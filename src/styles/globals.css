@@ -1,0 +1,356 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap');
+
+@import "tailwindcss";
+
+/* ... all your other custom code ... */
+
+:root {
+  
+  /* Professional Trust & Intelligent Action Theme */
+  
+  /* Typography */
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-size: 16px;
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
+  
+  /* Core Brand Colors - Deep Teal (from logo) */
+  --brand-teal-50: #f0fdfa;
+  --brand-teal-100: #ccfbf1;
+  --brand-teal-200: #99f6e4;
+  --brand-teal-300: #5eead4;
+  --brand-teal-400: #2dd4bf;
+  --brand-teal-500: #14b8a6;
+  --brand-teal-600: #0d9488;
+  --brand-teal-700: #0f766e;
+  --brand-teal-800: #115e59;
+  --brand-teal-900: #134e4a;
+  
+  /* Accent Colors - Amber/Gold for CTAs and Achievement */
+  --brand-amber-50: #fffbeb;
+  --brand-amber-100: #fef3c7;
+  --brand-amber-200: #fde68a;
+  --brand-amber-300: #fcd34d;
+  --brand-amber-400: #fbbf24;
+  --brand-amber-500: #f59e0b;
+  --brand-amber-600: #d97706;
+  --brand-amber-700: #b45309;
+  
+  /* Neutrals - Dark Slate Text */
+  --slate-50: #f8fafc;
+  --slate-100: #f1f5f9;
+  --slate-200: #e2e8f0;
+  --slate-300: #cbd5e1;
+  --slate-400: #94a3b8;
+  --slate-500: #64748b;
+  --slate-600: #475569;
+  --slate-700: #334155;
+  --slate-800: #1e293b;
+  --slate-900: #0f172a;
+  --slate-950: #020617;
+  
+  /* System Colors */
+  --system-red: #ef4444;
+  --system-red-dark: #dc2626;
+  --system-green: #10b981;
+  --system-green-dark: #059669;
+  --system-blue: #3b82f6;
+  --system-orange: #f97316;
+  
+  /* Base Theme - Light Mode (Development Hub) */
+  --background: #ffffff;
+  --foreground: var(--slate-900);
+  --card: #ffffff;
+  --card-foreground: var(--slate-900);
+  --popover: #ffffff;
+  --popover-foreground: var(--slate-900);
+  
+  /* Primary - Deep Teal */
+  --primary: var(--brand-teal-600);
+  --primary-foreground: #ffffff;
+  
+  /* Secondary - Amber for CTAs */
+  --secondary: var(--brand-amber-500);
+  --secondary-foreground: var(--slate-900);
+  
+  /* Muted */
+  --muted: var(--slate-100);
+  --muted-foreground: var(--slate-500);
+  
+  /* Accent */
+  --accent: var(--brand-teal-50);
+  --accent-foreground: var(--brand-teal-900);
+  
+  /* Destructive - Crisis Red */
+  --destructive: var(--system-red);
+  --destructive-foreground: #ffffff;
+  
+  /* Borders & Inputs */
+  --border: var(--slate-200);
+  --input: var(--slate-200);
+  --input-background: var(--slate-50);
+  --switch-background: var(--slate-300);
+  --ring: var(--brand-teal-600);
+  
+  /* Charts - Professional palette */
+  --chart-1: var(--brand-teal-500);
+  --chart-2: var(--brand-amber-500);
+  --chart-3: var(--system-blue);
+  --chart-4: var(--system-green);
+  --chart-5: var(--system-orange);
+  
+  /* Radius */
+  --radius: 0.5rem;
+  
+  /* Sidebar - Light Mode */
+  --sidebar: var(--brand-teal-700);
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: var(--brand-teal-800);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: var(--brand-teal-600);
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: var(--brand-teal-800);
+  --sidebar-ring: var(--brand-amber-400);
+}
+
+/* Dark Mode - Mobilization Hub (Crisis Management) */
+.dark {
+  --background: var(--slate-950);
+  --foreground: var(--slate-100);
+  --card: var(--slate-900);
+  --card-foreground: var(--slate-100);
+  --popover: var(--slate-900);
+  --popover-foreground: var(--slate-100);
+  
+  /* Primary - Keep Teal but adjusted */
+  --primary: var(--brand-teal-400);
+  --primary-foreground: var(--slate-950);
+  
+  /* Secondary - Amber pops in dark */
+  --secondary: var(--brand-amber-400);
+  --secondary-foreground: var(--slate-950);
+  
+  /* Muted */
+  --muted: var(--slate-800);
+  --muted-foreground: var(--slate-400);
+  
+  /* Accent */
+  --accent: var(--slate-800);
+  --accent-foreground: var(--slate-100);
+  
+  /* Destructive - Bright Red for alerts */
+  --destructive: var(--system-red);
+  --destructive-foreground: #ffffff;
+  
+  /* Borders & Inputs - Higher contrast */
+  --border: var(--slate-700);
+  --input: var(--slate-700);
+  --input-background: var(--slate-800);
+  --switch-background: var(--slate-600);
+  --ring: var(--brand-teal-400);
+  
+  /* Charts - Brighter for dark mode */
+  --chart-1: var(--brand-teal-400);
+  --chart-2: var(--brand-amber-400);
+  --chart-3: #60a5fa;
+  --chart-4: var(--system-green);
+  --chart-5: var(--system-orange);
+  
+  /* Sidebar - Dark Mode */
+  --sidebar: var(--slate-950);
+  --sidebar-foreground: var(--slate-100);
+  --sidebar-primary: var(--brand-teal-600);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: var(--slate-800);
+  --sidebar-accent-foreground: var(--slate-100);
+  --sidebar-border: var(--slate-800);
+  --sidebar-ring: var(--brand-amber-400);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-input-background: var(--input-background);
+  --color-switch-background: var(--switch-background);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-family);
+  }
+}
+
+/**
+ * Base typography - Inter font for professional clarity
+ */
+@layer base {
+  :where(:not(:has([class*=" text-"]), :not(:has([class^="text-"])))) {
+    h1 {
+      font-size: var(--text-2xl);
+      font-weight: 600;
+      line-height: 1.3;
+      letter-spacing: -0.02em;
+    }
+
+    h2 {
+      font-size: var(--text-xl);
+      font-weight: 600;
+      line-height: 1.3;
+      letter-spacing: -0.01em;
+    }
+
+    h3 {
+      font-size: var(--text-lg);
+      font-weight: 600;
+      line-height: 1.4;
+    }
+
+    h4 {
+      font-size: var(--text-base);
+      font-weight: 600;
+      line-height: 1.5;
+    }
+
+    p {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-normal);
+      line-height: 1.6;
+    }
+
+    label {
+      font-size: var(--text-sm);
+      font-weight: 500;
+      line-height: 1.5;
+    }
+
+    button {
+      font-size: var(--text-sm);
+      font-weight: 500;
+      line-height: 1.5;
+    }
+
+    input {
+      font-size: var(--text-sm);
+      font-weight: var(--font-weight-normal);
+      line-height: 1.5;
+    }
+  }
+}
+
+html {
+  font-size: var(--font-size);
+}
+
+/* Professional spacing and layout utilities */
+.container-professional {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+/* Achievement badge styling - Gold borders */
+.achievement-badge {
+  border: 2px solid var(--brand-amber-500);
+  box-shadow: 0 0 0 3px var(--brand-amber-100);
+}
+
+/* Crisis alert styling - High contrast red */
+.crisis-alert {
+  background: var(--system-red);
+  color: white;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+/* Progress bar - Amber gradient */
+.progress-bar-gold {
+  background: linear-gradient(90deg, var(--brand-amber-500), var(--brand-amber-400));
+}
+
+/* Card elevation - Professional depth */
+.card-elevated {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+}
+
+.card-elevated-hover {
+  transition: all 0.2s ease;
+}
+
+.card-elevated-hover:hover {
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+/* Mission Control Dark Theme specific */
+.mission-control-header {
+  background: var(--slate-900);
+  border-bottom: 1px solid var(--brand-teal-800);
+}
+
+/* Hide scrollbar for horizontal scrolling sections */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Professional scrollbar for dark mode */
+.dark ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: var(--slate-900);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: var(--slate-700);
+  border-radius: 4px;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: var(--slate-600);
+}
