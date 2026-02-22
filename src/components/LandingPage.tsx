@@ -33,17 +33,17 @@ const AnimatedCounter = ({ end, duration = 2000, suffix = "" }: { end: number, d
     const animate = (currentTime: number) => {
       if (!startTime) startTime = currentTime;
       const progress = Math.min((currentTime - startTime) / duration, 1);
-      
+
       // Easing function for smooth effect (starts fast, slows down)
       const easeOutQuad = (t: number) => t * (2 - t);
-      
+
       setCount(Math.floor(easeOutQuad(progress) * end));
 
       if (progress < 1) {
         requestAnimationFrame(animate);
       }
     };
-    
+
     requestAnimationFrame(animate);
   }, [end, duration]);
 
@@ -60,10 +60,6 @@ interface LandingPageProps {
 export function LandingPage({
   onSelectUserType,
 }: LandingPageProps) {
-  const [activeSection, setActiveSection] = useState<
-    "home" | "about" | "how-it-works" | "contact"
-  >("home");
-
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {

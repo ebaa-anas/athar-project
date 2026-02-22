@@ -17,6 +17,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 import atharLogo from "../assets/athar-logo.png";
+import { useUserProfile } from '../hooks/useUserProfile';
 
 interface SidebarProps {
   activeSection: string;
@@ -39,7 +40,14 @@ const menuItems = [
   { id: "certificates", label: "Certificates", icon: Award },
 ];
 
-export function Sidebar({ activeSection, onSectionChange, onLogout }: SidebarProps) { // <--- ADDED onLogout
+export function Sidebar({ activeSection, onSectionChange, onLogout }: SidebarProps) {
+  // 1. Fetch user data
+  const { user } = useUserProfile();
+  
+  // 2. Safely get the name and generate initials
+  const displayName = user?.name || "Volunteer";
+  const initials = displayName.split(' ').map((n: string) => n[0]).join('').toUpperCase().substring(0, 2);
+
   return (
     <aside className="fixed inset-y-0 left-0 w-64 h-screen bg-[#0f766e] flex flex-col shadow-2xl z-50 font-sans border-r border-[#115e59]">
       
@@ -60,11 +68,16 @@ export function Sidebar({ activeSection, onSectionChange, onLogout }: SidebarPro
         <div className="px-3 mb-2">
           <div className="flex items-center gap-3 bg-white/10 p-3 rounded-xl border border-white/10 hover:border-[#14b8a6]/50 transition-colors cursor-default backdrop-blur-sm">
             <Avatar className="w-9 h-9 border border-[#14b8a6]/50">
-              <AvatarImage src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100" />
-              <AvatarFallback className="bg-[#14b8a6] text-white text-xs font-bold">JD</AvatarFallback>
+              {/* Load real image if it exists */}
+              <AvatarImage src={user?.photoUrl || ""} />
+              {/* Show dynamic initials if no image */}
+              <AvatarFallback className="bg-[#14b8a6] text-white text-xs font-bold">
+                {initials}
+              </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <p className="truncate text-white text-sm font-semibold tracking-tight">John Doe</p>
+              {/* Display Real Name */}
+              <p className="truncate text-white text-sm font-semibold tracking-tight">{displayName}</p>
               <p className="text-[11px] text-teal-100 font-medium opacity-80">Development Hub</p>
             </div>
           </div>
@@ -74,7 +87,7 @@ export function Sidebar({ activeSection, onSectionChange, onLogout }: SidebarPro
           <div className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
         </div>
       </div>
-
+      
       {/* --- SCROLLABLE MIDDLE SECTION (Hidden Scrollbar) --- */}
       <div className="flex-1 overflow-y-auto px-3 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         <nav className="space-y-1 py-2">

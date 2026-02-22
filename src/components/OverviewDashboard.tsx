@@ -3,6 +3,7 @@ import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Progress } from './ui/progress';
 import { Clock, CheckCircle, Calendar, MapPin, Users, ArrowRight, Shield, Zap, TrendingUp, Brain } from 'lucide-react';
+import { useUserProfile } from '../hooks/useUserProfile';
 
 const stats = [
   { 
@@ -97,11 +98,12 @@ const ongoingProjects = [
 ];
 
 export function OverviewDashboard() {
+  const { user } = useUserProfile();
   return (
     <div className="space-y-6">
       {/* Welcome Section */}
       <div>
-        <h1 className="text-gray-900">Welcome back, John!</h1>
+        <h1 className="text-gray-900">Welcome back, {user ? user.name : "Volunteer"}!</h1>
         <p className="text-gray-500 mt-1">Here's what's happening with your volunteer activities</p>
       </div>
 

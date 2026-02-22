@@ -1,124 +1,148 @@
+import { useState, useEffect } from 'react';
+import { initializeApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
+import { 
+  getFirestore, collection, onSnapshot, query, where, doc, updateDoc, writeBatch 
+} from "firebase/firestore";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Bell, Calendar, Heart, Award, Users, CheckCircle, AlertCircle } from 'lucide-react';
 
-const notifications = [
-  {
-    id: 1,
-    type: 'event',
-    title: 'Event Reminder: Community Food Drive',
-    message: 'Your registered event starts tomorrow at 9:00 AM. Don\'t forget to bring your volunteer ID.',
-    organization: 'Local Food Bank',
-    time: '2 hours ago',
-    read: false,
-    icon: Calendar,
-    iconBg: 'bg-blue-100',
-    iconColor: 'text-blue-600'
-  },
-  {
-    id: 2,
-    type: 'task',
-    title: 'Task Due Soon',
-    message: 'Submit volunteer hours for Food Drive is due in 2 days.',
-    organization: 'Local Food Bank',
-    time: '3 hours ago',
-    read: false,
-    icon: AlertCircle,
-    iconBg: 'bg-orange-100',
-    iconColor: 'text-orange-600'
-  },
-  {
-    id: 3,
-    type: 'achievement',
-    title: 'Achievement Unlocked!',
-    message: 'You\'ve completed 100 volunteer hours! Keep up the amazing work.',
-    organization: 'Athar Platform',
-    time: '5 hours ago',
-    read: false,
-    icon: Award,
-    iconBg: 'bg-yellow-100',
-    iconColor: 'text-yellow-600'
-  },
-  {
-    id: 4,
-    type: 'opportunity',
-    title: 'New Opportunity Match',
-    message: 'Youth Tutor position matches your skills and interests.',
-    organization: 'Future Leaders Foundation',
-    time: '1 day ago',
-    read: true,
-    icon: Heart,
-    iconBg: 'bg-pink-100',
-    iconColor: 'text-pink-600'
-  },
-  {
-    id: 5,
-    type: 'event',
-    title: 'Event Registration Confirmed',
-    message: 'You\'re registered for Environmental Cleanup Day on Oct 22.',
-    organization: 'Green Earth Initiative',
-    time: '1 day ago',
-    read: true,
-    icon: CheckCircle,
-    iconBg: 'bg-teal-100',
-    iconColor: 'text-teal-600'
-  },
-  {
-    id: 6,
-    type: 'organization',
-    title: 'New Message from Organization',
-    message: 'Tech for All has sent you a message about upcoming training.',
-    organization: 'Tech for All',
-    time: '2 days ago',
-    read: true,
-    icon: Users,
-    iconBg: 'bg-purple-100',
-    iconColor: 'text-purple-600'
-  },
-  {
-    id: 7,
-    type: 'event',
-    title: 'Event Cancelled',
-    message: 'Community Workshop on Oct 19 has been cancelled due to weather.',
-    organization: 'Community Center',
-    time: '2 days ago',
-    read: true,
-    icon: AlertCircle,
-    iconBg: 'bg-red-100',
-    iconColor: 'text-red-600'
-  },
-  {
-    id: 8,
-    type: 'achievement',
-    title: 'Course Completed',
-    message: 'Congratulations! You\'ve completed Volunteer Leadership Training.',
-    organization: 'Athar Platform',
-    time: '3 days ago',
-    read: true,
-    icon: Award,
-    iconBg: 'bg-yellow-100',
-    iconColor: 'text-yellow-600'
-  }
-];
+// --- FIREBASE CONFIG ---
+const firebaseConfig = {
+  apiKey: "AIzaSyDRSETgWx1F3RX3_KAzgceyYBJKfpheRQk",
+  authDomain: "athar-project-aa74e.firebaseapp.com",
+  projectId: "athar-project-aa74e",
+  storageBucket: "athar-project-aa74e.firebasestorage.app",
+  messagingSenderId: "715063889584",
+  appId: "1:715063889584:web:3443ae48678c91a7f4b575",
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+// Helper function to format timestamps into "2 hours ago"
+const timeAgo = (timestamp: any) => {
+  if (!timestamp) return 'Just now';
+  const date = timestamp?.toDate ? timestamp.toDate() : new Date(timestamp);
+  const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
+  
+  let interval = seconds / 86400;
+  if (interval > 1) return Math.floor(interval) + " days ago";
+  interval = seconds / 3600;
+  if (interval > 1) return Math.floor(interval) + " hours ago";
+  interval = seconds / 60;
+  if (interval > 1) return Math.floor(interval) + " mins ago";
+  return "Just now";
+};
 
 export function Notifications() {
+  const [notifications, setNotifications] = useState<any[]>([]);
+
+  // --- 1. FETCH REAL-TIME NOTIFICATIONS ---
+  useEffect(() => {
+    const unsubscribeAuth = auth.onAuthStateChanged((user) => {
+      if (user) {
+        const q = query(
+          collection(db, "notifications"), 
+          where("userId", "==", user.uid)
+        );
+
+        const unsubscribeData = onSnapshot(q, (snapshot) => {
+          const notifs = snapshot.docs.map(docSnap => {
+            const data = docSnap.data();
+            
+            let icon = Bell;
+            let iconBg = 'bg-gray-100';
+            let iconColor = 'text-gray-600';
+            let mappedType = 'organization';
+
+            if (data.type === 'success') {
+              icon = CheckCircle;
+              iconBg = 'bg-teal-100';
+              iconColor = 'text-teal-600';
+              mappedType = 'achievement'; 
+            } else if (data.type === 'info') {
+              icon = AlertCircle;
+              iconBg = 'bg-orange-100';
+              iconColor = 'text-orange-600';
+              mappedType = 'event';
+            }
+
+            return {
+              id: docSnap.id,
+              title: data.title || 'Platform Update',
+              message: data.message || '',
+              // 👇 THE MAGIC FIX IS HERE: It reads the real name now!
+              organization: data.organizationName || 'Athar Platform', 
+              time: timeAgo(data.createdAt),
+              read: data.read || false,
+              type: mappedType,
+              icon, 
+              iconBg, 
+              iconColor,
+              rawTimestamp: data.createdAt?.toMillis ? data.createdAt.toMillis() : 0
+            };
+          });
+
+          notifs.sort((a, b) => b.rawTimestamp - a.rawTimestamp);
+          setNotifications(notifs);
+        });
+
+        return () => unsubscribeData();
+      } else {
+        setNotifications([]);
+      }
+    });
+
+    return () => unsubscribeAuth();
+  }, []);
+
   const unreadCount = notifications.filter(n => !n.read).length;
+
+  // --- 2. INTERACTIVE FEATURES ---
+  const handleMarkAsRead = async (id: string, currentlyRead: boolean) => {
+    if (currentlyRead) return; 
+    try {
+      await updateDoc(doc(db, "notifications", id), { read: true });
+    } catch (e) {
+      console.error("Error marking read", e);
+    }
+  };
+
+  const handleMarkAllAsRead = async () => {
+    try {
+      const batch = writeBatch(db);
+      const unreadNotifs = notifications.filter(n => !n.read);
+      
+      unreadNotifs.forEach(n => {
+        const ref = doc(db, "notifications", n.id);
+        batch.update(ref, { read: true });
+      });
+      
+      await batch.commit(); 
+    } catch (e) {
+      console.error("Error marking all read", e);
+    }
+  };
   
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-gray-900">Notifications</h1>
+          <h1 className="text-gray-900 text-2xl font-bold">Notifications</h1>
           <p className="text-gray-500 mt-1">Stay updated with your volunteer activities</p>
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="text-teal-700 border-teal-300">
             {unreadCount} Unread
           </Badge>
-          <Button variant="outline" size="sm">
+          <Button onClick={handleMarkAllAsRead} variant="outline" size="sm" disabled={unreadCount === 0}>
             Mark All as Read
           </Button>
         </div>
@@ -126,58 +150,10 @@ export function Notifications() {
 
       {/* Notification Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm text-gray-500">All</p>
-                <p className="text-gray-900 mt-2">{notifications.length}</p>
-              </div>
-              <div className="bg-gray-100 p-3 rounded-lg">
-                <Bell className="h-5 w-5 text-gray-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Events</p>
-                <p className="text-gray-900 mt-2">{notifications.filter(n => n.type === 'event').length}</p>
-              </div>
-              <div className="bg-blue-100 p-3 rounded-lg">
-                <Calendar className="h-5 w-5 text-blue-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Achievements</p>
-                <p className="text-gray-900 mt-2">{notifications.filter(n => n.type === 'achievement').length}</p>
-              </div>
-              <div className="bg-yellow-100 p-3 rounded-lg">
-                <Award className="h-5 w-5 text-yellow-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Opportunities</p>
-                <p className="text-gray-900 mt-2">{notifications.filter(n => n.type === 'opportunity').length}</p>
-              </div>
-              <div className="bg-pink-100 p-3 rounded-lg">
-                <Heart className="h-5 w-5 text-pink-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <Card><CardContent className="p-6"><div className="flex items-start justify-between"><div><p className="text-sm text-gray-500 font-medium">All</p><p className="text-gray-900 mt-2 text-2xl font-bold">{notifications.length}</p></div><div className="bg-gray-100 p-3 rounded-lg"><Bell className="h-5 w-5 text-gray-600" /></div></div></CardContent></Card>
+        <Card><CardContent className="p-6"><div className="flex items-start justify-between"><div><p className="text-sm text-gray-500 font-medium">Events</p><p className="text-gray-900 mt-2 text-2xl font-bold">{notifications.filter(n => n.type === 'event').length}</p></div><div className="bg-blue-100 p-3 rounded-lg"><Calendar className="h-5 w-5 text-blue-600" /></div></div></CardContent></Card>
+        <Card><CardContent className="p-6"><div className="flex items-start justify-between"><div><p className="text-sm text-gray-500 font-medium">Achievements</p><p className="text-gray-900 mt-2 text-2xl font-bold">{notifications.filter(n => n.type === 'achievement').length}</p></div><div className="bg-yellow-100 p-3 rounded-lg"><Award className="h-5 w-5 text-yellow-600" /></div></div></CardContent></Card>
+        <Card><CardContent className="p-6"><div className="flex items-start justify-between"><div><p className="text-sm text-gray-500 font-medium">Opportunities</p><p className="text-gray-900 mt-2 text-2xl font-bold">{notifications.filter(n => n.type === 'opportunity').length}</p></div><div className="bg-pink-100 p-3 rounded-lg"><Heart className="h-5 w-5 text-pink-600" /></div></div></CardContent></Card>
       </div>
 
       {/* Notifications List */}
@@ -193,15 +169,19 @@ export function Notifications() {
           <Card>
             <CardContent className="p-6">
               <div className="space-y-4">
+                {notifications.length === 0 && (
+                  <p className="text-center text-gray-500 py-8">You have no notifications yet.</p>
+                )}
                 {notifications.map((notification) => {
                   const Icon = notification.icon;
                   return (
                     <div 
                       key={notification.id} 
+                      onClick={() => handleMarkAsRead(notification.id, notification.read)}
                       className={`flex gap-4 p-4 rounded-lg border transition-colors ${
                         notification.read 
                           ? 'border-gray-200 bg-white' 
-                          : 'border-teal-200 bg-teal-50'
+                          : 'border-teal-200 bg-teal-50 cursor-pointer hover:bg-teal-100/50'
                       }`}
                     >
                       <div className={`${notification.iconBg} p-3 rounded-lg h-fit`}>
@@ -209,14 +189,14 @@ export function Notifications() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
-                          <h3 className="text-gray-900">{notification.title}</h3>
+                          <h3 className={`text-gray-900 ${!notification.read ? 'font-bold' : ''}`}>{notification.title}</h3>
                           {!notification.read && (
                             <div className="w-2 h-2 bg-teal-600 rounded-full shrink-0 mt-2"></div>
                           )}
                         </div>
                         <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
-                        <div className="flex items-center gap-3 mt-2 text-sm text-gray-500">
-                          <span>{notification.organization}</span>
+                        <div className="flex items-center gap-3 mt-2 text-sm text-gray-500 font-medium">
+                          <span className="text-[#043E52]">{notification.organization}</span>
                           <span>•</span>
                           <span>{notification.time}</span>
                         </div>
@@ -233,94 +213,28 @@ export function Notifications() {
           <Card>
             <CardContent className="p-6">
               <div className="space-y-4">
+                {notifications.filter(n => !n.read).length === 0 && (
+                   <p className="text-center text-gray-500 py-8">You're all caught up!</p>
+                )}
                 {notifications.filter(n => !n.read).map((notification) => {
                   const Icon = notification.icon;
                   return (
                     <div 
                       key={notification.id} 
-                      className="flex gap-4 p-4 rounded-lg border border-teal-200 bg-teal-50"
+                      onClick={() => handleMarkAsRead(notification.id, notification.read)}
+                      className="flex gap-4 p-4 rounded-lg border border-teal-200 bg-teal-50 cursor-pointer hover:bg-teal-100/50"
                     >
                       <div className={`${notification.iconBg} p-3 rounded-lg h-fit`}>
                         <Icon className={`h-5 w-5 ${notification.iconColor}`} />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
-                          <h3 className="text-gray-900">{notification.title}</h3>
+                          <h3 className="text-gray-900 font-bold">{notification.title}</h3>
                           <div className="w-2 h-2 bg-teal-600 rounded-full shrink-0 mt-2"></div>
                         </div>
                         <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
-                        <div className="flex items-center gap-3 mt-2 text-sm text-gray-500">
-                          <span>{notification.organization}</span>
-                          <span>•</span>
-                          <span>{notification.time}</span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="events" className="mt-6">
-          <Card>
-            <CardContent className="p-6">
-              <div className="space-y-4">
-                {notifications.filter(n => n.type === 'event').map((notification) => {
-                  const Icon = notification.icon;
-                  return (
-                    <div 
-                      key={notification.id} 
-                      className={`flex gap-4 p-4 rounded-lg border ${
-                        notification.read 
-                          ? 'border-gray-200 bg-white' 
-                          : 'border-teal-200 bg-teal-50'
-                      }`}
-                    >
-                      <div className={`${notification.iconBg} p-3 rounded-lg h-fit`}>
-                        <Icon className={`h-5 w-5 ${notification.iconColor}`} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-gray-900">{notification.title}</h3>
-                        <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
-                        <div className="flex items-center gap-3 mt-2 text-sm text-gray-500">
-                          <span>{notification.organization}</span>
-                          <span>•</span>
-                          <span>{notification.time}</span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="achievements" className="mt-6">
-          <Card>
-            <CardContent className="p-6">
-              <div className="space-y-4">
-                {notifications.filter(n => n.type === 'achievement').map((notification) => {
-                  const Icon = notification.icon;
-                  return (
-                    <div 
-                      key={notification.id} 
-                      className={`flex gap-4 p-4 rounded-lg border ${
-                        notification.read 
-                          ? 'border-gray-200 bg-white' 
-                          : 'border-teal-200 bg-teal-50'
-                      }`}
-                    >
-                      <div className={`${notification.iconBg} p-3 rounded-lg h-fit`}>
-                        <Icon className={`h-5 w-5 ${notification.iconColor}`} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-gray-900">{notification.title}</h3>
-                        <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
-                        <div className="flex items-center gap-3 mt-2 text-sm text-gray-500">
-                          <span>{notification.organization}</span>
+                        <div className="flex items-center gap-3 mt-2 text-sm text-gray-500 font-medium">
+                          <span className="text-[#043E52]">{notification.organization}</span>
                           <span>•</span>
                           <span>{notification.time}</span>
                         </div>
