@@ -133,7 +133,7 @@ export function Applications() {
       await updateDoc(doc(db, "applications", appObj.id), { status: newStatus });
 
       // B. Fetch Organization Name to make the notification personal
-      const orgDoc = await getDoc(doc(db, "users", user.uid));
+      const orgDoc = await getDoc(doc(db, "organizations", user.uid));
       const orgName = orgDoc.exists() ? orgDoc.data().name : "An Organization";
 
       // C. Shoot the notification to the Volunteer!

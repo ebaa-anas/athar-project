@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { auth, db } from "../lib/firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, onSnapshot } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 
 export function useUserProfile() {
@@ -8,23 +8,56 @@ export function useUserProfile() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let unsubscribeSnapshot: (() => void) | undefined;
+
     // Listen for login/logout
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+    const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
-        // If logged in, get their data from Firestore
-        const docRef = doc(db, "users", currentUser.uid);
-        const docSnap = await getDoc(docRef);
         
-        if (docSnap.exists()) {
-          setUser(docSnap.data());
+        // 1. Look at the "nametag" in the users collection to find their true role
+        const nametagRef = doc(db, "users", currentUser.uid);
+        const nametagSnap = await getDoc(nametagRef);
+        
+        let targetCollection = "users"; // Default for volunteers
+
+        if (nametagSnap.exists()) {
+          const role = nametagSnap.data().role;
+          if (role === "organization") {
+            targetCollection = "organizations";
+          } else if (role === "admin") {
+            targetCollection = "admins";
+          }
         }
+
+        // 2. Set up a REAL-TIME listener on the correct collection!
+        const fullProfileRef = doc(db, targetCollection, currentUser.uid);
+        
+        unsubscribeSnapshot = onSnapshot(fullProfileRef, (docSnap) => {
+          if (docSnap.exists()) {
+            setUser({ uid: currentUser.uid, ...docSnap.data() });
+          } else {
+            setUser(null);
+          }
+          setLoading(false);
+        });
+
       } else {
+        // User logged out
         setUser(null);
+        setLoading(false);
+        if (unsubscribeSnapshot) {
+          unsubscribeSnapshot();
+        }
       }
-      setLoading(false);
     });
 
-    return () => unsubscribe();
+    // Cleanup listeners when component unmounts
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeSnapshot) {
+        unsubscribeSnapshot();
+      }
+    };
   }, []);
 
   return { user, loading };

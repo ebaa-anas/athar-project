@@ -1,243 +1,209 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { initializeApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
+import { 
+  getFirestore, collection, onSnapshot, query, where, doc, getDoc, addDoc, updateDoc, increment, serverTimestamp 
+} from "firebase/firestore";
+
+// 👇 FIXED PATHS: Changed from '../ui' to './ui'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { 
-  AlertTriangle, 
-  Clock, 
-  MapPin, 
-  Users,
-  CheckCircle,
-  XCircle,
-  Zap,
-  TrendingUp,
-  Heart,
-  Shield,
-  Navigation,
-  Phone,
-  AlertCircle,
-  Activity
+  AlertTriangle, Clock, MapPin, Users, CheckCircle,
+  Zap, TrendingUp, Shield, Navigation, Phone, AlertCircle, ShieldAlert
 } from 'lucide-react';
 
-interface CrisisAlert {
-  id: string;
-  title: string;
-  organization: string;
-  organizationVerified: boolean;
-  severity: 'Critical' | 'High' | 'Medium';
-  location: string;
-  distance: string;
-  skillsNeeded: string[];
-  volunteersNeeded: number;
-  volunteersActivated: number;
-  postedTime: string;
-  reportedBy: string;
-  description: string;
-  status: 'active' | 'accepted' | 'completed';
-  matchScore?: number;
-}
+// 👇 FIXED PATH: Changed from '../../hooks' to '../hooks'
+import { useUserProfile } from '../hooks/useUserProfile';
 
-const crisisAlerts: CrisisAlert[] = [
-  {
-    id: '1',
-    title: 'Earthquake Response - Medical Aid Needed',
-    organization: 'AFAD',
-    organizationVerified: true,
-    severity: 'Critical',
-    location: 'Kadıköy, Istanbul',
-    distance: '2.3 km',
-    skillsNeeded: ['Medical Assistance Basic', 'Psychological First Aid', 'Emergency Response'],
-    volunteersNeeded: 15,
-    volunteersActivated: 8,
-    postedTime: '12 minutes ago',
-    reportedBy: 'AFAD Emergency Coordinator',
-    description: 'Major earthquake in Kadıköy district. Multiple buildings affected. Need immediate medical assistance and psychological support for affected residents. Emergency coordination center established at Kadıköy Municipality.',
-    status: 'active',
-    matchScore: 95
-  },
-  {
-    id: '2',
-    title: 'Flood Relief - Community Support',
-    organization: 'Kızılay',
-    organizationVerified: true,
-    severity: 'High',
-    location: 'Beşiktaş, Istanbul',
-    distance: '5.7 km',
-    skillsNeeded: ['Community Coordination', 'Crisis Communication'],
-    volunteersNeeded: 10,
-    volunteersActivated: 6,
-    postedTime: '45 minutes ago',
-    reportedBy: 'Kızılay Regional Director',
-    description: 'Flash flooding in Beşiktaş area. Need volunteers to help coordinate relief efforts and communicate with affected families. Distribution center at Beşiktaş Community Center.',
-    status: 'accepted',
-    matchScore: 88
-  },
-  {
-    id: '3',
-    title: 'Refugee Crisis - Translation Services',
-    organization: 'Turkish Red Crescent',
-    organizationVerified: true,
-    severity: 'Medium',
-    location: 'Şişli, Istanbul',
-    distance: '8.2 km',
-    skillsNeeded: ['Crisis Communication', 'Community Coordination'],
-    volunteersNeeded: 5,
-    volunteersActivated: 5,
-    postedTime: '2 hours ago',
-    reportedBy: 'Red Crescent Field Coordinator',
-    description: 'Increased refugee arrivals. Need volunteers with communication skills to help with registration and coordination. Meeting point at Şişli Refugee Center.',
-    status: 'completed',
-    matchScore: 72
-  }
-];
+// --- FIREBASE CONFIG ---
+const firebaseConfig = {
+  apiKey: "AIzaSyDRSETgWx1F3RX3_KAzgceyYBJKfpheRQk",
+  authDomain: "athar-project-aa74e.firebaseapp.com",
+  projectId: "athar-project-aa74e",
+  storageBucket: "athar-project-aa74e.firebasestorage.app",
+  messagingSenderId: "715063889584",
+  appId: "1:715063889584:web:3443ae48678c91a7f4b575",
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+// Helper for formatting time
+const timeAgo = (timestamp: any) => {
+  if (!timestamp) return 'Just now';
+  const date = timestamp?.toDate ? timestamp.toDate() : new Date(timestamp);
+  const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
+  let interval = seconds / 3600;
+  if (interval > 1) return Math.floor(interval) + " hours ago";
+  interval = seconds / 60;
+  if (interval > 1) return Math.floor(interval) + " mins ago";
+  return "Just now";
+};
 
 export function CrisisResponse() {
-  const [selectedAlert, setSelectedAlert] = useState<CrisisAlert | null>(null);
+  const { user, loading } = useUserProfile();
+  const [crises, setCrises] = useState<any[]>([]);
+  const [myResponses, setMyResponses] = useState<any[]>([]);
+  const [selectedAlert, setSelectedAlert] = useState<any | null>(null);
 
-  const activeAlerts = crisisAlerts.filter(a => a.status === 'active');
-  const acceptedAlerts = crisisAlerts.filter(a => a.status === 'accepted');
-  const completedAlerts = crisisAlerts.filter(a => a.status === 'completed');
+  // --- 1. FETCH CRISES & RESPONSES ---
+  useEffect(() => {
+    if (!user || !user.isAVRMember) return; 
 
-  const handleAcceptAlert = (alertId: string) => {
-    // In a real app, this would call an API
-    console.log('Accepted alert:', alertId);
+    const unsubscribeCrises = onSnapshot(collection(db, "crises"), (snapshot) => {
+      const allCrises = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      setCrises(allCrises);
+    });
+
+    const qResponses = query(collection(db, "crisisResponses"), where("volunteerId", "==", user.uid));
+    const unsubscribeResponses = onSnapshot(qResponses, (snapshot) => {
+      setMyResponses(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+    });
+
+    return () => {
+      unsubscribeCrises();
+      unsubscribeResponses();
+    };
+  }, [user]);
+
+  // --- 2. CATEGORIZE ALERTS ---
+  const activeAlerts = crises.filter(c => 
+    c.status === 'Active' && !myResponses.find(r => r.crisisId === c.id)
+  );
+
+  const acceptedAlerts = crises.filter(c => 
+    c.status === 'Active' && myResponses.find(r => r.crisisId === c.id && r.status === 'accepted')
+  );
+
+  const completedAlerts = crises.filter(c => 
+    c.status === 'Completed' && myResponses.find(r => r.crisisId === c.id && r.status === 'accepted')
+  );
+
+  // --- 3. HANDLE ACCEPT / DECLINE ---
+  const handleResponse = async (crisisId: string, status: 'accepted' | 'declined') => {
+    const currentUser = auth.currentUser;
+    if (!currentUser) return;
+
+    try {
+      await addDoc(collection(db, "crisisResponses"), {
+        crisisId,
+        volunteerId: currentUser.uid,
+        status,
+        respondedAt: serverTimestamp()
+      });
+
+      if (status === 'accepted') {
+        await updateDoc(doc(db, "crises", crisisId), {
+          volunteersResponded: increment(1)
+        });
+      }
+    } catch (error) {
+      console.error("Error responding to crisis:", error);
+    }
   };
 
-  const handleDeclineAlert = (alertId: string) => {
-    // In a real app, this would call an API
-    console.log('Declined alert:', alertId);
-  };
+  // --- SECURITY LOCK: AVR MEMBERS ONLY ---
+  if (loading) return <div>Loading Secure Data...</div>;
+  
+  if (!user?.isAVRMember) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[70vh] space-y-6 text-center px-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="bg-red-50 p-8 rounded-full border-4 border-red-100 shadow-sm">
+          <ShieldAlert className="h-20 w-20 text-[#E16A3D]" />
+        </div>
+        <div className="max-w-xl space-y-4">
+          <h2 className="text-4xl font-black text-[#043E52] uppercase tracking-tight">Restricted Access</h2>
+          <p className="text-slate-500 text-lg leading-relaxed">
+            The Crisis Response Center is exclusively available to certified members of the <strong>Athar Volunteer Reserve (AVR)</strong>. 
+            AVR members undergo specialized background checks and skills verification for immediate emergency deployment.
+          </p>
+        </div>
+        
+        <Button 
+          onClick={async () => await updateDoc(doc(db, "users", user.uid), { isAVRMember: true })}
+          className="bg-[#1C9290] hover:bg-[#157a78] h-14 px-10 text-white font-bold rounded-2xl shadow-xl mt-4 transition-all hover:scale-105"
+        >
+          <Shield className="mr-2 h-5 w-5" /> Enroll in AVR Certification
+        </Button>
+      </div>
+    );
+  }
 
+  // --- MAIN AVR DASHBOARD ---
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div>
-        <h1 className="text-gray-900 mb-2">Crisis Response Center</h1>
-        <p className="text-gray-600">
+        <h1 className="text-[#043E52] text-2xl font-bold mb-2">Crisis Response Center</h1>
+        <p className="text-slate-500">
           Receive real-time crisis alerts matched to your verified skills. Part of the Athar Volunteer Reserve (AVR).
         </p>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <div className="bg-red-100 p-3 rounded-lg">
-                <AlertTriangle className="h-6 w-6 text-red-700" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Active Alerts</p>
-                <p className="text-red-700">{activeAlerts.length}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <div className="bg-green-100 p-3 rounded-lg">
-                <Zap className="h-6 w-6 text-green-700" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Responses</p>
-                <p className="text-green-700">{acceptedAlerts.length}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <div className="bg-blue-100 p-3 rounded-lg">
-                <CheckCircle className="h-6 w-6 text-blue-700" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Completed</p>
-                <p className="text-blue-700">{completedAlerts.length}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <div className="bg-purple-100 p-3 rounded-lg">
-                <TrendingUp className="h-6 w-6 text-purple-700" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Response Rate</p>
-                <p className="text-purple-700">92%</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <Card className="border-t-4 border-t-red-500 shadow-sm"><CardContent className="p-6"><div className="flex items-center gap-3"><div className="bg-red-50 p-3 rounded-xl"><AlertTriangle className="h-6 w-6 text-red-600" /></div><div><p className="text-sm font-bold text-slate-400 uppercase">Active Alerts</p><p className="text-xl font-black text-[#043E52]">{activeAlerts.length}</p></div></div></CardContent></Card>
+        <Card className="border-t-4 border-t-[#1C9290] shadow-sm"><CardContent className="p-6"><div className="flex items-center gap-3"><div className="bg-teal-50 p-3 rounded-xl"><Zap className="h-6 w-6 text-[#1C9290]" /></div><div><p className="text-sm font-bold text-slate-400 uppercase">Responses</p><p className="text-xl font-black text-[#043E52]">{acceptedAlerts.length}</p></div></div></CardContent></Card>
+        <Card className="border-t-4 border-t-blue-500 shadow-sm"><CardContent className="p-6"><div className="flex items-center gap-3"><div className="bg-blue-50 p-3 rounded-xl"><CheckCircle className="h-6 w-6 text-blue-600" /></div><div><p className="text-sm font-bold text-slate-400 uppercase">Completed</p><p className="text-xl font-black text-[#043E52]">{completedAlerts.length}</p></div></div></CardContent></Card>
+        <Card className="border-t-4 border-t-purple-500 shadow-sm"><CardContent className="p-6"><div className="flex items-center gap-3"><div className="bg-purple-50 p-3 rounded-xl"><TrendingUp className="h-6 w-6 text-purple-600" /></div><div><p className="text-sm font-bold text-slate-400 uppercase">Response Rate</p><p className="text-xl font-black text-[#043E52]">92%</p></div></div></CardContent></Card>
       </div>
 
-      {/* AVR Status Banner */}
-      <Card className="border-2 border-teal-200 bg-gradient-to-r from-teal-50 to-green-50">
-        <CardContent className="p-6">
-          <div className="flex items-start gap-4">
-            <div className="bg-teal-600 text-white p-3 rounded-full">
-              <Shield className="h-6 w-6" />
+      <Card className="border-none shadow-md bg-gradient-to-br from-[#043E52] to-[#1C9290] text-white">
+        <CardContent className="p-6 md:p-8">
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+            <div className="bg-white/10 p-4 rounded-2xl backdrop-blur-sm border border-white/20">
+              <Shield className="h-8 w-8 text-teal-100" />
             </div>
             <div className="flex-1">
-              <h3 className="text-gray-900 mb-2">🛡️ Athar Volunteer Reserve Status: Active</h3>
-              <p className="text-gray-600 mb-3">
-                You're part of the AVR! Verified Partner organizations can activate you for crisis response. 
-                Alerts are matched using NLP to your verified skills for targeted, efficient deployment.
+              <h3 className="text-xl font-bold mb-2 flex items-center gap-2">
+                Athar Volunteer Reserve Status: <Badge className="bg-green-500 text-white border-none ml-2">ACTIVE</Badge>
+              </h3>
+              <p className="text-teal-50 text-sm mb-4 leading-relaxed max-w-3xl">
+                You are part of the elite AVR. Verified Partner organizations can activate you instantly for crisis response. 
+                Alerts are matched securely to your verified skills for targeted, efficient deployment.
               </p>
-              <div className="flex items-center gap-4 text-sm">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4 text-green-600" />
-                  <span className="text-gray-700">Skills Verified</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4 text-green-600" />
-                  <span className="text-gray-700">Background Check</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4 text-green-600" />
-                  <span className="text-gray-700">Active Status</span>
-                </div>
+              <div className="flex flex-wrap items-center gap-4 text-xs font-bold text-teal-100 uppercase tracking-wider">
+                <div className="flex items-center gap-1.5"><CheckCircle className="h-4 w-4 text-green-400" /> Skills Verified</div>
+                <div className="flex items-center gap-1.5"><CheckCircle className="h-4 w-4 text-green-400" /> Background Check</div>
+                <div className="flex items-center gap-1.5"><CheckCircle className="h-4 w-4 text-green-400" /> Standby Ready</div>
               </div>
             </div>
-            <Button variant="outline">Manage Availability</Button>
+            <Button variant="outline" className="bg-white/10 text-white border-white/20 hover:bg-white hover:text-[#043E52] font-bold">
+              Manage Availability
+            </Button>
           </div>
         </CardContent>
       </Card>
 
-      {/* Crisis Alerts */}
       <Tabs defaultValue="active">
-        <TabsList>
-          <TabsTrigger value="active" className="relative">
+        <TabsList className="bg-slate-100 p-1 rounded-xl h-12">
+          <TabsTrigger value="active" className="rounded-lg data-[state=active]:bg-white font-bold text-slate-500 data-[state=active]:text-[#E16A3D]">
             Active Alerts
             {activeAlerts.length > 0 && (
-              <Badge className="ml-2 bg-red-500 hover:bg-red-600">
+              <Badge className="ml-2 bg-[#E16A3D] text-white border-none px-1.5 min-w-[20px] h-5 flex items-center justify-center">
                 {activeAlerts.length}
               </Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="accepted">My Responses ({acceptedAlerts.length})</TabsTrigger>
-          <TabsTrigger value="completed">Completed ({completedAlerts.length})</TabsTrigger>
+          <TabsTrigger value="accepted" className="rounded-lg data-[state=active]:bg-white font-bold text-slate-500 data-[state=active]:text-[#1C9290]">
+            My Responses ({acceptedAlerts.length})
+          </TabsTrigger>
+          <TabsTrigger value="completed" className="rounded-lg data-[state=active]:bg-white font-bold text-slate-500">
+            Completed ({completedAlerts.length})
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="active" className="space-y-4 mt-6">
           {activeAlerts.length === 0 ? (
-            <Card>
-              <CardContent className="p-12 text-center">
-                <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <AlertCircle className="h-8 w-8 text-gray-400" />
+            <Card className="border-dashed border-2 border-slate-200 shadow-none bg-slate-50/50">
+              <CardContent className="p-16 text-center flex flex-col items-center">
+                <div className="bg-slate-100 w-20 h-20 rounded-full flex items-center justify-center mb-4">
+                  <AlertCircle className="h-10 w-10 text-slate-300" />
                 </div>
-                <h3 className="text-gray-900 mb-2">No Active Alerts</h3>
-                <p className="text-gray-600">
-                  You'll receive notifications when crisis alerts match your verified skills
-                </p>
+                <h3 className="text-xl font-bold text-[#043E52] mb-2">No Active Alerts</h3>
+                <p className="text-slate-500">You're on standby. We will notify you instantly when an emergency matches your profile.</p>
               </CardContent>
             </Card>
           ) : (
@@ -245,9 +211,10 @@ export function CrisisResponse() {
               <CrisisAlertCard 
                 key={alert.id} 
                 alert={alert} 
-                onAccept={handleAcceptAlert}
-                onDecline={handleDeclineAlert}
+                onAccept={handleResponse}
+                onDecline={handleResponse}
                 onViewDetails={setSelectedAlert}
+                statusType="active"
               />
             ))
           )}
@@ -259,8 +226,10 @@ export function CrisisResponse() {
               key={alert.id} 
               alert={alert}
               onViewDetails={setSelectedAlert}
+              statusType="accepted"
             />
           ))}
+          {acceptedAlerts.length === 0 && <p className="text-center text-slate-500 py-10 font-medium">You haven't responded to any active crises yet.</p>}
         </TabsContent>
 
         <TabsContent value="completed" className="space-y-4 mt-6">
@@ -269,213 +238,171 @@ export function CrisisResponse() {
               key={alert.id} 
               alert={alert}
               onViewDetails={setSelectedAlert}
+              statusType="completed"
             />
           ))}
         </TabsContent>
       </Tabs>
 
-      {/* Alert Details Modal (simplified as inline) */}
       {selectedAlert && (
-        <Card className="border-2 border-red-200">
-          <CardHeader>
-            <div className="flex items-start justify-between">
-              <div>
-                <CardTitle>{selectedAlert.title}</CardTitle>
-                <CardDescription>{selectedAlert.organization}</CardDescription>
-              </div>
-              <Button variant="ghost" size="sm" onClick={() => setSelectedAlert(null)}>
-                ✕
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div>
-                <h4 className="text-gray-900 mb-2">Emergency Details</h4>
-                <p className="text-gray-600">{selectedAlert.description}</p>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
+          <Card className="w-full max-w-2xl border-none shadow-2xl rounded-2xl overflow-hidden">
+            <CardHeader className="bg-[#E16A3D] text-white p-6">
+              <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">Location</p>
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-gray-400" />
+                  <Badge className="bg-white/20 hover:bg-white/30 text-white border-none mb-2 backdrop-blur-md">
+                    {selectedAlert.severity.toUpperCase()} PRIORITY
+                  </Badge>
+                  <CardTitle className="text-2xl font-bold">{selectedAlert.title}</CardTitle>
+                  <CardDescription className="text-orange-100 mt-1 text-base flex items-center gap-2">
+                    {selectedAlert.organization} {selectedAlert.organizationVerified && <CheckCircle className="h-4 w-4" />}
+                  </CardDescription>
+                </div>
+                <Button variant="ghost" onClick={() => setSelectedAlert(null)} className="text-white hover:bg-white/20 rounded-full h-10 w-10 p-0">
+                  ✕
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="p-8 space-y-6 bg-white">
+              <div>
+                <h4 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-3">Situation Report</h4>
+                <p className="text-slate-700 leading-relaxed bg-slate-50 p-4 rounded-xl border border-slate-100">
+                  {selectedAlert.description}
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-6 bg-white">
+                <div>
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Location Data</p>
+                  <div className="flex items-center gap-3 text-slate-700 font-medium">
+                    <div className="p-2 bg-orange-50 rounded-lg"><MapPin className="h-5 w-5 text-[#E16A3D]" /></div>
                     <span>{selectedAlert.location}</span>
                   </div>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">Contact</p>
-                  <div className="flex items-center gap-2">
-                    <Phone className="h-4 w-4 text-gray-400" />
-                    <span>+90 555 0123</span>
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Command Center</p>
+                  <div className="flex items-center gap-3 text-slate-700 font-medium">
+                    <div className="p-2 bg-teal-50 rounded-lg"><Phone className="h-5 w-5 text-[#1C9290]" /></div>
+                    <span>Secure Comms Channel</span>
                   </div>
                 </div>
               </div>
-              {selectedAlert.status === 'accepted' && (
-                <div className="flex gap-2">
-                  <Button className="flex-1 bg-teal-700 hover:bg-teal-800">
-                    <Navigation className="mr-2 h-4 w-4" />
-                    Get Directions
-                  </Button>
-                  <Button className="flex-1" variant="outline">
-                    <Phone className="mr-2 h-4 w-4" />
-                    Call Coordinator
-                  </Button>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+              
+              <div className="flex gap-3 pt-4 border-t border-slate-100">
+                <Button className="flex-1 bg-[#043E52] hover:bg-[#033040] h-12 text-white font-bold rounded-xl shadow-md">
+                  <Navigation className="mr-2 h-5 w-5" /> Secure Directions
+                </Button>
+                <Button variant="outline" className="flex-1 h-12 border-slate-200 text-slate-600 font-bold rounded-xl">
+                  <Phone className="mr-2 h-5 w-5" /> Connect Command
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
     </div>
   );
 }
 
-function CrisisAlertCard({ 
-  alert, 
-  onAccept, 
-  onDecline,
-  onViewDetails 
-}: { 
-  alert: CrisisAlert; 
-  onAccept?: (id: string) => void;
-  onDecline?: (id: string) => void;
-  onViewDetails?: (alert: CrisisAlert) => void;
-}) {
+// --- SUB-COMPONENT: Crisis Alert Card ---
+function CrisisAlertCard({ alert, onAccept, onDecline, onViewDetails, statusType }: any) {
+  const timeString = timeAgo(alert.createdAt);
+  const distanceMock = "3.2 km (Est.)"; 
+
   return (
-    <Card className={`border-2 ${
-      alert.severity === 'Critical' ? 'border-red-300 bg-red-50/30' :
-      alert.severity === 'High' ? 'border-orange-300 bg-orange-50/30' :
-      'border-yellow-300 bg-yellow-50/30'
+    <Card className={`border-2 shadow-sm hover:shadow-md transition-shadow rounded-2xl overflow-hidden ${
+      alert.severity === 'Critical' && statusType === 'active' ? 'border-[#E16A3D] bg-orange-50/10' :
+      statusType === 'accepted' ? 'border-[#1C9290] bg-teal-50/10' :
+      'border-slate-200 bg-white'
     }`}>
-      <CardHeader>
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
-              <CardTitle>{alert.title}</CardTitle>
+      <div className="p-6">
+        <div className="flex flex-col md:flex-row items-start justify-between gap-4">
+          
+          <div className="flex-1 w-full space-y-4">
+            <div className="flex items-center gap-3 flex-wrap">
+              <h3 className="text-xl font-bold text-[#043E52]">{alert.title}</h3>
               <Badge className={
-                alert.severity === 'Critical' ? 'bg-red-600 hover:bg-red-700' :
-                alert.severity === 'High' ? 'bg-orange-600 hover:bg-orange-700' :
-                'bg-yellow-600 hover:bg-yellow-700'
+                alert.severity === 'Critical' ? 'bg-[#E16A3D] hover:bg-[#c2562d]' :
+                alert.severity === 'High' ? 'bg-orange-500 hover:bg-orange-600' :
+                'bg-yellow-500 hover:bg-yellow-600'
               }>
-                {alert.severity}
+                {alert.severity.toUpperCase()}
               </Badge>
-              {alert.matchScore && (
-                <Badge className="bg-green-600 hover:bg-green-700">
-                  {alert.matchScore}% Match
-                </Badge>
+              {statusType === 'accepted' && (
+                <Badge className="bg-[#1C9290] hover:bg-[#157a78]"><CheckCircle className="h-3 w-3 mr-1" /> RESPONDING</Badge>
               )}
             </div>
-            <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
-              <div className="flex items-center gap-1">
-                <Building2 className="h-4 w-4" />
-                <span>{alert.organization}</span>
-                {alert.organizationVerified && (
-                  <CheckCircle className="h-4 w-4 text-green-600" />
-                )}
+
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm font-medium text-slate-500">
+              <div className="flex items-center gap-1.5 text-[#043E52] font-bold">
+                <Shield className="h-4 w-4 text-blue-500" />
+                {alert.organization}
               </div>
-              <div className="flex items-center gap-1">
-                <Clock className="h-4 w-4" />
-                <span>{alert.postedTime}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <MapPin className="h-4 w-4" />
-                <span>{alert.location} • {alert.distance}</span>
-              </div>
+              <div className="flex items-center gap-1.5"><Clock className="h-4 w-4" /> {timeString}</div>
+              <div className="flex items-center gap-1.5"><MapPin className="h-4 w-4" /> {alert.location} • {distanceMock}</div>
             </div>
-            <CardDescription className="mb-3">{alert.description}</CardDescription>
+
+            <p className="text-slate-600 text-sm leading-relaxed line-clamp-2 bg-slate-50 p-3 rounded-lg border border-slate-100">
+                {alert.description}
+            </p>
             
-            {/* Skills Needed */}
-            <div className="mb-3">
-              <p className="text-sm text-gray-600 mb-2">Skills Needed:</p>
+            <div>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Required Capabilities</p>
               <div className="flex flex-wrap gap-2">
-                {alert.skillsNeeded.map((skill, index) => (
-                  <Badge key={index} variant="outline" className="border-teal-300 text-teal-700">
-                    <CheckCircle className="h-3 w-3 mr-1" />
-                    {skill}
+                {(alert.skillsNeeded || []).map((skill: string, index: number) => (
+                  <Badge key={index} variant="outline" className="border-teal-200 text-teal-700 bg-teal-50/50">
+                    <CheckCircle className="h-3 w-3 mr-1 text-teal-500" /> {skill}
                   </Badge>
                 ))}
               </div>
             </div>
 
-            {/* Volunteers Status */}
-            <div className="flex items-center gap-4 text-sm">
-              <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-gray-400" />
-                <span className="text-gray-600">
-                  {alert.volunteersActivated}/{alert.volunteersNeeded} volunteers activated
-                </span>
-              </div>
-              {alert.status === 'accepted' && (
-                <Badge className="bg-green-600 hover:bg-green-700">
-                  <CheckCircle className="h-3 w-3 mr-1" />
-                  You Accepted
-                </Badge>
-              )}
-              {alert.status === 'completed' && (
-                <Badge className="bg-blue-600 hover:bg-blue-700">
-                  <CheckCircle className="h-3 w-3 mr-1" />
-                  Completed
-                </Badge>
-              )}
+            <div className="flex items-center gap-2 text-sm font-medium text-slate-500 bg-slate-50 px-3 py-1.5 rounded-lg w-fit">
+              <Users className="h-4 w-4 text-slate-400" />
+              <span>{alert.volunteersResponded} / {alert.volunteersNeeded} Volunteers Activated</span>
             </div>
           </div>
           
-          {/* Actions */}
-          <div className="flex flex-col gap-2 ml-4">
-            {alert.status === 'active' && onAccept && onDecline && (
+          {/* Actions Column */}
+          <div className="flex flex-col gap-3 w-full md:w-48 shrink-0 md:pl-6 md:border-l border-slate-100">
+            {statusType === 'active' && onAccept && onDecline && (
               <>
                 <Button 
-                  className="bg-teal-700 hover:bg-teal-800"
-                  onClick={() => onAccept(alert.id)}
+                  className="w-full bg-[#E16A3D] hover:bg-[#c2562d] text-white font-bold h-12 shadow-md shadow-orange-200"
+                  onClick={() => onAccept(alert.id, 'accepted')}
                 >
-                  <Zap className="mr-2 h-4 w-4" />
-                  Accept Alert
+                  <Zap className="mr-2 h-5 w-5" /> Accept Alert
                 </Button>
                 <Button 
                   variant="outline"
-                  onClick={() => onDecline(alert.id)}
+                  className="w-full h-11 border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-red-500 font-bold"
+                  onClick={() => onDecline(alert.id, 'declined')}
                 >
-                  Decline
+                  Ignore
                 </Button>
               </>
             )}
-            {alert.status === 'accepted' && (
+            
+            {statusType === 'accepted' && (
               <>
-                <Button className="bg-green-700 hover:bg-green-800">
-                  <Navigation className="mr-2 h-4 w-4" />
-                  Get Directions
-                </Button>
-                <Button variant="outline">
-                  <Phone className="mr-2 h-4 w-4" />
-                  Contact
+                <Button className="w-full bg-[#1C9290] hover:bg-[#157a78] font-bold h-12 shadow-md">
+                  <Navigation className="mr-2 h-5 w-5" /> Mission Comms
                 </Button>
               </>
             )}
+
             {onViewDetails && (
               <Button 
-                variant="outline"
+                variant="ghost"
+                className="w-full h-11 text-slate-500 font-bold hover:text-[#043E52] hover:bg-slate-100"
                 onClick={() => onViewDetails(alert)}
               >
-                View Details
+                Read Full Briefing
               </Button>
             )}
           </div>
-        </div>
-      </CardHeader>
-    </Card>
-  );
-}
 
-function Building2(props: any) {
-  return (
-    <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/>
-      <path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/>
-      <path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/>
-      <path d="M10 6h4"/>
-      <path d="M10 10h4"/>
-      <path d="M10 14h4"/>
-      <path d="M10 18h4"/>
-    </svg>
+        </div>
+      </div>
+    </Card>
   );
 }
