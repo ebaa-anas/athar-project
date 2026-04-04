@@ -5,17 +5,15 @@ import {
   getFirestore, collection, onSnapshot, query, where, doc, getDoc, addDoc, updateDoc, increment, serverTimestamp 
 } from "firebase/firestore";
 
-// 👇 FIXED PATHS: Changed from '../ui' to './ui'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { 
   AlertTriangle, Clock, MapPin, Users, CheckCircle,
-  Zap, TrendingUp, Shield, Navigation, Phone, AlertCircle, ShieldAlert
+  Zap, TrendingUp, Shield, Navigation, Phone, AlertCircle, ShieldAlert, ShieldCheck ,  X
 } from 'lucide-react';
-
-// 👇 FIXED PATH: Changed from '../../hooks' to '../hooks'
+import { Label } from './ui/label';
 import { useUserProfile } from '../hooks/useUserProfile';
 
 // --- FIREBASE CONFIG ---
@@ -49,6 +47,7 @@ export function CrisisResponse() {
   const [crises, setCrises] = useState<any[]>([]);
   const [myResponses, setMyResponses] = useState<any[]>([]);
   const [selectedAlert, setSelectedAlert] = useState<any | null>(null);
+  const [isDeploying, setIsDeploying] = useState(false);
 
   // --- 1. FETCH CRISES & RESPONSES ---
   useEffect(() => {
@@ -106,6 +105,67 @@ export function CrisisResponse() {
     }
   };
 
+  // --- 4. ACTION: SECURE DIRECTIONS ---
+  const handleSecureDirections = (location: string) => {
+    // Opens Google Maps with the location string
+    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`;
+    window.open(mapsUrl, '_blank');
+  };
+
+  // --- 5. ACTION: CONNECT COMMAND (DEPLOY) ---
+  const handleConnectCommand = async () => {
+    if (!user || !selectedAlert) return;
+    setIsDeploying(true);
+
+    try {
+      // 1. Mark them as deployed in the Crisis Command Hub
+      await addDoc(collection(db, "crisisResponses"), {
+        crisisId: selectedAlert.id,
+        volunteerId: user.uid,
+        status: "accepted",
+        respondedAt: serverTimestamp()
+      });
+
+      // 2. Inject them into the Internal `Messages.tsx` Channel 
+      // We do this by creating an 'accepted' application record which the Messages tab listens to
+      await addDoc(collection(db, "applications"), {
+        oppId: selectedAlert.id,
+        oppTitle: `CRISIS: ${selectedAlert.title}`,
+        orgId: selectedAlert.orgId,
+        orgName: selectedAlert.organization || "Command Center",
+        volunteerId: user.uid,
+        volunteerName: user.name || "AVR Responder",
+        status: "accepted", 
+        type: "emergency",
+        appliedAt: serverTimestamp()
+      });
+
+      // 3. Update the Organization's live dashboard counter
+      const crisisRef = doc(db, "crises", selectedAlert.id);
+      await updateDoc(crisisRef, {
+        volunteersResponded: increment(1)
+      });
+
+      // 4. Open External Comms Link if the Organization provided one (e.g., WhatsApp)
+      if (selectedAlert.commsLink) {
+          let url = selectedAlert.commsLink;
+          if (!url.startsWith('http://') && !url.startsWith('https://')) {
+              url = 'https://' + url;
+          }
+          window.open(url, '_blank');
+      }
+
+      alert("Deployment Confirmed. You are now connected to the Command Channel. Please check your 'Messages' tab.");
+      setSelectedAlert(null); // Close modal
+
+    } catch (error) {
+      console.error("Deployment failed:", error);
+      alert("Error connecting to command. Please try again.");
+    }
+    setIsDeploying(false);
+  };
+
+
   // --- SECURITY LOCK: AVR MEMBERS ONLY ---
   if (loading) return <div>Loading Secure Data...</div>;
   
@@ -135,7 +195,7 @@ export function CrisisResponse() {
 
   // --- MAIN AVR DASHBOARD ---
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-12 max-w-6xl mx-auto">
       <div>
         <h1 className="text-[#043E52] text-2xl font-bold mb-2">Crisis Response Center</h1>
         <p className="text-slate-500">
@@ -244,61 +304,88 @@ export function CrisisResponse() {
         </TabsContent>
       </Tabs>
 
+      {/* --- THE CRISIS BRIEFING MODAL (WITH WORKING BUTTONS) --- */}
       {selectedAlert && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
-          <Card className="w-full max-w-2xl border-none shadow-2xl rounded-2xl overflow-hidden">
-            <CardHeader className="bg-[#E16A3D] text-white p-6">
-              <div className="flex items-start justify-between">
-                <div>
-                  <Badge className="bg-white/20 hover:bg-white/30 text-white border-none mb-2 backdrop-blur-md">
-                    {selectedAlert.severity.toUpperCase()} PRIORITY
-                  </Badge>
-                  <CardTitle className="text-2xl font-bold">{selectedAlert.title}</CardTitle>
-                  <CardDescription className="text-orange-100 mt-1 text-base flex items-center gap-2">
-                    {selectedAlert.organization} {selectedAlert.organizationVerified && <CheckCircle className="h-4 w-4" />}
-                  </CardDescription>
-                </div>
-                <Button variant="ghost" onClick={() => setSelectedAlert(null)} className="text-white hover:bg-white/20 rounded-full h-10 w-10 p-0">
-                  ✕
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="p-8 space-y-6 bg-white">
-              <div>
-                <h4 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-3">Situation Report</h4>
-                <p className="text-slate-700 leading-relaxed bg-slate-50 p-4 rounded-xl border border-slate-100">
-                  {selectedAlert.description}
-                </p>
-              </div>
-              <div className="grid grid-cols-2 gap-6 bg-white">
-                <div>
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Location Data</p>
-                  <div className="flex items-center gap-3 text-slate-700 font-medium">
-                    <div className="p-2 bg-orange-50 rounded-lg"><MapPin className="h-5 w-5 text-[#E16A3D]" /></div>
-                    <span>{selectedAlert.location}</span>
-                  </div>
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Command Center</p>
-                  <div className="flex items-center gap-3 text-slate-700 font-medium">
-                    <div className="p-2 bg-teal-50 rounded-lg"><Phone className="h-5 w-5 text-[#1C9290]" /></div>
-                    <span>Secure Comms Channel</span>
-                  </div>
-                </div>
-              </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-md p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-2xl bg-white shadow-2xl rounded-[24px] overflow-hidden flex flex-col animate-in zoom-in-95 duration-300">
+            
+            {/* The Orange Header Block */}
+            <div className={`${selectedAlert.severity === 'Critical' ? 'bg-[#E16A3D]' : 'bg-orange-500'} p-6 md:p-8 relative`}>
+              <button 
+                onClick={() => setSelectedAlert(null)} 
+                className="absolute top-6 right-6 text-white/70 hover:text-white transition-colors bg-white/10 hover:bg-white/20 p-2 rounded-full"
+              >
+                <X size={20} />
+              </button>
               
-              <div className="flex gap-3 pt-4 border-t border-slate-100">
-                <Button className="flex-1 bg-[#043E52] hover:bg-[#033040] h-12 text-white font-bold rounded-xl shadow-md">
+              <Badge className="bg-white/20 hover:bg-white/20 text-white border-none mb-3 text-[10px] tracking-widest uppercase font-bold shadow-none">
+                {selectedAlert.severity} PRIORITY
+              </Badge>
+              <h2 className="text-3xl md:text-4xl font-black text-white leading-tight mb-2 tracking-tight">
+                {selectedAlert.title}
+              </h2>
+              <div className="flex items-center gap-2 text-white/90 font-medium text-sm">
+                {selectedAlert.organization} <ShieldCheck className="h-4 w-4" />
+              </div>
+            </div>
+
+            {/* The White Content Block */}
+            <div className="p-6 md:p-8 bg-white space-y-6">
+              
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black text-[#043E52] uppercase tracking-widest">Situation Report</Label>
+                <div className="w-full min-h-[60px] p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 leading-relaxed whitespace-pre-wrap">
+                  {selectedAlert.description}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black text-[#043E52] uppercase tracking-widest">Location Data</Label>
+                  <div className="flex items-center gap-3 w-full h-14 px-4 bg-slate-50 border border-slate-200 rounded-xl">
+                    <div className="bg-orange-100 p-1.5 rounded-lg shrink-0">
+                      <MapPin className="h-4 w-4 text-[#E16A3D]" />
+                    </div>
+                    <span className="text-sm font-bold text-slate-800 truncate">{selectedAlert.location}</span>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black text-[#043E52] uppercase tracking-widest">Command Center</Label>
+                  <div className="flex items-center gap-3 w-full h-14 px-4 bg-slate-50 border border-slate-200 rounded-xl">
+                    <div className="bg-teal-100 p-1.5 rounded-lg shrink-0">
+                      <Phone className="h-4 w-4 text-[#1C9290]" />
+                    </div>
+                    <span className="text-sm font-bold text-slate-800 truncate">Secure Comms Channel</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* 🔥 THE ACTION BUTTONS 🔥 */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+                <Button 
+                  onClick={() => handleSecureDirections(selectedAlert.location)}
+                  className="w-full h-14 bg-[#043E52] hover:bg-[#033040] text-white font-bold text-base rounded-xl shadow-md transition-transform active:scale-95"
+                >
                   <Navigation className="mr-2 h-5 w-5" /> Secure Directions
                 </Button>
-                <Button variant="outline" className="flex-1 h-12 border-slate-200 text-slate-600 font-bold rounded-xl">
-                  <Phone className="mr-2 h-5 w-5" /> Connect Command
+                
+                <Button 
+                  onClick={handleConnectCommand}
+                  disabled={isDeploying}
+                  variant="outline" 
+                  className="w-full h-14 bg-white hover:bg-teal-50 border-2 border-slate-200 hover:border-[#1C9290] text-[#1C9290] font-bold text-base rounded-xl transition-all active:scale-95 disabled:opacity-50"
+                >
+                  <Phone className="mr-2 h-5 w-5" /> 
+                  {isDeploying ? "Deploying..." : "Connect Command"}
                 </Button>
               </div>
-            </CardContent>
-          </Card>
+
+            </div>
+          </div>
         </div>
       )}
+
     </div>
   );
 }
@@ -366,11 +453,12 @@ function CrisisAlertCard({ alert, onAccept, onDecline, onViewDetails, statusType
           <div className="flex flex-col gap-3 w-full md:w-48 shrink-0 md:pl-6 md:border-l border-slate-100">
             {statusType === 'active' && onAccept && onDecline && (
               <>
+                {/* Replaced 'Accept Alert' button with 'View Briefing' to open the modal */}
                 <Button 
                   className="w-full bg-[#E16A3D] hover:bg-[#c2562d] text-white font-bold h-12 shadow-md shadow-orange-200"
-                  onClick={() => onAccept(alert.id, 'accepted')}
+                  onClick={() => onViewDetails(alert)}
                 >
-                  <Zap className="mr-2 h-5 w-5" /> Accept Alert
+                  <Zap className="mr-2 h-5 w-5" /> View Briefing
                 </Button>
                 <Button 
                   variant="outline"
@@ -384,13 +472,13 @@ function CrisisAlertCard({ alert, onAccept, onDecline, onViewDetails, statusType
             
             {statusType === 'accepted' && (
               <>
-                <Button className="w-full bg-[#1C9290] hover:bg-[#157a78] font-bold h-12 shadow-md">
+                <Button className="w-full bg-[#1C9290] hover:bg-[#157a78] font-bold h-12 shadow-md" onClick={() => onViewDetails(alert)}>
                   <Navigation className="mr-2 h-5 w-5" /> Mission Comms
                 </Button>
               </>
             )}
 
-            {onViewDetails && (
+            {(statusType === 'active' || statusType === 'completed') && onViewDetails && (
               <Button 
                 variant="ghost"
                 className="w-full h-11 text-slate-500 font-bold hover:text-[#043E52] hover:bg-slate-100"

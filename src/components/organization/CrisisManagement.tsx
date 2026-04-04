@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { initializeApp } from "firebase/app";
 import { getFirestore, collection, onSnapshot, query, where, doc, getDoc, getDocs, addDoc, serverTimestamp, writeBatch } from "firebase/firestore";
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Input } from '../ui/input';
@@ -16,7 +16,6 @@ import {
   Activity, Zap, Plus, ShieldAlert, Megaphone, ShieldX, Phone, Droplet, CheckCircle, Radio, Download
 } from 'lucide-react';
 
-// Import your custom hook!
 import { useUserProfile } from '../../hooks/useUserProfile';
 import { auth } from '../../lib/firebase'; 
 
@@ -40,7 +39,6 @@ export function CrisisManagement() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // States for the Command Hub (View Team)
   const [selectedCrisisForTeam, setSelectedCrisisForTeam] = useState<any | null>(null);
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
   const [isLoadingTeam, setIsLoadingTeam] = useState(false);
@@ -61,13 +59,17 @@ export function CrisisManagement() {
       const events = snapshot.docs.map(docSnap => {
         const data = docSnap.data();
         let safeDate = 'Recently';
-        if (data.createdAt?.toDate) {
+        let sortTime = 0; 
+
+        if (data.createdAt && typeof data.createdAt.toDate === 'function') {
           safeDate = new Date(data.createdAt.toDate()).toLocaleString();
+          sortTime = data.createdAt.toDate().getTime(); 
         }
-        return { id: docSnap.id, ...data, createdAtText: safeDate };
+
+        return { id: docSnap.id, ...data, createdAtText: safeDate, sortTime };
       });
       
-      events.sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
+      events.sort((a, b) => b.sortTime - a.sortTime);
       setCrisisEvents(events);
     });
 
@@ -105,10 +107,8 @@ export function CrisisManagement() {
     setIsBroadcasting(true);
     try {
       const batch = writeBatch(db);
-
-      // Create a notification for every single volunteer in the team
       teamMembers.forEach(vol => {
-        const notifRef = doc(collection(db, "notifications")); // Generate new ID
+        const notifRef = doc(collection(db, "notifications")); 
         batch.set(notifRef, {
           userId: vol.id,
           organizationName: user.name || "Command Center",
@@ -122,7 +122,6 @@ export function CrisisManagement() {
       });
 
       await batch.commit(); 
-      
       alert(`Successfully broadcasted to ${teamMembers.length} volunteers.`);
       setBroadcastMessage("");
     } catch (error) {
@@ -132,16 +131,48 @@ export function CrisisManagement() {
     setIsBroadcasting(false);
   };
 
-  // --- 4. DECLARE EMERGENCY ---
+  // --- 4. THE FIXED SMART DISPATCH ALGORITHM ---
   const handleActivate = async () => {
     if (!user) return;
     if (!newCrisis.title || !newCrisis.description || !newCrisis.location) return alert("Please fill all required fields");
 
     setIsSubmitting(true);
     try {
-      const skillsArray = newCrisis.skillsNeeded.split(',').map(s => s.trim()).filter(s => s !== '');
+      // 1. Fetch EVERY single volunteer from the platform
+      const qUsers = query(collection(db, "users"), where("role", "==", "volunteer"));
+      const usersSnapshot = await getDocs(qUsers);
+      
+      const allVolunteers: string[] = [];
+      usersSnapshot.forEach(docSnap => {
+          const vData = docSnap.data();
+          
+          // 🔥 FIXED THE isAVRMember CHECK HERE 🔥
+          const isAVR = 
+            vData.isAVRMember === true || 
+            vData.isAVRMember === "true" || 
+            vData.avrCertified === true || 
+            vData.avrCertified === "true" || 
+            vData.isAVR === true || 
+            vData.isAVR === "true" ||
+            vData.crisisInfo?.avrCertified === true ||
+            vData.crisisInfo?.avrCertified === "true" ||
+            (vData.skills && vData.skills.includes("AVR"));
 
-      await addDoc(collection(db, "crises"), {
+          if (isAVR) {
+              allVolunteers.push(docSnap.id);
+          }
+      });
+
+      // --- FAILSAFE FOR TESTING ---
+      // If the database returns 0, we override it to test the notifications
+      let finalDeployList = allVolunteers;
+      if (allVolunteers.length === 0) {
+          console.warn("No AVR members found. Using fallback to notify ALL volunteers for testing purposes.");
+          usersSnapshot.forEach(docSnap => finalDeployList.push(docSnap.id));
+      }
+
+      // 2. Save the Crisis to the Database
+      const crisisDocRef = await addDoc(collection(db, "crises"), {
         orgId: user.uid, 
         organization: user.name || "Verified Organization", 
         organizationVerified: true, 
@@ -149,23 +180,51 @@ export function CrisisManagement() {
         description: newCrisis.description,
         severity: newCrisis.severity,
         location: newCrisis.location,
-        skillsNeeded: skillsArray.length > 0 ? skillsArray : ['General Support'],
+        skillsNeeded: newCrisis.skillsNeeded.split(',').map(s => s.trim()).filter(s => s !== ''), 
         commsLink: newCrisis.commsLink, 
         volunteersNeeded: Number(newCrisis.volunteersNeeded),
-        volunteersActivated: Number(newCrisis.volunteersNeeded) * 2,
+        volunteersActivated: finalDeployList.length, // Log the fleet activation
         volunteersResponded: 0,
         status: 'Active',
         createdAt: serverTimestamp()
       });
 
+      // 3. Blast the Red SOS Notification
+      if (finalDeployList.length > 0) {
+        const batch = writeBatch(db);
+        finalDeployList.forEach(vId => {
+          const notifRef = doc(collection(db, "notifications"));
+          batch.set(notifRef, {
+            userId: vId,
+            organizationName: user.name || "Crisis Command",
+            title: `🚨 URGENT SOS: ${newCrisis.title}`,
+            message: `EMERGENCY ALERT: ${newCrisis.location}. ${newCrisis.volunteersNeeded} responders requested immediately. Deploy now!`,
+            type: 'alert', 
+            read: false,
+            createdAt: serverTimestamp(),
+            link: '/crisis-response', 
+            crisisId: crisisDocRef.id
+          });
+        });
+        await batch.commit();
+      }
+
       setShowCreateForm(false);
       setNewCrisis({ title: '', description: '', severity: 'Critical', location: '', volunteersNeeded: 10, skillsNeeded: '', commsLink: '' });
+      
+      if (allVolunteers.length === 0) {
+          alert(`Emergency declared! (WARNING: Database had 0 AVR. Fallback used: Notified all ${finalDeployList.length} standard volunteers).`);
+      } else {
+          alert(`Emergency declared! SOS Alarm broadcasted to ${finalDeployList.length} Elite AVR members.`);
+      }
+      
     } catch (error) {
       console.error("Error declaring emergency:", error);
       alert("Failed to declare emergency.");
     }
     setIsSubmitting(false);
   };
+
 
   // --- SECURITY LOCK ---
   if (loading) return <div className="p-10 font-bold text-[#043E52]">Verifying Organization Status...</div>;
@@ -272,7 +331,6 @@ export function CrisisManagement() {
                                     </div>
                                 </div>
                                 
-                                {/* 🔥 RESTORED TARGET & SHORTFALL 🔥 */}
                                 <div className="grid grid-cols-2 gap-2 text-center">
                                     <div className="bg-[#1C9290]/5 p-2 rounded-lg border border-[#1C9290]/10">
                                         <p className="text-xs text-slate-500">Target</p>
@@ -327,7 +385,6 @@ export function CrisisManagement() {
                   </TabsTrigger>
                 </TabsList>
 
-                {/* TAB 1: ROSTER */}
                 <TabsContent value="roster" className="p-0 m-0 overflow-y-auto flex-1">
                   {isLoadingTeam ? (
                     <div className="p-12 text-center text-slate-500 font-bold animate-pulse">Establishing Secure Connection...</div>
@@ -383,7 +440,6 @@ export function CrisisManagement() {
                   )}
                 </TabsContent>
 
-                {/* TAB 2: MASS BROADCAST */}
                 <TabsContent value="broadcast" className="p-8 m-0 flex-1 bg-slate-50">
                   <div className="max-w-2xl mx-auto space-y-6 bg-white p-8 rounded-2xl shadow-sm border border-slate-100">
                     <div>
@@ -429,7 +485,7 @@ export function CrisisManagement() {
       {showCreateForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
             <Card className="w-full max-w-xl shadow-2xl border-none rounded-2xl overflow-hidden max-h-[90vh] flex flex-col">
-                <CardHeader className="bg-[#043E52] text-white p-6 shrink-0">
+                <CardHeader className="bg-[#043E52] text-white p-5 shrink-0">
                     <div className="flex justify-between items-center">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-red-500/20 rounded-full"><AlertTriangle className="h-5 w-5 text-red-200" /></div>
@@ -438,35 +494,47 @@ export function CrisisManagement() {
                         <Button variant="ghost" size="sm" onClick={() => setShowCreateForm(false)} className="h-8 w-8 p-0 rounded-full text-white hover:bg-white/10"><XCircle className="h-6 w-6" /></Button>
                     </div>
                 </CardHeader>
-                <CardContent className="p-6 space-y-4 overflow-y-auto">
-                    <div className="space-y-2"><Label className="font-bold text-slate-700">Incident Title</Label><Input placeholder="e.g. Structural Collapse" value={newCrisis.title} onChange={(e) => setNewCrisis({...newCrisis, title: e.target.value})} className="border-slate-200 h-11 focus:border-[#E16A3D] focus:ring-[#E16A3D]" /></div>
+                <div className="p-6 overflow-y-auto bg-slate-50 space-y-5">
                     
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label className="font-bold text-slate-700">Severity</Label>
-                          <select className="w-full h-11 px-3 rounded-md border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#E16A3D]" onChange={(e) => setNewCrisis({...newCrisis, severity: e.target.value})} value={newCrisis.severity}>
-                            <option value="Critical">Critical</option><option value="High">High</option><option value="Medium">Medium</option>
-                          </select>
-                        </div>
-                        <div className="space-y-2"><Label className="font-bold text-slate-700">Volunteers Needed</Label><Input type="number" value={newCrisis.volunteersNeeded} onChange={(e) => setNewCrisis({...newCrisis, volunteersNeeded: Number(e.target.value)})} className="border-slate-200 h-11 focus:border-[#E16A3D] focus:ring-[#E16A3D]" /></div>
-                    </div>
-                    
-                    <div className="space-y-2"><Label className="font-bold text-slate-700">Location / Rally Point</Label><Input placeholder="e.g. Kadıköy, Istanbul" value={newCrisis.location} onChange={(e) => setNewCrisis({...newCrisis, location: e.target.value})} className="border-slate-200 h-11 focus:border-[#E16A3D] focus:ring-[#E16A3D]" /></div>
-                    
-                    <div className="space-y-2">
-                      <Label className="font-bold text-slate-700">Secure Comms Link (Optional)</Label>
-                      <Input placeholder="e.g. https://chat.whatsapp.com/..." value={newCrisis.commsLink} onChange={(e) => setNewCrisis({...newCrisis, commsLink: e.target.value})} className="border-slate-200 h-11 focus:border-[#E16A3D] focus:ring-[#E16A3D]" />
-                      <p className="text-[10px] text-slate-400">Volunteers will see this link ONLY after accepting the mission.</p>
+                    <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                      <div className="space-y-1.5"><Label className="font-bold text-[#043E52] text-xs uppercase tracking-widest">Incident Title</Label><Input placeholder="e.g. Structural Collapse" value={newCrisis.title} onChange={(e) => setNewCrisis({...newCrisis, title: e.target.value})} className="border-slate-200 h-11 focus:border-[#E16A3D] focus:ring-[#E16A3D]" /></div>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-1.5">
+                            <Label className="font-bold text-[#043E52] text-xs uppercase tracking-widest">Severity</Label>
+                            <select className="w-full h-11 px-3 rounded-md border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#E16A3D]" onChange={(e) => setNewCrisis({...newCrisis, severity: e.target.value})} value={newCrisis.severity}>
+                              <option value="Critical">Critical</option><option value="High">High</option><option value="Medium">Medium</option>
+                            </select>
+                          </div>
+                          <div className="space-y-1.5"><Label className="font-bold text-[#043E52] text-xs uppercase tracking-widest">Location / City</Label><Input placeholder="e.g. Kadıköy, Istanbul" value={newCrisis.location} onChange={(e) => setNewCrisis({...newCrisis, location: e.target.value})} className="border-slate-200 h-11 focus:border-[#E16A3D] focus:ring-[#E16A3D]" /></div>
+                      </div>
                     </div>
 
-                    <div className="space-y-2"><Label className="font-bold text-slate-700">Required Skills (Comma separated)</Label><Input placeholder="e.g. Medical Aid, Debris Clearing" value={newCrisis.skillsNeeded} onChange={(e) => setNewCrisis({...newCrisis, skillsNeeded: e.target.value})} className="border-slate-200 h-11 focus:border-[#E16A3D] focus:ring-[#E16A3D]" /></div>
-                    
-                    <div className="space-y-2"><Label className="font-bold text-slate-700">Situation Report</Label><Textarea placeholder="Describe the incident details..." value={newCrisis.description} onChange={(e) => setNewCrisis({...newCrisis, description: e.target.value})} className="min-h-[100px] border-slate-200 focus:border-[#E16A3D] focus:ring-[#E16A3D] resize-none" /></div>
-                    
-                    <Button disabled={isSubmitting} className="w-full bg-[#E16A3D] hover:bg-[#c2562d] text-white font-bold h-12 mt-4 text-base" onClick={handleActivate}>
-                        {isSubmitting ? "TRANSMITTING..." : <><Send className="mr-2 h-5 w-5" /> ACTIVATE RESERVE</>}
-                    </Button>
-                </CardContent>
+                    <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                      <div className="space-y-1.5"><Label className="font-bold text-[#043E52] text-xs uppercase tracking-widest">Required Skills (Comma separated)</Label><Input placeholder="e.g. Medical Aid, Driving License" value={newCrisis.skillsNeeded} onChange={(e) => setNewCrisis({...newCrisis, skillsNeeded: e.target.value})} className="border-slate-200 h-11 focus:border-[#E16A3D] focus:ring-[#E16A3D]" /></div>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                          <Label className="font-bold text-[#043E52] text-xs uppercase tracking-widest">AVR Volunteers Needed</Label>
+                          <Input type="number" value={newCrisis.volunteersNeeded} onChange={(e) => setNewCrisis({...newCrisis, volunteersNeeded: Number(e.target.value)})} className="border-slate-200 h-11 focus:border-[#E16A3D] focus:ring-[#E16A3D]" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="font-bold text-[#043E52] text-xs uppercase tracking-widest">Secure Comms Link</Label>
+                          <Input placeholder="e.g. https://chat.whatsapp.com/..." value={newCrisis.commsLink} onChange={(e) => setNewCrisis({...newCrisis, commsLink: e.target.value})} className="border-slate-200 h-11 focus:border-[#E16A3D] focus:ring-[#E16A3D]" />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                      <div className="space-y-1.5"><Label className="font-bold text-[#043E52] text-xs uppercase tracking-widest">Situation Report</Label><Textarea placeholder="Describe the incident details..." value={newCrisis.description} onChange={(e) => setNewCrisis({...newCrisis, description: e.target.value})} className="min-h-[100px] border-slate-200 focus:border-[#E16A3D] focus:ring-[#E16A3D] resize-none" /></div>
+                    </div>
+                </div>
+                
+                <div className="p-4 bg-white border-t border-slate-200 shrink-0">
+                  <Button disabled={isSubmitting} className="w-full bg-[#E16A3D] hover:bg-[#c2562d] text-white font-bold h-12 text-base shadow-md" onClick={handleActivate}>
+                      {isSubmitting ? "TRANSMITTING..." : <><Send className="mr-2 h-5 w-5" /> ACTIVATE RESERVE ALGORITHM</>}
+                  </Button>
+                </div>
             </Card>
         </div>
       )}

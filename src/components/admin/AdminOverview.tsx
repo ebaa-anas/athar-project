@@ -1,138 +1,317 @@
+import { useState, useEffect } from 'react';
+import { initializeApp } from "firebase/app";
+import { getFirestore, collection, onSnapshot, query, where } from "firebase/firestore";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { Users, Building2, Clock, TrendingUp, AlertCircle, CheckCircle, UserCheck, Brain, Zap, Activity, CheckCircle2 } from 'lucide-react';
+import { Button } from '../ui/button';
 import { Progress } from '../ui/progress';
 import { Badge } from '../ui/badge';
+import { 
+  Users, Building2, Clock, TrendingUp, AlertCircle, CheckCircle, 
+  UserCheck, Brain, Zap, Activity, CheckCircle2, Sparkles, Loader2 
+} from 'lucide-react';
+
+// --- FIREBASE CONFIG ---
+const firebaseConfig = {
+  apiKey: "AIzaSyDRSETgWx1F3RX3_KAzgceyYBJKfpheRQk",
+  authDomain: "athar-project-aa74e.firebaseapp.com",
+  projectId: "athar-project-aa74e",
+  storageBucket: "athar-project-aa74e.firebasestorage.app",
+  messagingSenderId: "715063889584",
+  appId: "1:715063889584:web:3443ae48678c91a7f4b575",
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// 🔥 INITIALIZE GEMINI AI 🔥
+const genAI = new GoogleGenerativeAI("AIzaSyDiNP9rAwU2fyxz9E1VgkQGnnV_p8LMjgY");
 
 export function AdminOverview() {
-  
-  // 1. VIBRANT STATS GRID
-  // Each card gets a unique color from your palette to make them distinct
-  const stats = [
-    { 
-      label: 'Total Users', 
-      value: '15,234', 
-      change: '+12.5%', 
-      icon: Users, 
-      color: 'text-[#043E52]',        // Nile Blue
-      bgColor: 'bg-[#043E52]/10',
-      borderColor: 'border-[#043E52]/20'
-    },
-    { 
-      label: 'Volunteers', 
-      value: '10,420', 
-      change: '+8.2%', 
-      icon: UserCheck, 
-      color: 'text-[#1C9290]',        // Sea Green
-      bgColor: 'bg-[#1C9290]/10',
-      borderColor: 'border-[#1C9290]/20'
-    },
-    { 
-      label: 'Organizations', 
-      value: '814', 
-      change: '+15.3%', 
-      icon: Building2, 
-      color: 'text-[#016A6D]',        // Pine
-      bgColor: 'bg-[#016A6D]/10',
-      borderColor: 'border-[#016A6D]/20'
-    },
-    { 
-      label: 'Total Hours', 
-      value: '1.2M', 
-      change: '+20.1%', 
-      icon: Clock, 
-      color: 'text-[#E16A3D]',        // Sunset Orange
-      bgColor: 'bg-[#E16A3D]/10',
-      borderColor: 'border-[#E16A3D]/20'
-    },
+  const [loading, setLoading] = useState(true);
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  // --- LIVE DATA STATES ---
+  const [metrics, setMetrics] = useState({ users: 0, vols: 0, orgs: 0, hours: 0 });
+  const [pendingCounts, setPendingCounts] = useState({ verifications: 0, reports: 0 });
+  const [recentActivities, setRecentActivities] = useState<any[]>([]);
+
+  // --- 1. FETCH REAL-TIME MASTER DATA ---
+  useEffect(() => {
+    // We use a unified state aggregator to combine data from multiple collections
+    let currentVols = 0;
+    let currentOrgs = 0;
+    let currentPendingOrgs = 0;
+    let currentPendingReports = 0;
+    let currentHours = 0;
+
+    let latestEvents: any[] = [];
+
+    const formatEventDate = (ts: any) => {
+      if (!ts) return new Date();
+      return ts.toDate ? ts.toDate() : new Date(ts);
+    };
+
+    // Listen to Users & Organizations
+    const unsubUsers = onSnapshot(collection(db, "users"), (snapshot) => {
+      currentVols = 0;
+      currentOrgs = 0;
+      currentPendingOrgs = 0;
+      const userEvents: any[] = [];
+
+      snapshot.docs.forEach(doc => {
+        const data = doc.data();
+        const date = formatEventDate(data.createdAt || data.joinDate);
+
+        if (data.role === 'organization' || data.collectionName === 'organizations') {
+          currentOrgs++;
+          if (data.verificationStatus === 'pending') currentPendingOrgs++;
+          userEvents.push({
+            action: 'New organization applied',
+            org: data.auditData?.legalName || data.name || 'Unknown Org',
+            rawDate: date,
+            status: data.verificationStatus === 'pending' ? 'pending' : 'approved'
+          });
+        } else if (data.role !== 'admin') {
+          currentVols++;
+          userEvents.push({
+            action: 'New volunteer signed up',
+            org: data.name || 'New User',
+            rawDate: date,
+            status: 'completed'
+          });
+        }
+      });
+
+      setMetrics(prev => ({ ...prev, users: currentVols + currentOrgs + 1, vols: currentVols, orgs: currentOrgs }));
+      setPendingCounts(prev => ({ ...prev, verifications: currentPendingOrgs }));
+      
+      // Update Activity Feed
+      latestEvents = [...latestEvents.filter(e => !e.action.includes('signed up') && !e.action.includes('organization applied')), ...userEvents];
+      updateActivityFeed(latestEvents);
+    });
+
+    // Listen to Applications (For Total Hours)
+    const unsubApps = onSnapshot(query(collection(db, "applications"), where("status", "==", "accepted")), (snapshot) => {
+      currentHours = snapshot.docs.length * 4; // 4 hours per accepted mission average
+      setMetrics(prev => ({ ...prev, hours: currentHours }));
+    });
+
+    // Listen to Content Reports
+    const unsubReports = onSnapshot(collection(db, "reports"), (snapshot) => {
+      currentPendingReports = 0;
+      const reportEvents: any[] = [];
+
+      snapshot.docs.forEach(doc => {
+        const data = doc.data();
+        if (data.status === 'pending' || !data.status) {
+          currentPendingReports++;
+        }
+        reportEvents.push({
+          action: `Content flagged: ${data.type || 'Post'}`,
+          org: `Reported by ${data.reportedBy || 'System'}`,
+          rawDate: formatEventDate(data.reportDate || data.createdAt),
+          status: 'flagged'
+        });
+      });
+
+      setPendingCounts(prev => ({ ...prev, reports: currentPendingReports }));
+      
+      // Update Activity Feed
+      latestEvents = [...latestEvents.filter(e => !e.action.includes('flagged')), ...reportEvents];
+      updateActivityFeed(latestEvents);
+      setLoading(false);
+    });
+
+    const updateActivityFeed = (events: any[]) => {
+      const sorted = events
+        .sort((a, b) => b.rawDate.getTime() - a.rawDate.getTime())
+        .slice(0, 5)
+        .map(e => {
+          // Calculate 'time ago'
+          const diffMins = Math.floor((new Date().getTime() - e.rawDate.getTime()) / 60000);
+          let timeStr = 'Just now';
+          if (diffMins > 0 && diffMins < 60) timeStr = `${diffMins} minutes ago`;
+          else if (diffMins >= 60 && diffMins < 1440) timeStr = `${Math.floor(diffMins/60)} hours ago`;
+          else if (diffMins >= 1440) timeStr = `${Math.floor(diffMins/1440)} days ago`;
+
+          return { ...e, time: timeStr };
+        });
+      setRecentActivities(sorted);
+    };
+
+    return () => { unsubUsers(); unsubApps(); unsubReports(); };
+  }, []);
+
+
+  // --- 2. AI REPORT GENERATOR 🔥 ---
+  const handleGenerateReport = async () => {
+    setIsGenerating(true);
+    try {
+      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+      const dataSummary = `
+        Total Registered Users: ${metrics.users}
+        Total Volunteers: ${metrics.vols}
+        Total Verified Organizations: ${metrics.orgs}
+        Total Community Impact Hours: ${metrics.hours}
+        Pending Organization Audits: ${pendingCounts.verifications}
+        Pending Content Reports: ${pendingCounts.reports}
+        Recent Activity 1: ${recentActivities[0]?.action || 'None'} (${recentActivities[0]?.time || ''})
+        Recent Activity 2: ${recentActivities[1]?.action || 'None'} (${recentActivities[1]?.time || ''})
+      `;
+
+      const prompt = `You are the Chief AI Administrator for the Athar Volunteer Platform. Write a formal, high-level Executive System Overview based on the live operational data provided. 
+      Format the report neatly with HTML tags (use <h2> for section headers, <p> for paragraphs, and <ul>/<li> for lists). 
+      DO NOT use markdown asterisks (**bold**). 
+      Make the tone highly professional, commanding, and analytical. Include sections for: Executive Summary, Network Health & Growth, Security & Compliance Queue (analyze the pending verifications and reports), and Operational Directives.
+
+      LIVE DATA TO ANALYZE:
+      ${dataSummary}`;
+
+      const result = await model.generateContent(prompt);
+      const reportHTML = result.response.text();
+
+      // Create a hidden iframe for PDF Printing
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      document.body.appendChild(iframe);
+
+      const iframeDoc = iframe.contentWindow?.document || iframe.contentDocument;
+      if (iframeDoc) {
+        iframeDoc.write(`
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <title>Athar System Overview</title>
+              <style>
+                body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; padding: 40px; max-width: 800px; margin: 0 auto; }
+                .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; border-bottom: 2px solid #043E52; padding-bottom: 20px; }
+                .logo { font-size: 28px; font-weight: 900; color: #043E52; letter-spacing: -0.5px; }
+                .logo span { color: #1C9290; }
+                .date { color: #64748b; font-size: 14px; font-weight: bold; }
+                h1 { color: #043E52; font-size: 24px; margin-bottom: 30px; text-transform: uppercase; letter-spacing: 1px;}
+                h2 { color: #043E52; font-size: 18px; margin-top: 30px; text-transform: uppercase; border-bottom: 1px solid #eee; padding-bottom: 8px;}
+                p, li { font-size: 14px; color: #475569; }
+                .footer { margin-top: 60px; border-top: 1px solid #e2e8f0; padding-top: 20px; font-size: 11px; color: #94a3b8; text-align: center; text-transform: uppercase; letter-spacing: 1px; }
+              </style>
+            </head>
+            <body>
+              <div class="header">
+                <div class="logo">Athar <span>Command</span></div>
+                <div class="date">DATE: ${new Date().toLocaleDateString()}</div>
+              </div>
+              <h1>System Overview & Compliance Report</h1>
+              <div class="content">
+                ${reportHTML.replace(/```html|```/g, '')}
+              </div>
+              <div class="footer">Confidential System Data • Generated by Athar AI Command Node</div>
+            </body>
+          </html>
+        `);
+        iframeDoc.close();
+        
+        setTimeout(() => {
+          iframe.contentWindow?.focus();
+          iframe.contentWindow?.print();
+          setTimeout(() => document.body.removeChild(iframe), 1000);
+        }, 500);
+      }
+    } catch (error) {
+      console.error("AI Report Generation failed", error);
+      alert("Failed to generate AI report. Please try again.");
+    }
+    setIsGenerating(false);
+  };
+
+  // --- UI CONSTANTS ---
+  const statsConfig = [
+    { label: 'Total Users', value: metrics.users.toLocaleString(), change: '+12.5%', icon: Users, color: 'text-[#043E52]', bgColor: 'bg-[#043E52]/10', borderColor: 'border-[#043E52]/20' },
+    { label: 'Volunteers', value: metrics.vols.toLocaleString(), change: '+8.2%', icon: UserCheck, color: 'text-[#1C9290]', bgColor: 'bg-[#1C9290]/10', borderColor: 'border-[#1C9290]/20' },
+    { label: 'Organizations', value: metrics.orgs.toLocaleString(), change: '+15.3%', icon: Building2, color: 'text-[#016A6D]', bgColor: 'bg-[#016A6D]/10', borderColor: 'border-[#016A6D]/20' },
+    { label: 'Total Hours', value: metrics.hours.toLocaleString(), change: '+20.1%', icon: Clock, color: 'text-[#E16A3D]', bgColor: 'bg-[#E16A3D]/10', borderColor: 'border-[#E16A3D]/20' },
   ];
 
   const pendingActions = [
-    { type: 'Verification Request', count: 5, color: 'bg-[#E16A3D]', textColor: 'text-[#E16A3D]' }, // Sunset Orange (High Priority)
-    { type: 'Content Reports', count: 3, color: 'bg-[#FFA45D]', textColor: 'text-[#d97706]' },     // Tangerine (Warning)
-    { type: 'Support Tickets', count: 12, color: 'bg-[#1C9290]', textColor: 'text-[#1C9290]' },     // Sea Green (Standard)
-  ];
-
-  const recentActivities = [
-    { action: 'New organization registered', org: 'Hope Foundation', time: '5 minutes ago', status: 'pending' },
-    { action: 'Verification approved', org: 'Green Earth Initiative', time: '1 hour ago', status: 'approved' },
-    { action: 'Content flagged', org: 'Community Center', time: '2 hours ago', status: 'flagged' },
-    { action: 'New volunteer signed up', org: 'Sarah Johnson', time: '3 hours ago', status: 'completed' },
-    { action: 'Organization updated profile', org: 'Local Food Bank', time: '5 hours ago', status: 'completed' },
+    { type: 'Verification Requests', count: pendingCounts.verifications, color: 'bg-[#E16A3D]', textColor: 'text-[#E16A3D]' },
+    { type: 'Content Reports', count: pendingCounts.reports, color: 'bg-[#FFA45D]', textColor: 'text-[#d97706]' },
+    { type: 'Support Tickets', count: 0, color: 'bg-[#1C9290]', textColor: 'text-[#1C9290]' }, 
   ];
 
   const platformHealth = [
-    { metric: 'System Uptime', value: 99.8, status: 'excellent' },
+    { metric: 'System Uptime', value: 99.9, status: 'excellent' },
     { metric: 'User Satisfaction', value: 94, status: 'excellent' },
     { metric: 'Response Time', value: 87, status: 'good' },
   ];
 
+  if (loading) return <div className="p-12 text-center text-[#043E52] font-bold flex flex-col items-center justify-center"><Loader2 className="h-8 w-8 animate-spin mb-4" /> Initializing Command Center...</div>;
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 animate-in fade-in duration-300 pb-12">
       {/* Header */}
-      <div>
-        <h1 className="text-[#043E52] font-bold text-3xl mb-2">Platform Overview</h1>
-        <p className="text-slate-500">Monitor and manage the entire Athar platform</p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-5">
+        <div>
+          <h1 className="text-[#043E52] font-bold text-3xl mb-2">Platform Overview</h1>
+          <p className="text-slate-500">Monitor and manage the entire Athar ecosystem</p>
+        </div>
+        <div className="flex gap-3">
+          {/* 🔥 AI REPORT BUTTON 🔥 */}
+          <Button 
+            onClick={handleGenerateReport} 
+            disabled={isGenerating}
+            className="bg-[#043E52] hover:bg-[#033040] text-white shadow-md h-11 px-6 font-bold uppercase tracking-wider text-xs"
+          >
+            {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+            {isGenerating ? 'Analyzing System...' : 'AI Health Report'}
+          </Button>
+        </div>
       </div>
 
-      {/* 2. AI ECOSYSTEM STATUS - VIBRANT & CLEAN */}
+      {/* AI ECOSYSTEM STATUS */}
       <Card className="border border-[#016A6D]/30 bg-white shadow-sm overflow-hidden">
-        <CardContent className="p-8">
-          <div className="flex items-start gap-6">
-            {/* Main Icon - Pine Gradient */}
-            <div className="bg-gradient-to-br from-[#016A6D] to-[#1C9290] text-white p-4 rounded-xl shadow-lg shadow-teal-900/20">
+        <CardContent className="p-6 md:p-8">
+          <div className="flex flex-col md:flex-row items-start gap-6">
+            <div className="bg-gradient-to-br from-[#016A6D] to-[#1C9290] text-white p-4 rounded-xl shadow-lg shadow-teal-900/20 shrink-0">
               <Brain className="h-8 w-8" />
             </div>
-            <div className="flex-1">
+            <div className="flex-1 w-full">
               <h3 className="text-[#043E52] font-bold text-xl mb-2">🤖 AI Ecosystem Feedback Loop Status</h3>
               <p className="text-slate-500 mb-6">
                 The self-learning system is actively analyzing crisis data and optimizing volunteer training
               </p>
               
-              {/* Vibrant Mini-Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                
-                {/* Crisis Events - Sunset Orange */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 w-full">
                 <div className="bg-orange-50/50 rounded-xl p-4 border border-orange-100 hover:shadow-md transition-shadow">
                   <div className="flex items-center gap-2 mb-2">
-                    <div className="bg-white p-1.5 rounded-md shadow-sm">
-                      <Zap className="h-4 w-4 text-[#E16A3D]" />
-                    </div>
+                    <div className="bg-white p-1.5 rounded-md shadow-sm"><Zap className="h-4 w-4 text-[#E16A3D]" /></div>
                     <p className="text-sm font-bold text-[#E16A3D]">Crisis Events</p>
                   </div>
-                  <p className="text-[#043E52] font-bold text-lg">52 This Month</p>
+                  <p className="text-[#043E52] font-bold text-lg">52 Active</p>
                   <p className="text-xs text-slate-500 font-medium">Auto-matched</p>
                 </div>
                 
-                {/* Skill Gaps - Tangerine */}
                 <div className="bg-amber-50/50 rounded-xl p-4 border border-amber-100 hover:shadow-md transition-shadow">
                   <div className="flex items-center gap-2 mb-2">
-                     <div className="bg-white p-1.5 rounded-md shadow-sm">
-                      <Activity className="h-4 w-4 text-[#FFA45D]" />
-                    </div>
+                     <div className="bg-white p-1.5 rounded-md shadow-sm"><Activity className="h-4 w-4 text-[#FFA45D]" /></div>
                     <p className="text-sm font-bold text-[#d97706]">Skill Gaps</p>
                   </div>
                   <p className="text-[#043E52] font-bold text-lg">4 Detected</p>
                   <p className="text-xs text-slate-500 font-medium">AI Analyzed</p>
                 </div>
                 
-                {/* Auto Updates - Sea Green */}
                 <div className="bg-teal-50/50 rounded-xl p-4 border border-teal-100 hover:shadow-md transition-shadow">
                   <div className="flex items-center gap-2 mb-2">
-                     <div className="bg-white p-1.5 rounded-md shadow-sm">
-                      <Brain className="h-4 w-4 text-[#1C9290]" />
-                    </div>
+                     <div className="bg-white p-1.5 rounded-md shadow-sm"><Brain className="h-4 w-4 text-[#1C9290]" /></div>
                     <p className="text-sm font-bold text-[#1C9290]">Auto Updates</p>
                   </div>
                   <p className="text-[#043E52] font-bold text-lg">3 Paths</p>
                   <p className="text-xs text-slate-500 font-medium">Promoted</p>
                 </div>
                 
-                {/* AVR Members - Nile Blue */}
                 <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 hover:shadow-md transition-shadow">
                   <div className="flex items-center gap-2 mb-2">
-                     <div className="bg-white p-1.5 rounded-md shadow-sm">
-                      <TrendingUp className="h-4 w-4 text-[#043E52]" />
-                    </div>
+                     <div className="bg-white p-1.5 rounded-md shadow-sm"><TrendingUp className="h-4 w-4 text-[#043E52]" /></div>
                     <p className="text-sm font-bold text-[#043E52]">AVR Members</p>
                   </div>
                   <p className="text-[#043E52] font-bold text-lg">3,247</p>
@@ -144,18 +323,18 @@ export function AdminOverview() {
         </CardContent>
       </Card>
 
-      {/* 3. STATS GRID - WITH COLORED BORDERS */}
+      {/* STATS GRID */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, index) => {
+        {statsConfig.map((stat, index) => {
           const Icon = stat.icon;
           return (
-            <Card key={index} className={`border-2 ${stat.borderColor} hover:shadow-lg transition-all duration-300`}>
+            <Card key={index} className={`bg-white border-2 ${stat.borderColor} hover:shadow-md transition-all duration-300`}>
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="text-sm font-medium text-slate-500 mb-1">{stat.label}</p>
-                    <p className="text-2xl font-bold text-[#043E52] mb-1">{stat.value}</p>
-                    <p className="text-xs font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full w-fit">{stat.change}</p>
+                    <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">{stat.label}</p>
+                    <p className="text-3xl font-black text-[#043E52] mb-2">{stat.value}</p>
+                    <Badge variant="secondary" className="text-[9px] font-bold text-emerald-700 bg-emerald-50 border-none uppercase tracking-wider">{stat.change}</Badge>
                   </div>
                   <div className={`${stat.bgColor} ${stat.color} p-3 rounded-xl`}>
                     <Icon className="h-6 w-6" />
@@ -167,86 +346,96 @@ export function AdminOverview() {
         })}
       </div>
 
-      {/* Pending Actions */}
-      <Card className="border-slate-200 shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-[#043E52]">Pending Actions</CardTitle>
-          <CardDescription>Items requiring your attention</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {pendingActions.map((action, index) => (
-              <div key={index} className="flex items-center justify-between p-4 bg-slate-50/80 rounded-lg border border-slate-100 hover:border-slate-300 transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className={`${action.color} w-3 h-3 rounded-full shadow-sm`} />
-                  <span className="text-slate-700 font-semibold">{action.type}</span>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        {/* Left Column (Actions & Health) */}
+        <div className="lg:col-span-1 space-y-6">
+            <Card className="border-slate-200 shadow-sm bg-white">
+              <CardHeader>
+                <CardTitle className="text-[#043E52]">Pending Actions</CardTitle>
+                <CardDescription>Items requiring your attention</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {pendingActions.map((action, index) => (
+                    <div key={index} className="flex items-center justify-between p-4 bg-slate-50/80 rounded-xl border border-slate-100 hover:border-slate-300 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className={`${action.color} w-2.5 h-2.5 rounded-full shadow-sm`} />
+                        <span className="text-slate-700 font-bold text-sm">{action.type}</span>
+                      </div>
+                      <Badge variant="secondary" className={`bg-white border border-slate-200 ${action.textColor} font-black shadow-sm`}>{action.count}</Badge>
+                    </div>
+                  ))}
                 </div>
-                <Badge variant="secondary" className={`bg-white border border-slate-200 ${action.textColor} font-bold shadow-sm`}>{action.count} pending</Badge>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+              </CardContent>
+            </Card>
 
-      {/* Two Column Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Activities */}
-        <Card className="border-slate-200 shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-[#043E52]">Recent Activities</CardTitle>
-            <CardDescription>Latest platform events</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {recentActivities.map((activity, index) => (
-                <div key={index} className="flex items-start gap-3 pb-4 border-b border-slate-100 last:border-0 last:pb-0">
-                  <div className={`mt-1 ${
-                    activity.status === 'pending' ? 'text-[#E16A3D]' : // Sunset Orange
-                    activity.status === 'approved' ? 'text-[#1C9290]' : // Sea Green
-                    activity.status === 'flagged' ? 'text-[#FFA45D]' : // Tangerine
-                    'text-slate-400'
-                  }`}>
-                    {activity.status === 'pending' ? <AlertCircle className="h-5 w-5" /> :
-                     activity.status === 'approved' ? <CheckCircle className="h-5 w-5" /> :
-                     activity.status === 'flagged' ? <AlertCircle className="h-5 w-5" /> :
-                     <CheckCircle2 className="h-5 w-5" />}
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-[#043E52]">{activity.action}</p>
-                    <p className="text-sm text-slate-500">{activity.org}</p>
-                    <p className="text-xs text-slate-400 mt-1">{activity.time}</p>
+            <Card className="border-slate-200 shadow-sm bg-white">
+              <CardHeader>
+                <CardTitle className="text-[#043E52]">Platform Health</CardTitle>
+                <CardDescription>System performance metrics</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  {platformHealth.map((item, index) => (
+                    <div key={index}>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-bold text-slate-600">{item.metric}</span>
+                        <span className="text-sm font-black text-[#043E52]">{item.value}%</span>
+                      </div>
+                      <Progress value={item.value} className="h-2.5 bg-slate-100 [&>div]:bg-[#016A6D]" />
+                    </div>
+                  ))}
+                  
+                  <div className="pt-4 border-t border-slate-100">
+                    <div className="flex items-center gap-2 text-xs text-[#1C9290] font-bold bg-[#1C9290]/10 p-3 rounded-lg w-full justify-center uppercase tracking-widest">
+                      <CheckCircle className="h-4 w-4" /> All systems operational
+                    </div>
                   </div>
                 </div>
-              ))}
+              </CardContent>
+            </Card>
+        </div>
+
+        {/* Right Column (Live Activity Feed) */}
+        <Card className="lg:col-span-2 border-slate-200 shadow-sm bg-white">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-[#043E52]">Live Activity Feed</CardTitle>
+                <CardDescription>Real-time events across the ecosystem</CardDescription>
+              </div>
+              <div className="flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-3 w-3 rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+              </div>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Platform Health */}
-        <Card className="border-slate-200 shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-[#043E52]">Platform Health</CardTitle>
-            <CardDescription>System performance metrics</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-6">
-              {platformHealth.map((item, index) => (
-                <div key={index}>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-slate-600">{item.metric}</span>
-                    <span className="text-sm font-bold text-[#043E52]">{item.value}%</span>
+            <div className="space-y-0">
+              {recentActivities.length === 0 ? (
+                 <div className="text-center text-slate-400 py-10 text-sm font-medium">Waiting for system events...</div>
+              ) : recentActivities.map((activity, index) => (
+                <div key={index} className="flex items-start gap-4 p-4 hover:bg-slate-50 rounded-xl transition-colors border-b border-slate-50 last:border-0">
+                  <div className={`mt-1 p-2 rounded-full bg-white shadow-sm border border-slate-100 ${
+                    activity.status === 'pending' ? 'text-[#E16A3D]' : 
+                    activity.status === 'approved' ? 'text-[#1C9290]' : 
+                    activity.status === 'flagged' ? 'text-[#FFA45D]' : 'text-slate-400'
+                  }`}>
+                    {activity.status === 'pending' ? <AlertCircle className="h-4 w-4" /> :
+                     activity.status === 'approved' ? <CheckCircle className="h-4 w-4" /> :
+                     activity.status === 'flagged' ? <AlertCircle className="h-4 w-4" /> :
+                     <CheckCircle2 className="h-4 w-4" />}
                   </div>
-                  {/* Progress Bar uses Pine for System Identity */}
-                  <Progress value={item.value} className="h-2.5 bg-slate-100 [&>div]:bg-[#016A6D]" />
+                  <div className="flex-1 pt-1">
+                    <p className="text-sm font-bold text-[#043E52] leading-tight">{activity.action}</p>
+                    <p className="text-xs font-semibold text-slate-500 mt-1">{activity.org}</p>
+                  </div>
+                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pt-1">
+                    {activity.time}
+                  </div>
                 </div>
               ))}
-              
-              <div className="pt-4 border-t border-slate-100">
-                <div className="flex items-center gap-2 text-sm text-[#1C9290] font-bold bg-[#1C9290]/5 p-2 rounded-lg w-fit">
-                  <CheckCircle className="h-4 w-4" />
-                  <span>All systems operational</span>
-                </div>
-              </div>
             </div>
           </CardContent>
         </Card>

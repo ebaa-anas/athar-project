@@ -1,4 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { initializeApp } from "firebase/app";
+import { getFirestore } from "firebase/firestore";
+// 🔥 REMOVED FIREBASE STORAGE IMPORTS - WE DON'T NEED THEM ANYMORE! 🔥
+
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -10,10 +14,24 @@ import { Separator } from './ui/separator';
 import { 
   User, Mail, Phone, MapPin, Calendar, Briefcase, GraduationCap, 
   Edit, Save, X, Plus, Trash2, CheckCircle, Pencil,
-  Heart, AlertTriangle, Droplet, Car, PhoneCall, Clock, CalendarRange, Laptop
+  Heart, AlertTriangle, Droplet, Car, PhoneCall, Clock, CalendarRange, Laptop,
+  Camera, Loader2
 } from 'lucide-react';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { updateVolunteerProfile } from '../lib/authService';
+
+// --- FIREBASE CONFIG ---
+const firebaseConfig = {
+  apiKey: "AIzaSyDRSETgWx1F3RX3_KAzgceyYBJKfpheRQk",
+  authDomain: "athar-project-aa74e.firebaseapp.com",
+  projectId: "athar-project-aa74e",
+  storageBucket: "athar-project-aa74e.firebasestorage.app", 
+  messagingSenderId: "715063889584",
+  appId: "1:715063889584:web:3443ae48678c91a7f4b575",
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
 // --- DATA INTERFACES ---
 interface Experience { id: string; title: string; organization: string; location: string; startDate: string; endDate: string; current: boolean; description: string; }
@@ -29,10 +47,9 @@ const EDUCATION_LEVELS = [
   "High School", "Associate Degree", "Bachelor's Degree", "Master's Degree", "Doctorate (PhD)", "Diploma/Certificate"
 ];
 
-// --- HELPER: FORMAT DATES TO LOOK NICE (e.g., Jul 2020) ---
 const formatNiceDate = (dateStr: string) => {
   if (!dateStr) return '';
-  if (/^\d{4}$/.test(dateStr)) return dateStr; // If it's just a year like "2026"
+  if (/^\d{4}$/.test(dateStr)) return dateStr; 
   const parts = dateStr.split('-');
   if (parts.length >= 2) {
     const date = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1);
@@ -45,12 +62,15 @@ export function MyProfile() {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const { user, loading } = useUserProfile();
+  
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // --- 1. CORE STATE ---
   const [profileData, setProfileData] = useState({
     fullName: '', email: '', phone: '', dateOfBirth: '',
     address: '', city: '', state: '', zipCode: '', country: '',
-    bio: '', linkedIn: '', website: '', photoUrl: ''
+    bio: '', linkedIn: '', website: '', photoUrl: '', avatarUrl: ''
   });
 
   // --- 2. LISTS & OBJECT STATES ---
@@ -63,12 +83,10 @@ export function MyProfile() {
   const [availability, setAvailability] = useState({ weekdays: false, weekends: false, hours: '5-10 hours', format: 'Flexible' });
   const [crisisInfo, setCrisisInfo] = useState({ bloodType: '', drivingLicense: false, emergencyName: '', emergencyRelation: '', emergencyPhone: '' });
 
-  // --- 3. FORM STATES FOR ADDING/EDITING ITEMS ---
   const [newSkill, setNewSkill] = useState("");
   const [newLanguage, setNewLanguage] = useState("");
   const [newProficiency, setNewProficiency] = useState("Native");
   
-  // Use active items for forms so we can edit existing ones
   const [activeExp, setActiveExp] = useState<Experience | null>(null);
   const [activeEdu, setActiveEdu] = useState<Education | null>(null);
 
@@ -80,7 +98,7 @@ export function MyProfile() {
         dateOfBirth: user.dateOfBirth || '', address: user.address || '', city: user.city || '',
         state: user.state || '', zipCode: user.zipCode || '', country: user.country || '',
         bio: user.bio || '', linkedIn: user.linkedIn || '', website: user.website || '',
-        photoUrl: user.photoUrl || ''
+        photoUrl: user.photoUrl || user.avatarUrl || '' 
       });
       setSkills(user.skills || []);
       setExperiences(user.experiences || []);
@@ -109,33 +127,72 @@ export function MyProfile() {
 
   const toggleInterest = (interest: string) => { interests.includes(interest) ? setInterests(interests.filter(i => i !== interest)) : setInterests([...interests, interest]); };
 
-  // Experience Logic
   const handleSaveExperience = () => {
     if (!activeExp?.title || !activeExp?.organization) return alert("Title and Organization required");
-    if (activeExp.id) {
-      // Editing an existing experience
-      setExperiences(experiences.map(e => e.id === activeExp.id ? activeExp : e));
-    } else {
-      // Adding a new experience
-      setExperiences([...experiences, { ...activeExp, id: Date.now().toString() }]);
-    }
+    if (activeExp.id) { setExperiences(experiences.map(e => e.id === activeExp.id ? activeExp : e)); } 
+    else { setExperiences([...experiences, { ...activeExp, id: Date.now().toString() }]); }
     setActiveExp(null);
   };
   const handleRemoveExperience = (id: string) => setExperiences(experiences.filter(exp => exp.id !== id));
 
-  // Education Logic
   const handleSaveEducation = () => {
     if (!activeEdu?.level || !activeEdu?.institution) return alert("Level and Institution required");
-    if (activeEdu.id) {
-      // Editing an existing education
-      setEducations(educations.map(e => e.id === activeEdu.id ? activeEdu : e));
-    } else {
-      // Adding a new education
-      setEducations([...educations, { ...activeEdu, id: Date.now().toString() }]);
-    }
+    if (activeEdu.id) { setEducations(educations.map(e => e.id === activeEdu.id ? activeEdu : e)); } 
+    else { setEducations([...educations, { ...activeEdu, id: Date.now().toString() }]); }
     setActiveEdu(null);
   };
   const handleRemoveEducation = (id: string) => setEducations(educations.filter(edu => edu.id !== id));
+
+  // --- 🔥 6. THE BASE64 NO-STORAGE IMAGE COMPRESSOR 🔥 ---
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user) return;
+
+    setIsUploadingPhoto(true);
+
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    
+    reader.onload = (e) => {
+      const img = new Image();
+      img.src = e.target?.result as string;
+      
+      img.onload = async () => {
+        // Create an invisible canvas to compress the image
+        const canvas = document.createElement('canvas');
+        const MAX_SIZE = 400; // Shrink to 400px to keep database small
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE; }
+        } else {
+          if (height > MAX_SIZE) { width *= MAX_SIZE / height; height = MAX_SIZE; }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(img, 0, 0, width, height);
+
+        // Convert the shrunk image to a lightweight text string (JPEG, 70% quality)
+        const base64String = canvas.toDataURL('image/jpeg', 0.7);
+
+        try {
+          // Update the UI immediately
+          setProfileData({ ...profileData, photoUrl: base64String });
+          
+          // Save directly to Firestore Database! (Bypassing Firebase Storage)
+          await updateVolunteerProfile(user.uid, { photoUrl: base64String, avatarUrl: base64String });
+        } catch (error) {
+          console.error("Error saving image:", error);
+          alert("Failed to save image. Please try a smaller file.");
+        } finally {
+          setIsUploadingPhoto(false);
+        }
+      };
+    };
+  };
 
   const handleSave = async () => {
     if (!user) return;
@@ -144,7 +201,9 @@ export function MyProfile() {
       name: profileData.fullName, phone: profileData.phone, dateOfBirth: profileData.dateOfBirth,
       address: profileData.address, city: profileData.city, state: profileData.state,
       zipCode: profileData.zipCode, country: profileData.country, bio: profileData.bio, linkedIn: profileData.linkedIn,
-      skills, experiences, educations, languages, interests, availability, crisisInfo
+      skills, experiences, educations, languages, interests, availability, crisisInfo,
+      photoUrl: profileData.photoUrl,
+      avatarUrl: profileData.photoUrl
     };
     const success = await updateVolunteerProfile(user.uid, dataToSave);
     if (success) setIsEditing(false);
@@ -190,10 +249,35 @@ export function MyProfile() {
             <div className="h-20 bg-gradient-to-r from-teal-600 to-teal-400"></div>
             <CardContent className="px-6 pb-6 relative">
               <div className="flex flex-col md:flex-row gap-5">
-                <Avatar className="w-28 h-28 border-4 border-white shadow-md -mt-12 bg-white">
-                  <AvatarImage src={profileData.photoUrl} />
-                  <AvatarFallback className="text-2xl bg-slate-100 text-teal-800 font-bold">{initials}</AvatarFallback>
-                </Avatar>
+                
+                {/* 🔥 UPLOADABLE AVATAR 🔥 */}
+                <div className="relative -mt-12 group inline-block w-28 h-28">
+                  <Avatar className="w-28 h-28 border-4 border-white shadow-md bg-white">
+                    <AvatarImage src={profileData.photoUrl} className="object-cover" />
+                    <AvatarFallback className="text-2xl bg-slate-100 text-teal-800 font-bold">{initials}</AvatarFallback>
+                  </Avatar>
+                  
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    ref={fileInputRef} 
+                    onChange={handleImageUpload} 
+                    className="hidden" 
+                  />
+
+                  <div 
+                    onClick={() => fileInputRef.current?.click()}
+                    className={`absolute inset-0 bg-black/40 rounded-full flex items-center justify-center cursor-pointer transition-opacity 
+                      ${isEditing ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+                  >
+                    {isUploadingPhoto ? (
+                      <Loader2 className="h-8 w-8 text-white animate-spin" />
+                    ) : (
+                      <Camera className="h-8 w-8 text-white" />
+                    )}
+                  </div>
+                </div>
+
                 <div className="flex-1 pt-2">
                   {isEditing ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-1">

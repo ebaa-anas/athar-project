@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { OverviewDashboard } from './components/OverviewDashboard';
 import { MyProfile } from './components/MyProfile';
+import { Messages } from './components/Messages'; // <--- The import is here
 import { Causes } from './components/Causes';
 import { Organizations } from './components/Organizations';
 import { Courses } from './components/Courses';
@@ -32,6 +33,7 @@ import { UserManagement } from './components/admin/UserManagement';
 import { ContentModeration } from './components/admin/ContentModeration';
 import { PlatformAnalytics } from './components/admin/PlatformAnalytics';
 import { AdminSettings } from './components/admin/AdminSettings';
+import { OrganizationMessages } from './components/organization/OrganizationMessages';
 
 type UserType = 'volunteer' | 'organization' | 'admin' | null;
 
@@ -58,6 +60,7 @@ export default function App() {
     switch (activeSection) {
       case 'overview': return <OverviewDashboard />;
       case 'profile': return <MyProfile />;
+     case 'messages': return <Messages />;
       case 'skill-paths': return <SkillPaths />;
       case 'training-simulator': return <TrainingSimulator />;
       case 'crisis-response': return <CrisisResponse />;
@@ -77,6 +80,7 @@ export default function App() {
       case 'profile': return <OrganizationProfile />;
       case 'overview': return <OrganizationOverview />;
       case 'crisis-management': return <CrisisManagement />;
+      case 'messages': return <OrganizationMessages />; 
       case 'opportunities': return <ManageOpportunities />;
       case 'volunteers': return <ManageVolunteers />;
       case 'applications': return <Applications />;

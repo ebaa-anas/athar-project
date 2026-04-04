@@ -1,3 +1,10 @@
+import { useState, useEffect } from 'react';
+import { initializeApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
+import { 
+  getFirestore, collection, onSnapshot, query, where, doc, updateDoc, deleteDoc, orderBy
+} from "firebase/firestore";
+
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
@@ -5,121 +12,119 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Switch } from '../ui/switch';
 import { Label } from '../ui/label';
 import { 
-  Bell, 
-  Calendar, 
-  Users, 
-  Briefcase,
-  AlertCircle,
-  CheckCircle,
-  MessageSquare,
-  TrendingUp,
-  Clock,
-  Check
+  Bell, Calendar, Users, Briefcase, AlertCircle, 
+  CheckCircle, MessageSquare, TrendingUp, Clock, Check, Trash2, Info
 } from 'lucide-react';
 
-const notifications = [
-  {
-    id: 1,
-    type: 'application',
-    title: 'New Application Received',
-    message: 'Sarah Johnson applied for Food Distribution Assistant position.',
-    time: '5 minutes ago',
-    read: false,
-    icon: Briefcase,
-    color: 'text-[#043E52]', // Nile Blue
-    bg: 'bg-[#043E52]/10',
-    border: 'border-[#043E52]'
-  },
-  {
-    id: 2,
-    type: 'volunteer',
-    title: 'Volunteer Check-in Reminder',
-    message: 'Community Food Drive event starts in 2 hours. 7 volunteers registered.',
-    time: '1 hour ago',
-    read: false,
-    icon: Calendar,
-    color: 'text-[#1C9290]', // Sea Green
-    bg: 'bg-[#1C9290]/10',
-    border: 'border-[#1C9290]'
-  },
-  {
-    id: 3,
-    type: 'alert',
-    title: 'Low Volunteer Registration',
-    message: 'Monthly Food Distribution needs 8 more volunteers.',
-    time: '3 hours ago',
-    read: false,
-    icon: AlertCircle,
-    color: 'text-[#E16A3D]', // Sunset Orange
-    bg: 'bg-[#E16A3D]/10',
-    border: 'border-[#E16A3D]'
-  },
-  {
-    id: 4,
-    type: 'message',
-    title: 'New Message from Volunteer',
-    message: 'Michael Chen sent you a message about the upcoming orientation.',
-    time: '5 hours ago',
-    read: true,
-    icon: MessageSquare,
-    color: 'text-slate-600',
-    bg: 'bg-slate-100',
-    border: 'border-slate-200'
-  },
-  {
-    id: 5,
-    type: 'achievement',
-    title: 'Milestone Reached!',
-    message: 'Your organization reached 5,000 volunteer hours this year!',
-    time: '1 day ago',
-    read: true,
-    icon: TrendingUp,
-    color: 'text-[#1C9290]',
-    bg: 'bg-[#1C9290]/10',
-    border: 'border-[#1C9290]'
-  },
-  {
-    id: 6,
-    type: 'volunteer',
-    title: 'Volunteer Completed Training',
-    message: 'Emily Davis completed Food Safety Training certification.',
-    time: '1 day ago',
-    read: true,
-    icon: CheckCircle,
-    color: 'text-[#1C9290]',
-    bg: 'bg-[#1C9290]/10',
-    border: 'border-[#1C9290]'
-  },
-  {
-    id: 7,
-    type: 'application',
-    title: 'Application Deadline Approaching',
-    message: 'Volunteer Coordinator position applications close in 3 days.',
-    time: '2 days ago',
-    read: true,
-    icon: Briefcase,
-    color: 'text-[#043E52]',
-    bg: 'bg-[#043E52]/10',
-    border: 'border-[#043E52]'
-  },
-  {
-    id: 8,
-    type: 'volunteer',
-    title: 'Event Reminder',
-    message: 'Volunteer Orientation Session scheduled for tomorrow at 6 PM.',
-    time: '2 days ago',
-    read: true,
-    icon: Calendar,
-    color: 'text-[#043E52]',
-    bg: 'bg-[#043E52]/10',
-    border: 'border-[#043E52]'
+// --- FIREBASE CONFIG ---
+const firebaseConfig = {
+  apiKey: "AIzaSyDRSETgWx1F3RX3_KAzgceyYBJKfpheRQk",
+  authDomain: "athar-project-aa74e.firebaseapp.com",
+  projectId: "athar-project-aa74e",
+  storageBucket: "athar-project-aa74e.firebasestorage.app",
+  messagingSenderId: "715063889584",
+  appId: "1:715063889584:web:3443ae48678c91a7f4b575",
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+// Helper to turn dates into "5 mins ago" format
+function timeAgo(dateInput: any) {
+  if (!dateInput) return 'Recently';
+  const date = dateInput.toDate ? dateInput.toDate() : new Date(dateInput);
+  const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
+  
+  let interval = seconds / 31536000;
+  if (interval > 1) return Math.floor(interval) + " years ago";
+  interval = seconds / 2592000;
+  if (interval > 1) return Math.floor(interval) + " months ago";
+  interval = seconds / 86400;
+  if (interval > 1) return Math.floor(interval) + " days ago";
+  interval = seconds / 3600;
+  if (interval > 1) return Math.floor(interval) + " hours ago";
+  interval = seconds / 60;
+  if (interval > 1) return Math.floor(interval) + " minutes ago";
+  return Math.floor(seconds) + " seconds ago";
+}
+
+// Helper to map DB 'type' to UI Colors & Icons
+function getNotificationStyling(type: string) {
+  switch (type?.toLowerCase()) {
+    case 'application': return { icon: Briefcase, color: 'text-[#043E52]', bg: 'bg-[#043E52]/10', border: 'border-[#043E52]' };
+    case 'volunteer': return { icon: Users, color: 'text-[#1C9290]', bg: 'bg-[#1C9290]/10', border: 'border-[#1C9290]' };
+    case 'alert': return { icon: AlertCircle, color: 'text-[#E16A3D]', bg: 'bg-[#E16A3D]/10', border: 'border-[#E16A3D]' };
+    case 'success': return { icon: CheckCircle, color: 'text-[#1C9290]', bg: 'bg-[#1C9290]/10', border: 'border-[#1C9290]' };
+    case 'info': return { icon: Info, color: 'text-blue-500', bg: 'bg-blue-50', border: 'border-blue-500' };
+    default: return { icon: Bell, color: 'text-slate-600', bg: 'bg-slate-100', border: 'border-slate-300' };
   }
-];
+}
 
 export function OrganizationNotifications() {
+  const [notifications, setNotifications] = useState<any[]>([]);
+
+  // --- 1. FETCH NOTIFICATIONS ---
+  useEffect(() => {
+    const unsubscribeAuth = auth.onAuthStateChanged((user) => {
+      if (user) {
+        // Query notifications meant for THIS organization
+        // Note: For organizations, we query by 'orgId'. (Volunteers query by 'userId')
+        const q = query(collection(db, "notifications"), where("orgId", "==", user.uid));
+        
+        const unsubscribeData = onSnapshot(q, (snapshot) => {
+          const fetchedNotifs = snapshot.docs.map(docSnap => {
+            const data = docSnap.data();
+            const styling = getNotificationStyling(data.type);
+            return {
+              id: docSnap.id,
+              title: data.title || 'New Notification',
+              message: data.message || '',
+              type: data.type || 'info',
+              time: timeAgo(data.createdAt),
+              rawDate: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(),
+              read: data.read || false,
+              ...styling
+            };
+          });
+          
+          // Sort newest first
+          fetchedNotifs.sort((a, b) => b.rawDate.getTime() - a.rawDate.getTime());
+          setNotifications(fetchedNotifs);
+        });
+
+        return () => unsubscribeData();
+      } else {
+        setNotifications([]);
+      }
+    });
+
+    return () => unsubscribeAuth();
+  }, []);
+
+  // --- 2. ACTIONS ---
+  const markAsRead = async (id: string) => {
+    try { await updateDoc(doc(db, "notifications", id), { read: true }); } 
+    catch (error) { console.error("Error updating notification:", error); }
+  };
+
+  const markAllAsRead = async () => {
+    const unread = notifications.filter(n => !n.read);
+    unread.forEach(async (n) => {
+      try { await updateDoc(doc(db, "notifications", n.id), { read: true }); } 
+      catch (e) { console.error(e); }
+    });
+  };
+
+  const deleteNotification = async (id: string) => {
+    try { await deleteDoc(doc(db, "notifications", id)); } 
+    catch (error) { console.error("Error deleting notification:", error); }
+  };
+
+  // --- 3. COMPUTED STATS ---
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  // Custom Stat Card Component for Consistency
+  // Custom Stat Card Component
   const StatCard = ({ title, value, icon: Icon, color, bg, border }: any) => (
     <Card className={`border-l-4 ${border} shadow-sm hover:shadow-md transition-all relative overflow-hidden group`}>
       <div className={`absolute inset-0 opacity-30 bg-gradient-to-r ${bg} to-transparent`} />
@@ -174,15 +179,15 @@ export function OrganizationNotifications() {
             </div>
           </div>
 
-          {/* Actions (Visible on Hover for desktop, always for mobile) */}
+          {/* Actions */}
           <div className="mt-3 flex gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200">
             {!notification.read && (
-              <Button size="sm" variant="outline" className="h-8 text-xs border-[#043E52]/20 text-[#043E52] hover:bg-[#043E52]/5">
+              <Button onClick={() => markAsRead(notification.id)} size="sm" variant="outline" className="h-8 text-xs border-[#043E52]/20 text-[#043E52] hover:bg-[#043E52]/5">
                 <Check className="h-3 w-3 mr-1" /> Mark as Read
               </Button>
             )}
-            <Button size="sm" variant="ghost" className="h-8 text-xs text-slate-500 hover:text-[#E16A3D]">
-              Delete
+            <Button onClick={() => deleteNotification(notification.id)} size="sm" variant="ghost" className="h-8 text-xs text-slate-500 hover:text-[#E16A3D]">
+              <Trash2 className="h-3 w-3 mr-1"/> Delete
             </Button>
           </div>
         </div>
@@ -203,10 +208,12 @@ export function OrganizationNotifications() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Badge variant="secondary" className="bg-[#E16A3D]/10 text-[#E16A3D] px-3 py-1 text-sm">
-            {unreadCount} Unread
-          </Badge>
-          <Button variant="outline" className="border-slate-200 text-slate-600 hover:text-[#043E52] shadow-sm">
+          {unreadCount > 0 && (
+            <Badge variant="secondary" className="bg-[#E16A3D]/10 text-[#E16A3D] px-3 py-1 text-sm font-bold">
+              {unreadCount} Unread
+            </Badge>
+          )}
+          <Button onClick={markAllAsRead} disabled={unreadCount === 0} variant="outline" className="border-slate-200 text-slate-600 hover:text-[#043E52] shadow-sm font-bold">
             Mark All as Read
           </Button>
         </div>
@@ -251,11 +258,11 @@ export function OrganizationNotifications() {
       {/* 3. Main Content Tabs */}
       <Tabs defaultValue="all" className="w-full">
         <TabsList className="bg-slate-100 p-1 rounded-xl w-full md:w-auto flex justify-start mb-6 overflow-x-auto">
-          <TabsTrigger value="all" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#043E52] data-[state=active]:shadow-sm px-4">All</TabsTrigger>
-          <TabsTrigger value="unread" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#E16A3D] data-[state=active]:shadow-sm px-4">Unread</TabsTrigger>
-          <TabsTrigger value="applications" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#043E52] data-[state=active]:shadow-sm px-4">Applications</TabsTrigger>
-          <TabsTrigger value="volunteers" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#1C9290] data-[state=active]:shadow-sm px-4">Volunteers</TabsTrigger>
-          <TabsTrigger value="settings" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-slate-600 data-[state=active]:shadow-sm px-4">Preferences</TabsTrigger>
+          <TabsTrigger value="all" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#043E52] data-[state=active]:shadow-sm px-4 font-bold">All</TabsTrigger>
+          <TabsTrigger value="unread" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#E16A3D] data-[state=active]:shadow-sm px-4 font-bold">Unread</TabsTrigger>
+          <TabsTrigger value="applications" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#043E52] data-[state=active]:shadow-sm px-4 font-bold">Applications</TabsTrigger>
+          <TabsTrigger value="volunteers" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#1C9290] data-[state=active]:shadow-sm px-4 font-bold">Volunteers</TabsTrigger>
+          <TabsTrigger value="settings" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-slate-600 data-[state=active]:shadow-sm px-4 font-bold">Preferences</TabsTrigger>
         </TabsList>
 
         {/* List Sections */}
@@ -279,9 +286,11 @@ export function OrganizationNotifications() {
                       if (tab === 'unread') return !n.read;
                       return n.type === tab.slice(0, -1);
                     }).length === 0 && (
-                      <div className="text-center py-12 text-slate-400">
-                        <Bell className="h-12 w-12 mx-auto mb-3 opacity-20" />
-                        <p>No notifications found in this category.</p>
+                      <div className="text-center py-16 bg-slate-50 rounded-xl border border-slate-200">
+                        <div className="bg-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-slate-100">
+                           <Bell className="h-8 w-8 text-slate-300" />
+                        </div>
+                        <p className="text-slate-500 font-medium">No notifications found in this category.</p>
                       </div>
                     )}
                 </div>
@@ -333,7 +342,7 @@ export function OrganizationNotifications() {
               </div>
 
               <div className="pt-4 border-t border-slate-100">
-                <Button className="bg-[#043E52] hover:bg-[#033040] text-white shadow-md w-full sm:w-auto">
+                <Button className="bg-[#043E52] hover:bg-[#033040] text-white shadow-md w-full sm:w-auto font-bold h-11 px-8">
                   Save Preferences
                 </Button>
               </div>

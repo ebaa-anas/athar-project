@@ -12,7 +12,8 @@ import {
   TrendingUp,
   Brain,
   AlertTriangle,
-  ChevronRight
+  ChevronRight,
+  MessageSquare // <--- ADDED Message Icon
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
@@ -22,12 +23,15 @@ import { useUserProfile } from '../hooks/useUserProfile';
 interface SidebarProps {
   activeSection: string;
   onSectionChange: (section: string) => void;
-  onLogout: () => void; // <--- ADDED THIS
+  onLogout: () => void;
 }
+
+// <--- REMOVED the stray import { Messages } from here. Routing happens in your Dashboard file!
 
 const menuItems = [
   { id: "profile", label: "My Profile", icon: User },
   { id: "overview", label: "Overview", icon: LayoutDashboard },
+  { id: "messages", label: "Messages", icon: MessageSquare }, // <--- ADDED MESSAGES TAB HERE
   { id: "crisis-response", label: "Crisis Response", icon: AlertTriangle, badge: 2 },
   { id: "notifications", label: "Notifications", icon: Bell },
   { id: "skill-paths", label: "Skill Paths", icon: TrendingUp },
@@ -69,7 +73,7 @@ export function Sidebar({ activeSection, onSectionChange, onLogout }: SidebarPro
           <div className="flex items-center gap-3 bg-white/10 p-3 rounded-xl border border-white/10 hover:border-[#14b8a6]/50 transition-colors cursor-default backdrop-blur-sm">
             <Avatar className="w-9 h-9 border border-[#14b8a6]/50">
               {/* Load real image if it exists */}
-              <AvatarImage src={user?.photoUrl || ""} />
+              <AvatarImage src={user?.photoUrl || ""} className="object-cover" />
               {/* Show dynamic initials if no image */}
               <AvatarFallback className="bg-[#14b8a6] text-white text-xs font-bold">
                 {initials}
@@ -136,7 +140,7 @@ export function Sidebar({ activeSection, onSectionChange, onLogout }: SidebarPro
       <div className="flex-none p-4 border-t border-white/10 bg-[#0f766e]">
         <Button
           variant="ghost"
-          onClick={onLogout} // <--- Connected here
+          onClick={onLogout}
           className="w-full justify-start text-teal-100 hover:bg-[#115e59] hover:text-white transition-all rounded-lg h-10 px-3 font-medium"
         >
           <LogOut className="mr-3 h-[18px] w-[18px]" />

@@ -21,15 +21,17 @@ const db = getFirestore(app);
 const auth = getAuth(app); // Needed to know WHO is logged in
 
 // --- UI COMPONENTS ---
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
 import { Progress } from '../ui/progress';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { 
-  MapPin, Users, Clock, Plus, Edit3, Trash2, CheckCircle, Tag, XCircle, Send 
+  MapPin, Users, Clock, Plus, Edit3, Trash2, CheckCircle, Tag, XCircle, Send,
+  ArrowLeft, MessageSquare, Loader2
 } from 'lucide-react';
 
 export function ManageOpportunities() {
@@ -40,6 +42,12 @@ export function ManageOpportunities() {
 
   const [skillInput, setSkillInput] = useState('');
   const [skills, setSkills] = useState<string[]>([]);
+
+  // --- APPLICANT MANAGEMENT STATES ---
+  const [selectedOpp, setSelectedOpp] = useState<any | null>(null);
+  const [applicants, setApplicants] = useState<any[]>([]);
+  const [broadcastMessage, setBroadcastMessage] = useState("");
+  const [isBroadcasting, setIsBroadcasting] = useState(false);
 
   // --- CATEGORIES LIST ---
   const categories = ["Medical", "Education", "Environment", "Disaster Relief", "Social", "Other"];
@@ -82,6 +90,23 @@ export function ManageOpportunities() {
     return () => unsubscribeAuth();
   }, []);
 
+  // 2. FETCH APPLICANTS WHEN AN OPPORTUNITY IS SELECTED
+  useEffect(() => {
+    if (!selectedOpp) return;
+
+    const qApps = query(
+      collection(db, "applications"),
+      where("oppId", "==", selectedOpp.id)
+    );
+
+    const unsubApps = onSnapshot(qApps, (snapshot) => {
+      const fetchedApps = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setApplicants(fetchedApps);
+    });
+
+    return () => unsubApps();
+  }, [selectedOpp]);
+
   const handleAddSkill = (e: any) => {
     if (e.key === 'Enter' && skillInput.trim()) {
       e.preventDefault();
@@ -115,7 +140,7 @@ export function ManageOpportunities() {
     setShowForm(true);
   };
 
-  // 2. THE POST STAMP: Attach orgId and orgName before saving
+  // 3. THE POST STAMP: Attach orgId and orgName before saving
   const handleSubmit = async () => {
     setLoading(true);
     const user = auth.currentUser;
@@ -157,6 +182,156 @@ export function ManageOpportunities() {
     setLoading(false);
   };
 
+  // 🔥 UPDATED: BROADCAST TO MISSION COMMS (MESSAGES COLLECTION) 🔥
+  const handleBroadcastMessage = async () => {
+    if (!broadcastMessage.trim()) return alert("Message cannot be empty.");
+    
+    // Only allow broadcasting if there are actually accepted volunteers
+    const acceptedVols = applicants.filter(a => a.status === 'accepted');
+    if (acceptedVols.length === 0) return alert("You don't have any deployed (accepted) volunteers for this mission yet.");
+    
+    setIsBroadcasting(true);
+    try {
+      const user = auth.currentUser;
+      const orgDoc = await getDoc(doc(db, "users", user!.uid));
+      const orgData = orgDoc.exists() ? orgDoc.data() : {};
+      const orgName = orgData.name || "Organization Command";
+
+      // 1. Post directly to the 'messages' collection linked to this missionId
+      await addDoc(collection(db, "messages"), {
+        missionId: selectedOpp.id,
+        text: broadcastMessage,
+        senderId: user!.uid,
+        senderName: orgName,
+        senderRole: "organization",
+        avatar: orgData.photoUrl || orgData.avatarUrl || orgData.logoUrl || "",
+        timestamp: serverTimestamp()
+      });
+
+      // 2. Update the opportunity's last activity so it jumps to the top of the Comms Hub
+      await updateDoc(doc(db, "opportunities", selectedOpp.id), {
+        lastActivityAt: serverTimestamp()
+      });
+
+      setBroadcastMessage("");
+      alert("Message successfully broadcasted to the Mission Comms channel!");
+    } catch (error) {
+      console.error("Broadcast failed:", error);
+      alert("Failed to broadcast message.");
+    }
+    setIsBroadcasting(false);
+  };
+
+  // --- APPLICANT MANAGEMENT VIEW ---
+  if (selectedOpp) {
+    const deployedCount = applicants.filter(a => a.status === 'accepted').length;
+
+    return (
+      <div className="space-y-6 pb-10 max-w-7xl mx-auto p-4 animate-in fade-in duration-300">
+        <Button 
+          variant="ghost" 
+          onClick={() => setSelectedOpp(null)} 
+          className="text-slate-500 hover:text-[#043E52] hover:bg-slate-100 -ml-2 font-bold mb-2"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" /> Back to Opportunities
+        </Button>
+
+        <div className="flex flex-col md:flex-row gap-6">
+          {/* LEFT: BROADCAST TOOL */}
+          <div className="md:w-1/3 space-y-6">
+            <Card className="border-slate-200 shadow-sm border-t-4 border-t-[#043E52]">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-[#043E52] text-lg leading-tight">{selectedOpp.title}</CardTitle>
+                <CardDescription className="text-xs font-semibold">Mission Communications Hub</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-3">
+                  <div className="flex justify-between items-center text-sm font-bold text-slate-700">
+                    <span>Total Applicants</span>
+                    <Badge className="bg-[#1C9290]">{applicants.length}</Badge>
+                  </div>
+                  <div className="flex justify-between items-center text-sm font-bold text-slate-700">
+                    <span>Deployed (Accepted)</span>
+                    <Badge className="bg-[#E16A3D]">{deployedCount}</Badge>
+                  </div>
+                </div>
+
+                <div className="space-y-2 pt-2 border-t border-slate-100">
+                  <Label className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">Broadcast to Deployed Team</Label>
+                  <Textarea 
+                    placeholder="Type instructions, updates, or meeting links here..." 
+                    className="min-h-[120px] resize-none border-slate-200 focus:border-[#1C9290] text-sm"
+                    value={broadcastMessage}
+                    onChange={(e) => setBroadcastMessage(e.target.value)}
+                  />
+                  <Button 
+                    onClick={handleBroadcastMessage} 
+                    disabled={isBroadcasting || deployedCount === 0 || !broadcastMessage.trim()} 
+                    className="w-full bg-[#043E52] hover:bg-[#033040] text-white font-bold mt-2"
+                  >
+                    {isBroadcasting ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Send className="mr-2 h-4 w-4" /> Send to Mission Comms</>}
+                  </Button>
+                  {deployedCount === 0 && (
+                    <p className="text-[10px] text-orange-600 font-bold text-center mt-2">You need accepted volunteers to broadcast.</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* RIGHT: APPLICANT LIST */}
+          <div className="md:w-2/3 space-y-4">
+            <h2 className="text-lg font-bold text-[#043E52] flex items-center gap-2">
+              <Users className="h-5 w-5 text-[#1C9290]" /> Roster & Applications
+            </h2>
+            
+            {applicants.length === 0 ? (
+              <Card className="border-dashed border-2 border-slate-200 shadow-none bg-slate-50/50">
+                <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+                  <Users className="h-12 w-12 text-slate-300 mb-3" />
+                  <p className="font-bold text-slate-600">No applicants yet</p>
+                  <p className="text-sm text-slate-500 mt-1">When volunteers apply to this mission, they will appear here.</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid gap-3">
+                {applicants.map((app) => (
+                  <Card key={app.id} className="border-slate-200 shadow-sm hover:border-[#1C9290]/30 transition-colors">
+                    <CardContent className="p-4 flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-4">
+                        <Avatar className="h-12 w-12 border border-slate-200">
+                          <AvatarImage src={app.volunteerAvatar} />
+                          <AvatarFallback className="bg-[#043E52] text-white font-bold">{String(app.volunteerName || 'U').charAt(0).toUpperCase()}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <h4 className="font-bold text-[#043E52] text-sm">{app.volunteerName || "Unknown Volunteer"}</h4>
+                          <p className="text-xs text-slate-500 mt-0.5">Applied: {app.createdAt ? new Date(app.createdAt.toDate()).toLocaleDateString() : 'Recently'}</p>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end gap-2">
+                        <Badge variant="outline" className={`text-[10px] font-bold uppercase tracking-wider ${
+                          app.status === 'accepted' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                          app.status === 'rejected' ? 'bg-red-50 text-red-700 border-red-200' :
+                          'bg-orange-50 text-orange-700 border-orange-200'
+                        }`}>
+                          {app.status || 'Pending'}
+                        </Badge>
+                        {app.status === 'pending' && (
+                           <span className="text-[10px] text-slate-400 italic">Review in Applications tab</span>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // --- ORIGINAL OPPORTUNITIES VIEW ---
   return (
     <div className="space-y-6 pb-10 max-w-7xl mx-auto p-4">
       
@@ -226,7 +401,9 @@ export function ManageOpportunities() {
                         <span>{opp.applicantsCount || 0} Applied</span>
                         <span>Goal: {opp.goal}</span>
                     </div>
-                    <Button className="w-full mt-4 bg-[#043E52] text-white h-9 text-sm">Manage Applicants</Button>
+                    <Button onClick={() => setSelectedOpp(opp)} className="w-full mt-4 bg-[#043E52] text-white h-9 text-sm">
+                      Manage Applicants
+                    </Button>
                 </div>
               </div>
             </CardContent>

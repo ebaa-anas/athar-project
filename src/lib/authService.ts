@@ -1,7 +1,7 @@
 import { auth, db } from "./firebase";
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc, updateDoc, collection, addDoc, serverTimestamp, getDoc } from "firebase/firestore";
-
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 
 // --- 1. VOLUNTEER SIGN UP ---
 export const signUpVolunteer = async (email: string, pass: string, fullName: string) => {
@@ -165,5 +165,57 @@ export const submitVerificationRequest = async (orgId: string, formData: any) =>
   } catch (error) {
     console.error("Verification submission failed:", error);
     return false;
+  }
+};
+
+
+// Make sure auth and db are imported at the top of your file!
+
+export const loginWithGoogle = async (expectedRole: 'volunteer' | 'organization') => {
+  try {
+    const provider = new GoogleAuthProvider();
+    const result = await signInWithPopup(auth, provider);
+    const user = result.user;
+
+    // Check if this user already exists in our Firestore database
+    const userDocRef = doc(db, 'users', user.uid);
+    const userDoc = await getDoc(userDocRef);
+
+    if (!userDoc.exists()) {
+      // First time logging in! Let's create their profile.
+      const newProfile: any = {
+        name: user.displayName || 'New User',
+        email: user.email,
+        photoUrl: user.photoURL || '',
+        role: expectedRole,
+        createdAt: new Date(),
+      };
+
+      // Add default states based on role
+      if (expectedRole === 'volunteer') {
+        newProfile.status = 'active';
+        newProfile.totalHours = 0;
+        newProfile.rating = 5.0;
+        newProfile.skills = [];
+      } else if (expectedRole === 'organization') {
+        newProfile.verified = false;
+        newProfile.verificationStatus = 'unverified';
+      }
+
+      await setDoc(userDocRef, newProfile);
+      return { success: true, role: expectedRole };
+      
+    } else {
+      // User already exists! Ensure they aren't logging into the wrong portal
+      const actualRole = userDoc.data().role;
+      if (actualRole !== expectedRole) {
+        await auth.signOut(); // Kick them out
+        return { success: false, error: `Account exists, but is registered as a ${actualRole}.` };
+      }
+      return { success: true, role: actualRole };
+    }
+  } catch (error: any) {
+    console.error("Google Login Error:", error);
+    return { success: false, error: error.message };
   }
 };
