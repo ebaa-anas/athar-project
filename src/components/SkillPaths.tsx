@@ -1,239 +1,483 @@
+import { useState, useEffect } from 'react';
+import { initializeApp } from "firebase/app";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { getFirestore, collection, query, where, onSnapshot, doc, setDoc, updateDoc, increment, serverTimestamp } from "firebase/firestore";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Progress } from './ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { 
-  Award, 
-  Brain, 
-  CheckCircle, 
-  Heart, 
-  Lock, 
-  Star, 
-  TrendingUp,
-  Zap,
-  Trophy,
-  Target,
-  Users,
-  Building2,
-  Clock,
-  BookOpen
+  Award, Brain, CheckCircle, Heart, Lock, Star, TrendingUp,
+  Zap, Trophy, Users, Building2, Clock, BookOpen, ShieldCheck,
+  AlertTriangle, Loader2, Download
 } from 'lucide-react';
 
-interface SkillPath {
-  id: string;
-  title: string;
-  category: string;
-  level: 'Beginner' | 'Intermediate' | 'Advanced';
-  progress: number;
-  totalModules: number;
-  completedModules: number;
-  impactPoints: number;
-  estimatedHours: number;
-  icon: any;
-  locked: boolean;
-  inReserve: boolean;
-  description: string;
-}
+// --- FIREBASE CONFIG ---
+const firebaseConfig = {
+  apiKey: "AIzaSyDRSETgWx1F3RX3_KAzgceyYBJKfpheRQk",
+  authDomain: "athar-project-aa74e.firebaseapp.com",
+  projectId: "athar-project-aa74e",
+  storageBucket: "athar-project-aa74e.firebasestorage.app",
+  messagingSenderId: "715063889584",
+  appId: "1:715063889584:web:3443ae48678c91a7f4b575",
+};
 
-const skillPaths: SkillPath[] = [
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+// --- OFFICIAL COURSE CATALOG ---
+const COURSE_CATALOG = [
   {
     id: '1',
     title: 'Emergency Response Fundamentals',
     category: 'Crisis Management',
     level: 'Beginner',
-    progress: 75,
     totalModules: 8,
-    completedModules: 6,
     impactPoints: 250,
     estimatedHours: 12,
     icon: AlertTriangle,
-    locked: false,
-    inReserve: true,
-    description: 'Learn the basics of emergency response and crisis management protocols'
-  },
-  {
-    id: '2',
-    title: 'Psychological First Aid',
-    category: 'Mental Health',
-    level: 'Intermediate',
-    progress: 40,
-    totalModules: 10,
-    completedModules: 4,
-    impactPoints: 400,
-    estimatedHours: 20,
-    icon: Heart,
-    locked: false,
-    inReserve: true,
-    description: 'Provide mental health support and psychological assistance in crisis situations'
-  },
-  {
-    id: '3',
-    title: 'Community Coordination',
-    category: 'Leadership',
-    level: 'Advanced',
-    progress: 0,
-    totalModules: 12,
-    completedModules: 0,
-    impactPoints: 600,
-    estimatedHours: 25,
-    icon: Users,
-    locked: true,
-    inReserve: false,
-    description: 'Lead and coordinate volunteer teams during large-scale operations'
+    qualifiesForAVR: true,
+    description: 'Core protocols for ground-zero emergency response and safety management.'
   },
   {
     id: '4',
     title: 'Medical Assistance Basic',
     category: 'Healthcare',
     level: 'Beginner',
-    progress: 100,
     totalModules: 6,
-    completedModules: 6,
     impactPoints: 300,
     estimatedHours: 15,
     icon: Heart,
-    locked: false,
-    inReserve: true,
-    description: 'Basic medical assistance and first aid techniques'
+    qualifiesForAVR: true,
+    description: 'Ministry-approved basic triage, CPR, and trauma stabilization.'
   },
   {
-    id: '5',
-    title: 'Disaster Relief Operations',
-    category: 'Crisis Management',
+    id: '2',
+    title: 'Psychological First Aid',
+    category: 'Mental Health',
     level: 'Intermediate',
-    progress: 20,
-    totalModules: 15,
-    completedModules: 3,
-    impactPoints: 500,
-    estimatedHours: 30,
-    icon: Building2,
-    locked: false,
-    inReserve: false,
-    description: 'Comprehensive training in disaster relief and recovery operations'
+    totalModules: 10,
+    impactPoints: 400,
+    estimatedHours: 20,
+    icon: Heart,
+    qualifiesForAVR: true,
+    prerequisiteId: '1', 
+    description: 'Provide immediate mental health support to trauma survivors in crisis zones.'
   },
   {
     id: '6',
-    title: 'Crisis Communication',
+    title: 'Crisis Communication Network',
     category: 'Communication',
     level: 'Intermediate',
-    progress: 60,
-    totalModules: 8,
-    completedModules: 5,
+    totalModules: 10,
     impactPoints: 350,
     estimatedHours: 18,
     icon: Brain,
-    locked: false,
-    inReserve: true,
-    description: 'Effective communication strategies during emergencies'
+    qualifiesForAVR: true,
+    prerequisiteId: '1', 
+    description: 'Operate emergency comms and manage public information flow.'
+  },
+  {
+    id: '5',
+    title: 'Logistics & Supply Chain',
+    category: 'Crisis Management',
+    level: 'Intermediate',
+    totalModules: 15,
+    impactPoints: 500,
+    estimatedHours: 30,
+    icon: Building2,
+    qualifiesForAVR: false,
+    description: 'Manage the distribution of vital resources and relief supplies.'
+  },
+  {
+    id: '3',
+    title: 'Incident Command & Coordination',
+    category: 'Leadership',
+    level: 'Advanced',
+    totalModules: 12,
+    impactPoints: 600,
+    estimatedHours: 25,
+    icon: Users,
+    qualifiesForAVR: true,
+    requiredPoints: 600, 
+    prerequisiteId: '1',
+    description: 'Lead volunteer battalions and coordinate with state emergency services.'
   }
 ];
 
-function AlertTriangle(props: any) {
-  return (
-    <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
-      <path d="M12 9v4"/>
-      <path d="M12 17h.01"/>
-    </svg>
-  );
-}
-
 export function SkillPaths() {
-  const totalImpactPoints = skillPaths.reduce((acc, path) => 
-    acc + (path.progress === 100 ? path.impactPoints : Math.floor(path.impactPoints * path.progress / 100)), 0
-  );
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [userProgressDb, setUserProgressDb] = useState<Record<string, any>>({});
+  const [loading, setLoading] = useState(true);
+  const [isProcessing, setIsProcessing] = useState<string | null>(null);
+  const [isGeneratingCert, setIsGeneratingCert] = useState<string | null>(null);
 
-  const reserveSkills = skillPaths.filter(path => path.inReserve);
+  // --- 1. REAL-TIME DATABASE SYNC ---
+  useEffect(() => {
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setCurrentUser(user);
+        const q = query(collection(db, "userSkills"), where("userId", "==", user.uid));
+        
+        const unsubSkills = onSnapshot(q, (snapshot) => {
+          const progressMap: Record<string, any> = {};
+          snapshot.forEach((doc) => {
+            progressMap[doc.data().courseId] = doc.data();
+          });
+          setUserProgressDb(progressMap);
+          setLoading(false);
+        });
+
+        return () => unsubSkills();
+      } else {
+        setCurrentUser(null);
+        setLoading(false);
+      }
+    });
+
+    return () => unsubscribeAuth();
+  }, []);
+
+  // --- 2. CALCULATE POINTS EARLY FOR PREREQUISITES ---
+  let totalImpactPoints = 0;
+  const completionMap: Record<string, boolean> = {};
+
+  COURSE_CATALOG.forEach(course => {
+    const dbRecord = userProgressDb[course.id];
+    const progress = dbRecord?.progress || 0;
+    completionMap[course.id] = progress === 100;
+    
+    if (progress === 100) {
+      totalImpactPoints += course.impactPoints;
+    } else if (progress > 0) {
+      totalImpactPoints += Math.floor((course.impactPoints * progress) / 100);
+    }
+  });
+
+  // --- 3. MERGE CATALOG WITH FIXED LOCK LOGIC ---
+  const activePaths = COURSE_CATALOG.map(course => {
+    const dbRecord = userProgressDb[course.id];
+    const completedModules = dbRecord?.completedModules || 0;
+    const progress = dbRecord?.progress || 0;
+    const completedAt = dbRecord?.completedAt || null;
+    const isCompleted = progress === 100;
+
+    let isLocked = false;
+    let lockReason = '';
+
+    if (progress === 0) {
+      if (course.requiredPoints && totalImpactPoints < course.requiredPoints) {
+        isLocked = true;
+        lockReason = `Requires ${course.requiredPoints} Impact Points`;
+      } else if (course.prerequisiteId && !completionMap[course.prerequisiteId]) {
+        isLocked = true;
+        const prereqName = COURSE_CATALOG.find(c => c.id === course.prerequisiteId)?.title;
+        lockReason = `Requires: ${prereqName}`;
+      }
+    }
+    
+    return {
+      ...course,
+      completedModules,
+      progress,
+      isCompleted,
+      completedAt,
+      isLocked,
+      lockReason,
+      inReserve: course.qualifiesForAVR && isCompleted
+    };
+  });
+
+  // --- 4. DATABASE WRITE: COMPLETE MODULE ---
+  const handleCompleteModule = async (courseId: string) => {
+    if (!currentUser) return alert("Please log in to save your training progress.");
+    setIsProcessing(courseId);
+    
+    const course = COURSE_CATALOG.find(c => c.id === courseId);
+    if (!course) return;
+
+    const currentCompleted = userProgressDb[courseId]?.completedModules || 0;
+    
+    if (currentCompleted < course.totalModules) {
+      const newCompleted = currentCompleted + 1;
+      const newProgress = Math.round((newCompleted / course.totalModules) * 100);
+      const isNowFinished = newProgress === 100;
+
+      try {
+        const skillDocRef = doc(db, "userSkills", `${currentUser.uid}_${courseId}`);
+        const dateString = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        
+        const updateData: any = {
+          userId: currentUser.uid,
+          courseId: courseId,
+          completedModules: newCompleted,
+          progress: newProgress,
+          isCompleted: isNowFinished,
+          lastUpdated: serverTimestamp()
+        };
+
+        if (isNowFinished) {
+          updateData.completedAt = dateString;
+        }
+
+        await setDoc(skillDocRef, updateData, { merge: true });
+
+        if (isNowFinished) {
+          // 1. Update the Main User Profile
+          const userRef = doc(db, "users", currentUser.uid);
+          await updateDoc(userRef, {
+            impactPoints: increment(course.impactPoints),
+            verifiedSkills: increment(1)
+          });
+
+          // 🔥 2. NEW: GENERATE A PERMANENT CERTIFICATE RECORD FOR THE PROFILE PAGE 🔥
+          const certRef = doc(db, "userCertificates", `${currentUser.uid}_skill_${courseId}`);
+          await setDoc(certRef, {
+            userId: currentUser.uid,
+            sourceId: courseId,
+            title: course.title,
+            type: 'Skill Path Mastery',
+            category: course.category,
+            impactPoints: course.impactPoints,
+            earnedAt: serverTimestamp(),
+            dateString: dateString
+          });
+        }
+
+      } catch (error) {
+        console.error("Error saving progress:", error);
+        alert("Failed to save progress to database.");
+      }
+    }
+    setIsProcessing(null);
+  };
+
+  // --- 5. PDF CERTIFICATE GENERATOR ---
+  const handleDownloadCertificate = (courseId: string, courseTitle: string, dateAwarded: string) => {
+    setIsGeneratingCert(courseId);
+    
+    setTimeout(() => {
+      const userName = currentUser?.displayName || currentUser?.email?.split('@')[0] || "Athar Volunteer";
+
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      document.body.appendChild(iframe);
+
+      const iframeDoc = iframe.contentWindow?.document || iframe.contentDocument;
+      if (iframeDoc) {
+        iframeDoc.write(`
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <title>Skill Mastery - ${courseTitle}</title>
+              <style>
+                @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Inter:wght@400;600;800&display=swap');
+                
+                body {
+                  margin: 0; padding: 0; display: flex; justify-content: center; align-items: center;
+                  width: 11in; height: 8.5in;
+                  font-family: 'Inter', sans-serif;
+                  background-color: #f8fafc;
+                  -webkit-print-color-adjust: exact;
+                }
+                
+                .certificate-container {
+                  width: 10.5in; height: 8in;
+                  background: white;
+                  border: 12px solid #016A6D;
+                  outline: 4px solid #1C9290;
+                  outline-offset: -20px;
+                  padding: 50px;
+                  box-sizing: border-box;
+                  text-align: center;
+                  position: relative;
+                  background-image: radial-gradient(#016A6D 0.5px, transparent 0.5px), radial-gradient(#016A6D 0.5px, #ffffff 0.5px);
+                  background-size: 20px 20px;
+                  background-position: 0 0, 10px 10px;
+                  background-color: white;
+                }
+
+                .inner-content {
+                  background: rgba(255,255,255,0.95);
+                  width: 100%; height: 100%;
+                  display: flex; flex-direction: column; justify-content: center; align-items: center;
+                }
+
+                .logo { font-size: 32px; font-weight: 900; color: #016A6D; letter-spacing: -1px; text-transform: uppercase; margin-top: 20px; margin-bottom: 30px;}
+                .logo span { color: #1C9290; }
+                
+                .title { font-family: 'Cinzel', serif; font-size: 52px; font-weight: 900; color: #016A6D; letter-spacing: 4px; margin: 0; text-transform: uppercase; }
+                .subtitle { font-size: 16px; color: #E16A3D; letter-spacing: 3px; font-weight: 800; text-transform: uppercase; margin-top: 10px; margin-bottom: 50px; }
+                
+                .presented-to { font-size: 18px; color: #64748b; margin-bottom: 15px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;}
+                .name { font-family: 'Cinzel', serif; font-size: 56px; font-weight: 700; color: #016A6D; margin: 0; border-bottom: 2px solid #e2e8f0; display: inline-block; padding: 0 50px 10px; min-width: 60%; line-height: 1.2; }
+                
+                .for-completion { font-size: 16px; color: #64748b; margin-top: 30px; margin-bottom: 15px; max-width: 70%; line-height: 1.6;}
+                .course-name { font-family: 'Cinzel', serif; font-size: 32px; font-weight: 700; color: #016A6D; margin: 0; padding: 0 40px; }
+                
+                .footer { display: flex; justify-content: space-between; align-items: flex-end; position: absolute; bottom: 50px; left: 80px; right: 80px; width: calc(100% - 160px); }
+                
+                .signature-block, .date-block { text-align: center; }
+                .signature, .date { font-family: 'Cinzel', cursive; font-size: 24px; font-weight: 700; color: #016A6D; border-bottom: 1px solid #cbd5e1; padding-bottom: 5px; margin-bottom: 8px; width: 250px; }
+                .date { font-family: 'Inter', sans-serif; font-size: 20px;}
+                .title-role { font-size: 11px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 1.5px; }
+                
+                .badge { position: absolute; top: 50px; right: 50px; width: 110px; height: 110px; background: #E16A3D; border-radius: 50%; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; font-weight: 900; text-transform: uppercase; font-size: 14px; text-align: center; box-shadow: 0 10px 25px -5px rgba(225, 106, 61, 0.4); outline: 4px dashed white; outline-offset: -6px;}
+                .badge-sub { font-size: 9px; font-weight: 600; letter-spacing: 1px; opacity: 0.9; margin-top: 4px;}
+
+                @media print {
+                  @page { size: landscape; margin: 0; }
+                  body { background: white; }
+                  .certificate-container { border: 12px solid #016A6D !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                }
+              </style>
+            </head>
+            <body>
+              <div class="certificate-container">
+                <div class="inner-content">
+                  <div class="badge">Official<br/><span class="badge-sub">Skill Mastery</span></div>
+                  <div class="logo">Athar <span>Academy</span></div>
+                  <h1 class="title">Skill Path Mastery</h1>
+                  <p class="subtitle">Official Volunteer Readiness Program</p>
+
+                  <p class="presented-to">This is proudly presented to</p>
+                  <h2 class="name">${userName}</h2>
+
+                  <p class="for-completion">for demonstrating expert proficiency and completing all field training requirements for the curriculum:</p>
+                  <h3 class="course-name">${courseTitle}</h3>
+
+                  <div class="footer">
+                    <div class="date-block">
+                      <div class="date">${dateAwarded}</div>
+                      <div class="title-role">Date of Issuance</div>
+                    </div>
+                    <div class="signature-block">
+                      <div class="signature">Athar Command</div>
+                      <div class="title-role">Director of Readiness</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </body>
+          </html>
+        `);
+        iframeDoc.close();
+
+        setTimeout(() => {
+          iframe.contentWindow?.focus();
+          iframe.contentWindow?.print();
+          
+          setTimeout(() => {
+            document.body.removeChild(iframe);
+            setIsGeneratingCert(null);
+          }, 1000);
+        }, 1000); 
+      }
+    }, 100);
+  };
+
+  const completedPaths = activePaths.filter(p => p.isCompleted);
+  const reserveSkills = activePaths.filter(path => path.inReserve);
+
+  if (loading) {
+    return <div className="p-12 text-center text-[#1C9290] font-bold flex flex-col items-center justify-center"><Loader2 className="h-8 w-8 animate-spin mb-4" /> Loading Secure Curriculum...</div>;
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-gray-900 mb-2">Impact-Based Skill Paths</h1>
-        <p className="text-gray-600">
-          Build verified skills through gamified learning paths. Complete modules to join the Athar Volunteer Reserve (AVR).
+    <div className="space-y-6 animate-in fade-in duration-300 pb-12 max-w-7xl mx-auto">
+      {/* Header - Refined Typography */}
+      <div className="flex flex-col gap-1 border-b border-slate-200 pb-4">
+        <div className="flex items-center gap-3">
+          <h1 className="text-[#016A6D] font-bold text-2xl tracking-tight">Athar Training Academy</h1>
+          <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-100 border-none shadow-sm uppercase tracking-wider text-[10px] font-bold px-2 py-0.5">Gov Approved</Badge>
+        </div>
+        <p className="text-slate-500 text-sm">
+          Build verified skills through official curriculums. Complete modules to secure your clearance in the Athar Volunteer Reserve (AVR).
         </p>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <div className="bg-teal-100 p-3 rounded-lg">
-                <Star className="h-6 w-6 text-teal-700" />
-              </div>
+      {/* Stats Cards - Cleaner, smaller fonts */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="border-slate-200 shadow-sm bg-white border-l-4 border-l-[#1C9290]">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Impact Points</p>
-                <p className="text-teal-700">{totalImpactPoints}</p>
+                <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">Impact Points</p>
+                <p className="text-2xl font-bold text-[#1C9290]">{totalImpactPoints}</p>
+              </div>
+              <div className="bg-teal-50 p-2.5 rounded-lg">
+                <Star className="h-5 w-5 text-[#1C9290]" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <div className="bg-green-100 p-3 rounded-lg">
-                <CheckCircle className="h-6 w-6 text-green-700" />
-              </div>
+        <Card className="border-slate-200 shadow-sm bg-white border-l-4 border-l-emerald-500">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Completed Paths</p>
-                <p className="text-green-700">
-                  {skillPaths.filter(p => p.progress === 100).length}/{skillPaths.length}
+                <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">Certifications</p>
+                <p className="text-2xl font-bold text-emerald-600">
+                  {completedPaths.length}<span className="text-base text-slate-400">/{activePaths.length}</span>
                 </p>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <div className="bg-blue-100 p-3 rounded-lg">
-                <Trophy className="h-6 w-6 text-blue-700" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Reserve Skills</p>
-                <p className="text-blue-700">{reserveSkills.length}</p>
+              <div className="bg-emerald-50 p-2.5 rounded-lg">
+                <CheckCircle className="h-5 w-5 text-emerald-500" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <div className="bg-purple-100 p-3 rounded-lg">
-                <TrendingUp className="h-6 w-6 text-purple-700" />
-              </div>
+        <Card className="border-slate-200 shadow-sm bg-white border-l-4 border-l-blue-600">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Skill Level</p>
-                <p className="text-purple-700">Intermediate</p>
+                <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">AVR Clearances</p>
+                <p className="text-2xl font-bold text-blue-700">{reserveSkills.length}</p>
+              </div>
+              <div className="bg-blue-50 p-2.5 rounded-lg">
+                <ShieldCheck className="h-5 w-5 text-blue-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-slate-200 shadow-sm bg-white border-l-4 border-l-[#016A6D]">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">Clearance Level</p>
+                <p className="text-lg font-bold text-[#016A6D] mt-1 leading-none uppercase">Tier 2</p>
+                <p className="text-xs text-slate-500 mt-1">Intermediate</p>
+              </div>
+              <div className="bg-[#016A6D]/10 p-2.5 rounded-lg">
+                <TrendingUp className="h-5 w-5 text-[#016A6D]" />
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Reserve Status Banner */}
+      {/* Reserve Status Banner - Sleeker Design */}
       {reserveSkills.length > 0 && (
-        <Card className="border-2 border-teal-200 bg-gradient-to-r from-teal-50 to-green-50">
-          <CardContent className="p-6">
-            <div className="flex items-start gap-4">
-              <div className="bg-teal-600 text-white p-3 rounded-full">
+        <Card className="border border-teal-200 shadow-sm bg-teal-50">
+          <CardContent className="p-5">
+            <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
+              <div className="bg-[#1C9290] text-white p-3 rounded-xl shrink-0">
                 <Zap className="h-6 w-6" />
               </div>
               <div className="flex-1">
-                <h3 className="text-gray-900 mb-2">🎯 You're in the Athar Volunteer Reserve!</h3>
-                <p className="text-gray-600 mb-3">
-                  You have {reserveSkills.length} verified skills. Verified Partner organizations can activate you for crisis response.
+                <h3 className="text-[#043E52] text-lg font-bold mb-1">Official AVR Status: Active</h3>
+                <p className="text-slate-600 text-sm mb-3">
+                  You have been cleared for deployment. Verified partners can now activate you for field operations.
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {reserveSkills.map(skill => (
-                    <Badge key={skill.id} className="bg-teal-700 hover:bg-teal-800">
-                      <CheckCircle className="h-3 w-3 mr-1" />
+                    <Badge key={skill.id} className="bg-[#1C9290] text-white hover:bg-[#157a78] border-none px-2.5 py-0.5 font-semibold text-xs">
+                      <CheckCircle className="h-3 w-3 mr-1.5" />
                       {skill.title}
                     </Badge>
                   ))}
@@ -244,132 +488,145 @@ export function SkillPaths() {
         </Card>
       )}
 
-      {/* Skill Paths */}
-      <Tabs defaultValue="all">
-        <TabsList>
-          <TabsTrigger value="all">All Paths ({skillPaths.length})</TabsTrigger>
-          <TabsTrigger value="in-progress">In Progress ({skillPaths.filter(p => p.progress > 0 && p.progress < 100).length})</TabsTrigger>
-          <TabsTrigger value="completed">Completed ({skillPaths.filter(p => p.progress === 100).length})</TabsTrigger>
-          <TabsTrigger value="reserve">AVR Skills ({reserveSkills.length})</TabsTrigger>
+      {/* Skill Paths Tabs */}
+      <Tabs defaultValue="all" className="w-full">
+        <TabsList className="bg-slate-100 p-1 rounded-lg w-full md:w-auto flex flex-wrap justify-start mb-6">
+          <TabsTrigger value="all" className="rounded-md data-[state=active]:bg-white data-[state=active]:text-[#1C9290] data-[state=active]:shadow-sm px-4 py-2 font-bold text-xs">All Paths ({activePaths.length})</TabsTrigger>
+          <TabsTrigger value="in-progress" className="rounded-md data-[state=active]:bg-white data-[state=active]:text-[#1C9290] data-[state=active]:shadow-sm px-4 py-2 font-bold text-xs">In Progress ({activePaths.filter(p => p.progress > 0 && !p.isCompleted).length})</TabsTrigger>
+          <TabsTrigger value="completed" className="rounded-md data-[state=active]:bg-white data-[state=active]:text-[#1C9290] data-[state=active]:shadow-sm px-4 py-2 font-bold text-xs">Completed ({completedPaths.length})</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="all" className="space-y-4 mt-6">
-          {skillPaths.map((path) => (
-            <SkillPathCard key={path.id} path={path} />
-          ))}
+        <TabsContent value="all" className="space-y-4">
+          <div className="grid grid-cols-1 gap-4">
+            {activePaths.map((path) => (
+              <SkillPathCard key={path.id} path={path} onComplete={handleCompleteModule} isProcessing={isProcessing === path.id} onDownloadCert={handleDownloadCertificate} isGeneratingCert={isGeneratingCert === path.id} />
+            ))}
+          </div>
         </TabsContent>
 
-        <TabsContent value="in-progress" className="space-y-4 mt-6">
-          {skillPaths.filter(p => p.progress > 0 && p.progress < 100).map((path) => (
-            <SkillPathCard key={path.id} path={path} />
-          ))}
+        <TabsContent value="in-progress" className="space-y-4">
+          <div className="grid grid-cols-1 gap-4">
+            {activePaths.filter(p => p.progress > 0 && !p.isCompleted).map((path) => (
+              <SkillPathCard key={path.id} path={path} onComplete={handleCompleteModule} isProcessing={isProcessing === path.id} onDownloadCert={handleDownloadCertificate} isGeneratingCert={isGeneratingCert === path.id} />
+            ))}
+          </div>
         </TabsContent>
 
-        <TabsContent value="completed" className="space-y-4 mt-6">
-          {skillPaths.filter(p => p.progress === 100).map((path) => (
-            <SkillPathCard key={path.id} path={path} />
-          ))}
-        </TabsContent>
-
-        <TabsContent value="reserve" className="space-y-4 mt-6">
-          {reserveSkills.map((path) => (
-            <SkillPathCard key={path.id} path={path} />
-          ))}
+        <TabsContent value="completed" className="space-y-4">
+          <div className="grid grid-cols-1 gap-4">
+            {completedPaths.map((path) => (
+              <SkillPathCard key={path.id} path={path} onComplete={handleCompleteModule} isProcessing={isProcessing === path.id} onDownloadCert={handleDownloadCertificate} isGeneratingCert={isGeneratingCert === path.id} />
+            ))}
+          </div>
         </TabsContent>
       </Tabs>
     </div>
   );
 }
 
-function SkillPathCard({ path }: { path: SkillPath }) {
+// --- REFINED CHILD COMPONENT ---
+function SkillPathCard({ path, onComplete, isProcessing, onDownloadCert, isGeneratingCert }: { path: any, onComplete: (id: string) => void, isProcessing: boolean, onDownloadCert: (id: string, title: string, date: string) => void, isGeneratingCert: boolean }) {
   const Icon = path.icon;
+  const isComplete = path.isCompleted;
   
   return (
-    <Card className={path.locked ? 'opacity-60' : ''}>
-      <CardHeader>
-        <div className="flex items-start justify-between">
-          <div className="flex items-start gap-4 flex-1">
-            <div className={`p-3 rounded-lg ${
-              path.category === 'Crisis Management' ? 'bg-red-100' :
-              path.category === 'Mental Health' ? 'bg-purple-100' :
-              path.category === 'Leadership' ? 'bg-blue-100' :
-              path.category === 'Healthcare' ? 'bg-green-100' :
-              path.category === 'Communication' ? 'bg-yellow-100' :
-              'bg-gray-100'
-            }`}>
-              {path.locked ? (
-                <Lock className="h-6 w-6 text-gray-500" />
-              ) : (
-                <Icon className={`h-6 w-6 ${
-                  path.category === 'Crisis Management' ? 'text-red-700' :
-                  path.category === 'Mental Health' ? 'text-purple-700' :
-                  path.category === 'Leadership' ? 'text-blue-700' :
-                  path.category === 'Healthcare' ? 'text-green-700' :
-                  path.category === 'Communication' ? 'text-yellow-700' :
-                  'text-gray-700'
-                }`} />
-              )}
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-2">
-                <CardTitle>{path.title}</CardTitle>
-                {path.inReserve && (
-                  <Badge className="bg-teal-700 hover:bg-teal-800">
-                    <Zap className="h-3 w-3 mr-1" />
-                    AVR
-                  </Badge>
-                )}
-                {path.progress === 100 && (
-                  <Badge className="bg-green-600 hover:bg-green-700">
-                    <CheckCircle className="h-3 w-3 mr-1" />
-                    Completed
-                  </Badge>
-                )}
-              </div>
-              <CardDescription className="mb-3">{path.description}</CardDescription>
-              <div className="flex flex-wrap gap-2 mb-4">
-                <Badge variant="outline">{path.category}</Badge>
-                <Badge variant="outline">{path.level}</Badge>
-                <Badge variant="outline">
-                  <Star className="h-3 w-3 mr-1" />
-                  {path.impactPoints} points
-                </Badge>
-                <Badge variant="outline">
-                  <Clock className="h-3 w-3 mr-1" />
-                  {path.estimatedHours}h
-                </Badge>
-              </div>
-              {!path.locked && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">Progress: {path.completedModules}/{path.totalModules} modules</span>
-                    <span className="text-teal-700">{path.progress}%</span>
-                  </div>
-                  <Progress value={path.progress} className="h-2" />
-                </div>
-              )}
-            </div>
-          </div>
-          <div>
-            {path.locked ? (
-              <Button disabled variant="outline">
-                <Lock className="mr-2 h-4 w-4" />
-                Locked
-              </Button>
-            ) : path.progress === 100 ? (
-              <Button variant="outline" className="bg-green-50 border-green-200 text-green-700 hover:bg-green-100">
-                <Award className="mr-2 h-4 w-4" />
-                View Certificate
-              </Button>
+    <Card className={`overflow-hidden transition-all border ${
+        isComplete ? 'border-emerald-200 bg-emerald-50/50' : 
+        path.isLocked ? 'border-slate-200 bg-slate-50 opacity-80' : 
+        'border-slate-200 bg-white hover:border-[#1C9290]/40'
+    }`}>
+      <CardContent className="p-0">
+        <div className="flex flex-col md:flex-row items-stretch">
+          
+          {/* Icon Area - UI Fix: Trophy always wins if complete */}
+          <div className={`p-5 flex items-center justify-center border-b md:border-b-0 md:border-r border-slate-100 min-w-[100px] ${
+              isComplete ? 'bg-emerald-100/50' :
+              path.isLocked ? 'bg-slate-200/50' :
+              'bg-slate-50'
+          }`}>
+            {isComplete ? (
+              <Trophy className="h-8 w-8 text-emerald-600" />
+            ) : path.isLocked ? (
+              <Lock className="h-8 w-8 text-slate-400" />
             ) : (
-              <Button className="bg-teal-700 hover:bg-teal-800">
-                <BookOpen className="mr-2 h-4 w-4" />
-                {path.progress === 0 ? 'Start Path' : 'Continue'}
-              </Button>
+              <Icon className="h-8 w-8 text-[#043E52]" />
             )}
           </div>
+
+          {/* Content Area */}
+          <div className="flex-1 p-5">
+            <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+              
+              <div className="flex-1 space-y-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className={`font-bold text-lg ${path.isLocked && !isComplete ? 'text-slate-500' : 'text-[#043E52]'}`}>{path.title}</h3>
+                  {path.qualifiesForAVR && !isComplete && (
+                    <Badge variant="outline" className="bg-teal-50 text-teal-700 border-teal-200 font-bold text-[10px] uppercase tracking-wider px-2 py-0.5">AVR Eligible</Badge>
+                  )}
+                  {isComplete && (
+                    <Badge className="bg-emerald-500 text-white hover:bg-emerald-600 border-none font-bold text-[10px] uppercase tracking-wider px-2 py-0.5"><CheckCircle className="h-3 w-3 mr-1" /> Certified</Badge>
+                  )}
+                </div>
+                
+                <p className="text-sm text-slate-500 max-w-2xl">{path.description}</p>
+                
+                <div className="flex flex-wrap gap-2 pt-2">
+                  <Badge variant="outline" className="bg-white text-slate-500 border-slate-200 font-semibold text-[10px] uppercase tracking-wider">{path.category}</Badge>
+                  <Badge variant="outline" className="bg-white text-slate-500 border-slate-200 font-semibold text-[10px] uppercase tracking-wider">{path.level}</Badge>
+                  <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200 font-semibold text-[10px] uppercase tracking-wider">
+                    <Star className="h-3 w-3 mr-1" /> {path.impactPoints} points
+                  </Badge>
+                  <Badge variant="outline" className="bg-slate-50 text-slate-500 border-slate-200 font-semibold text-[10px] uppercase tracking-wider">
+                    <Clock className="h-3 w-3 mr-1" /> {path.estimatedHours}h
+                  </Badge>
+                </div>
+              </div>
+
+              {/* Action Area - UI Fix: Proper render priority */}
+              <div className="flex flex-col items-start md:items-end justify-center min-w-[200px] border-t md:border-t-0 md:border-l border-slate-100 pt-4 md:pt-0 md:pl-5">
+                {!path.isLocked && !isComplete && (
+                  <div className="w-full space-y-1.5 mb-3">
+                    <div className="flex items-center justify-between text-xs font-bold text-slate-500">
+                      <span>Module {path.completedModules}/{path.totalModules}</span>
+                      <span className="text-[#1C9290]">{path.progress}%</span>
+                    </div>
+                    <Progress value={path.progress} className="h-2 bg-slate-100 [&>div]:bg-[#1C9290]" />
+                  </div>
+                )}
+
+                {isComplete ? (
+                  <Button 
+                    variant="outline" 
+                    onClick={() => onDownloadCert(path.id, path.title, path.completedAt || new Date().toLocaleDateString())}
+                    disabled={isGeneratingCert}
+                    className="w-full border-emerald-200 bg-white text-emerald-700 hover:bg-emerald-50 font-bold text-xs h-10"
+                  >
+                    {isGeneratingCert ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                    {isGeneratingCert ? 'Generating PDF...' : 'Download Certificate'}
+                  </Button>
+                ) : path.isLocked ? (
+                  <div className="w-full text-center">
+                    <Button disabled variant="outline" className="w-full font-bold text-xs h-10 border-slate-200 bg-slate-100 text-slate-400">
+                      <Lock className="mr-2 h-3.5 w-3.5" /> Locked
+                    </Button>
+                    <p className="text-[10px] font-bold text-red-500 mt-2 text-center uppercase tracking-wider">{path.lockReason}</p>
+                  </div>
+                ) : (
+                  <Button 
+                    onClick={() => onComplete(path.id)}
+                    disabled={isProcessing}
+                    className="w-full bg-[#1C9290] hover:bg-[#157a78] text-white font-bold text-xs h-10 transition-colors"
+                  >
+                    {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <BookOpen className="mr-2 h-4 w-4" />}
+                    {path.progress === 0 ? 'Start Course' : 'Complete Module'}
+                  </Button>
+                )}
+              </div>
+
+            </div>
+          </div>
         </div>
-      </CardHeader>
+      </CardContent>
     </Card>
   );
 }

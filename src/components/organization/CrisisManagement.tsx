@@ -536,7 +536,7 @@ export function CrisisManagement() {
                   </Button>
                 </div>
             </Card>
-        </div>
+        </div> 
       )}
 
     </div>
