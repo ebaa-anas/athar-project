@@ -1,272 +1,221 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
+import { useState, useEffect } from 'react';
+import { db, auth } from '../lib/firebase';
+import { collection, query, where, onSnapshot, getDocs, limit } from 'firebase/firestore';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Progress } from './ui/progress';
-import { Clock, CheckCircle, Calendar, MapPin, Users, ArrowRight, Shield, Zap, TrendingUp, Brain } from 'lucide-react';
+import { 
+  Clock, CheckCircle, Calendar, MapPin, Users, Shield, 
+  Zap, TrendingUp, Brain, Rocket, ChevronRight, BarChart3 
+} from 'lucide-react';
 import { useUserProfile } from '../hooks/useUserProfile';
-
-const stats = [
-  { 
-    id: 1, 
-    label: 'Total Hours', 
-    value: '127', 
-    icon: Clock, 
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-50'
-  },
-  { 
-    id: 2, 
-    label: 'Completed Projects', 
-    value: '8', 
-    icon: CheckCircle, 
-    color: 'text-teal-600',
-    bgColor: 'bg-teal-50'
-  },
-  { 
-    id: 3, 
-    label: 'Active Tasks', 
-    value: '3', 
-    icon: Calendar, 
-    color: 'text-purple-600',
-    bgColor: 'bg-purple-50'
-  },
-  { 
-    id: 4, 
-    label: 'Impact Score', 
-    value: '92', 
-    icon: Users, 
-    color: 'text-orange-600',
-    bgColor: 'bg-orange-50'
-  },
-];
-
-const upcomingEvents = [
-  {
-    id: 1,
-    title: 'Community Food Drive',
-    organization: 'Local Food Bank',
-    date: 'Oct 20, 2025',
-    time: '9:00 AM - 2:00 PM',
-    location: 'Downtown Community Center',
-    volunteers: 12,
-    image: 'https://images.unsplash.com/photo-1724167924357-2d5febf3f931?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400',
-    category: 'Community'
-  },
-  {
-    id: 2,
-    title: 'Environmental Cleanup Day',
-    organization: 'Green Earth Initiative',
-    date: 'Oct 22, 2025',
-    time: '8:00 AM - 12:00 PM',
-    location: 'Riverside Park',
-    volunteers: 25,
-    image: 'https://images.unsplash.com/photo-1624858194621-92e3efffe22c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400',
-    category: 'Environment'
-  },
-  {
-    id: 3,
-    title: 'Youth Mentorship Workshop',
-    organization: 'Future Leaders Foundation',
-    date: 'Oct 25, 2025',
-    time: '3:00 PM - 6:00 PM',
-    location: 'City Education Hub',
-    volunteers: 8,
-    image: 'https://images.unsplash.com/photo-1648254333845-54e0ecba1123?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400',
-    category: 'Education'
-  }
-];
-
-const ongoingProjects = [
-  {
-    id: 1,
-    title: 'Senior Care Program',
-    organization: 'Elder Support Network',
-    progress: 65,
-    hoursContributed: 24,
-    totalHours: 40,
-    dueDate: 'Nov 15, 2025'
-  },
-  {
-    id: 2,
-    title: 'Digital Literacy Classes',
-    organization: 'Tech for All',
-    progress: 45,
-    hoursContributed: 18,
-    totalHours: 40,
-    dueDate: 'Nov 30, 2025'
-  }
-];
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 
 export function OverviewDashboard() {
   const { user } = useUserProfile();
+  const [liveStats, setLiveStats] = useState({ hours: 0, completed: 0, active: 0, points: 0 });
+  const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]);
+  const [suggestedPaths, setSuggestedPaths] = useState<any[]>([]);
+
+  // --- 1. DATA FETCHING (REALTIME FROM DATABASE) ---
+  useEffect(() => {
+    if (!user?.uid) return;
+
+    // Fetch Stats (Hours & Projects)
+    const qApps = query(collection(db, "applications"), where("volunteerId", "==", user.uid));
+    const unsubApps = onSnapshot(qApps, (snap) => {
+      const docs = snap.docs.map(d => d.data());
+      setLiveStats({
+        hours: docs.reduce((acc, curr) => acc + (curr.hoursContributed || 0), 0),
+        completed: docs.filter(d => d.status === 'completed').length,
+        active: docs.filter(d => d.status === 'accepted').length,
+        points: user.impactPoints || 0
+      });
+    });
+
+    // Fetch Upcoming Registered Missions
+    const qMissions = query(
+      collection(db, "applications"), 
+      where("volunteerId", "==", user.uid), 
+      where("status", "==", "accepted"),
+      limit(3)
+    );
+    const unsubMissions = onSnapshot(qMissions, (snap) => {
+      setUpcomingEvents(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    });
+
+    // Smart Suggestion Logic: Suggest skills NOT already in user.skills
+    const allPossibleSkills = [
+      { id: '1', title: 'Crisis Management', category: 'Emergency' },
+      { id: '2', title: 'First Aid Basic', category: 'Medical' },
+      { id: '3', title: 'Logistics Control', category: 'Operations' }
+    ];
+    const filtered = allPossibleSkills.filter(s => !user.skills?.includes(s.title));
+    setSuggestedPaths(filtered);
+
+    return () => { unsubApps(); unsubMissions(); };
+  }, [user]);
+
+  // Chart Data (Simulating weekly impact based on user's history)
+  const chartData = [
+    { name: 'Mon', impact: 20 }, { name: 'Tue', impact: 45 }, { name: 'Wed', impact: 30 },
+    { name: 'Thu', impact: 70 }, { name: 'Fri', impact: 40 }, { name: 'Sat', impact: 85 }, { name: 'Sun', impact: 60 },
+  ];
+
   return (
-    <div className="space-y-6">
-      {/* Welcome Section */}
-      <div>
-        <h1 className="text-gray-900">Welcome back, {user ? user.name : "Volunteer"}!</h1>
-        <p className="text-gray-500 mt-1">Here's what's happening with your volunteer activities</p>
+    <div className="space-y-8 max-w-7xl mx-auto pb-12 animate-in fade-in duration-500 font-sans">
+      
+      {/* --- HEADER --- */}
+      <div className="flex justify-between items-end">
+        <div>
+          <h1 className="text-3xl font-black text-[#0C4A54] tracking-tight">Marhaba, {user?.name?.split(' ')[0]}</h1>
+          <p className="text-slate-500 font-medium text-sm mt-1">Volunteer Ecosystem Status: <span className="text-[#1C9290] font-bold">STANDBY READY</span></p>
+        </div>
+        <div className="flex items-center gap-2 bg-orange-50 px-4 py-2 rounded-2xl border border-orange-100 shadow-sm">
+            <Zap size={16} className="text-orange-500 fill-orange-500" />
+            <span className="text-orange-700 font-black text-xs uppercase tracking-widest">Impact: {liveStats.points}</span>
+        </div>
       </div>
 
-      {/* AVR Status Banner */}
-      <Card className="border-2 border-teal-200 bg-gradient-to-r from-teal-50 to-green-50">
-        <CardContent className="p-6">
-          <div className="flex items-start gap-4">
-            <div className="bg-teal-600 text-white p-3 rounded-full">
-              <Shield className="h-6 w-6" />
+      {/* --- AVR STATUS BANNER (MATCHING CRISIS COLOR #1C9290) --- */}
+      <Card className="border-none shadow-xl shadow-[#1C9290]/10 bg-[#1C9290] text-white overflow-hidden relative rounded-[2rem]">
+        <div className="absolute top-0 right-0 opacity-10 translate-x-1/4 -translate-y-1/4"><Shield size={320} /></div>
+        <CardContent className="p-8 relative z-10">
+          <div className="flex flex-col lg:flex-row items-center gap-8">
+            <div className="bg-white/20 p-5 rounded-[2rem] backdrop-blur-md border border-white/30">
+              <Shield className="h-10 w-10 text-white" />
             </div>
-            <div className="flex-1">
-              <h3 className="text-gray-900 mb-2">🛡️ You're in the Athar Volunteer Reserve!</h3>
-              <p className="text-gray-600 mb-3">
-                You have 4 verified skills and can be activated for crisis response by Verified Partner organizations.
+            <div className="flex-1 text-center lg:text-left">
+              <div className="flex items-center justify-center lg:justify-start gap-3 mb-2">
+                <h3 className="text-xl font-black tracking-tight uppercase">Athar Volunteer Reserve Status</h3>
+                <Badge className="bg-emerald-400 text-white border-none font-bold text-[10px]">ACTIVE</Badge>
+              </div>
+              <p className="text-teal-50 text-sm font-medium leading-relaxed max-w-2xl opacity-90">
+                Identity verified via MERNIS. You are cleared for rapid deployment. Your tactical skill set is visible to government and NGO partners for emergency activation.
               </p>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="flex items-center gap-2">
-                  <div className="bg-teal-600 text-white p-2 rounded-lg">
-                    <CheckCircle className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Verified Skills</p>
-                    <p className="text-teal-700">4</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="bg-purple-600 text-white p-2 rounded-lg">
-                    <Brain className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Simulations</p>
-                    <p className="text-purple-700">2/4</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="bg-green-600 text-white p-2 rounded-lg">
-                    <TrendingUp className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Impact Points</p>
-                    <p className="text-green-700">1,450</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="bg-blue-600 text-white p-2 rounded-lg">
-                    <Zap className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Response Rate</p>
-                    <p className="text-blue-700">92%</p>
-                  </div>
-                </div>
+            </div>
+            <div className="flex gap-4 w-full lg:w-auto">
+              <div className="bg-white/10 border border-white/20 p-5 rounded-2xl backdrop-blur-sm flex-1 text-center">
+                <p className="text-[10px] font-black text-teal-100 uppercase tracking-widest mb-1">Skills</p>
+                <p className="text-2xl font-black">{user?.skills?.length || 0}</p>
+              </div>
+              <div className="bg-white/10 border border-white/20 p-5 rounded-2xl backdrop-blur-sm flex-1 text-center">
+                <p className="text-[10px] font-black text-orange-300 uppercase tracking-widest mb-1">Readiness</p>
+                <p className="text-2xl font-black">Tier 1</p>
               </div>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat) => {
-          const Icon = stat.icon;
-          return (
-            <Card key={stat.id}>
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-sm text-gray-500">{stat.label}</p>
-                    <p className="text-gray-900 mt-2">{stat.value}</p>
-                  </div>
-                  <div className={`${stat.bgColor} p-3 rounded-lg`}>
-                    <Icon className={`h-5 w-5 ${stat.color}`} />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
+      {/* --- ANALYTICS & STATS --- */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        {/* Weekly Impact Chart */}
+        <Card className="lg:col-span-2 border-none shadow-sm rounded-[2rem] bg-white overflow-hidden">
+          <CardHeader className="flex flex-row items-center justify-between pb-0 px-8 pt-8">
+            <div>
+                <CardTitle className="text-sm font-black text-slate-400 uppercase tracking-[0.2em]">Impact Analytics</CardTitle>
+                <p className="text-2xl font-black text-[#0C4A54] mt-1">Volunteer Velocity</p>
+            </div>
+            <BarChart3 className="text-[#1C9290] h-6 w-6" />
+          </CardHeader>
+          <CardContent className="p-0 h-[220px] mt-4">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData}>
+                <defs>
+                  <linearGradient id="colorImpact" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#1C9290" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#1C9290" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 700, fill: '#94a3b8'}} />
+                <Tooltip />
+                <Area type="monotone" dataKey="impact" stroke="#1C9290" strokeWidth={4} fillOpacity={1} fill="url(#colorImpact)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Vertical Stats Column */}
+        <div className="space-y-4">
+          {[
+            { label: 'Cumulative Hours', val: liveStats.hours, icon: Clock, color: 'text-blue-500', bg: 'bg-blue-50' },
+            { label: 'Completed Missions', val: liveStats.completed, icon: CheckCircle, color: 'text-[#1C9290]', bg: 'bg-teal-50' },
+            { label: 'Current Deployments', val: liveStats.active, icon: Zap, color: 'text-orange-500', bg: 'bg-orange-50' },
+          ].map((stat, i) => (
+            <div key={i} className="bg-white p-6 rounded-3xl flex items-center justify-between shadow-sm border border-slate-50 group hover:border-[#1C9290]/20 transition-all">
+               <div className="space-y-1">
+                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{stat.label}</p>
+                 <p className="text-2xl font-black text-[#0C4A54]">{stat.val}</p>
+               </div>
+               <div className={`${stat.bg} ${stat.color} p-4 rounded-2xl group-hover:rotate-12 transition-transform`}>
+                 <stat.icon size={22} />
+               </div>
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Upcoming Events */}
-        <div className="lg:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Upcoming Events</CardTitle>
-              <CardDescription>Events you've registered for</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {upcomingEvents.map((event) => (
-                <div key={event.id} className="flex gap-4 p-4 border border-gray-200 rounded-lg hover:border-teal-300 transition-colors">
-                  <img 
-                    src={event.image} 
-                    alt={event.title}
-                    className="w-24 h-24 object-cover rounded-lg"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1">
-                        <h3 className="text-gray-900 truncate">{event.title}</h3>
-                        <p className="text-sm text-gray-500 mt-1">{event.organization}</p>
-                      </div>
-                      <Badge variant="outline" className="shrink-0">{event.category}</Badge>
-                    </div>
-                    <div className="mt-3 space-y-1">
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Calendar className="h-4 w-4" />
-                        <span>{event.date} • {event.time}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <MapPin className="h-4 w-4" />
-                        <span>{event.location}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Users className="h-4 w-4" />
-                        <span>{event.volunteers} volunteers registered</span>
-                      </div>
-                    </div>
+      {/* --- MISSIONS & SUGGESTIONS --- */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        {/* Live Missions from DB */}
+        <div className="lg:col-span-2 space-y-6">
+          <h3 className="text-lg font-black text-[#0C4A54] uppercase tracking-tight ml-2">Active Assignments</h3>
+          <div className="space-y-4">
+            {upcomingEvents.length > 0 ? upcomingEvents.map((event) => (
+              <div key={event.id} className="bg-white p-5 rounded-[1.5rem] shadow-sm border border-slate-50 flex items-center justify-between group hover:shadow-md transition-all cursor-pointer">
+                <div className="flex items-center gap-5">
+                  <div className="h-12 w-12 bg-slate-50 rounded-xl flex items-center justify-center text-[#1C9290] border border-slate-100">
+                    <Calendar size={20} />
+                  </div>
+                  <div>
+                    <h4 className="font-black text-[#0C4A54] text-sm leading-none">{event.oppTitle}</h4>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1.5 flex items-center gap-2">
+                       <MapPin size={10} className="text-orange-500" /> {event.location || "Online Deployment"}
+                    </p>
+                  </div>
+                </div>
+                <Button variant="ghost" className="text-slate-300 group-hover:text-[#1C9290] group-hover:translate-x-1 transition-all">
+                  <ChevronRight size={20} />
+                </Button>
+              </div>
+            )) : (
+              <p className="text-slate-400 text-sm italic ml-2">No active missions. Visit 'Explore Opportunities' to deploy.</p>
+            )}
+          </div>
+        </div>
+
+        {/* Smart Suggestion Engine */}
+        <div className="space-y-6">
+          <h3 className="text-lg font-black text-[#0C4A54] uppercase tracking-tight">Adaptive Learning</h3>
+          <Card className="border-none shadow-xl shadow-[#1C9290]/5 rounded-[2rem] bg-white overflow-hidden">
+            <div className="bg-[#1C9290]/5 p-6 border-b border-[#1C9290]/10 flex items-center gap-3">
+               <Brain className="text-[#1C9290]" size={20} />
+               <span className="text-[10px] font-black text-[#1C9290] uppercase tracking-widest">Recommended Skill Paths</span>
+            </div>
+            <CardContent className="p-6 space-y-6">
+              {suggestedPaths.map((path, idx) => (
+                <div key={idx} className="flex items-center justify-between group cursor-pointer">
+                  <div className="space-y-1">
+                    <h5 className="font-black text-[#0C4A54] text-xs">{path.title}</h5>
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{path.category} Certification</p>
+                  </div>
+                  <div className="bg-slate-50 text-slate-300 group-hover:bg-[#1C9290] group-hover:text-white p-2 rounded-lg transition-all">
+                    <Rocket size={14} />
                   </div>
                 </div>
               ))}
-              <Button variant="outline" className="w-full">
-                View All Events
-                <ArrowRight className="ml-2 h-4 w-4" />
+              <Button className="w-full h-12 bg-[#1C9290] hover:bg-[#157a78] text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-lg shadow-[#1C9290]/20 mt-2">
+                Open Training Simulator
               </Button>
             </CardContent>
           </Card>
         </div>
 
-        {/* Ongoing Projects */}
-        <div>
-          <Card>
-            <CardHeader>
-              <CardTitle>Ongoing Projects</CardTitle>
-              <CardDescription>Your active commitments</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {ongoingProjects.map((project) => (
-                <div key={project.id} className="space-y-3">
-                  <div>
-                    <h4 className="text-gray-900">{project.title}</h4>
-                    <p className="text-sm text-gray-500 mt-1">{project.organization}</p>
-                  </div>
-                  <div>
-                    <div className="flex items-center justify-between text-sm mb-2">
-                      <span className="text-gray-600">Progress</span>
-                      <span className="text-teal-700">{project.progress}%</span>
-                    </div>
-                    <Progress value={project.progress} className="h-2" />
-                  </div>
-                  <div className="flex items-center justify-between text-sm text-gray-600">
-                    <span>{project.hoursContributed}/{project.totalHours} hours</span>
-                    <span>Due: {project.dueDate}</span>
-                  </div>
-                </div>
-              ))}
-              <Button variant="outline" className="w-full">
-                View All Projects
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
       </div>
     </div>
   );

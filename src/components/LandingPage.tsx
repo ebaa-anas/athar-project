@@ -483,6 +483,7 @@ export function LandingPage({
           
           <div className="border-t border-[#016A6D] pt-6 text-center">
             <p className="text-slate-400 font-medium text-xs">© 2026 Athar Platform. All rights reserved.</p>
+             <p className="text-slate-400 font-medium text-xs">Built With Love.</p>
           </div>
         </div>
       </footer>

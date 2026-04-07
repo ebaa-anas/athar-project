@@ -195,11 +195,11 @@ export function MyTasks() {
           </div>
           <div className="flex flex-wrap items-center gap-4 text-sm font-medium">
             <span className={isCrisis ? "text-red-700 font-bold" : "text-[#1C9290]"}>{org}</span>
-            <div className={`flex items-center gap-1.5 font-bold ${isCrisis ? 'text-red-600' : 'text-orange-600'}`}><Clock className="h-4 w-4" /> <span>Deadline: {isCrisis ? 'IMMEDIATE' : (task.deadline ? formatDate(task.deadline) : 'Ongoing')}</span></div>
+            <div className={`flex items-center gap-1.5 font-bold ${isCrisis ? 'text-red-600' : 'text-[#E16A3D]'}`}><Clock className="h-4 w-4" /> <span>Deadline: {isCrisis ? 'IMMEDIATE' : (task.deadline ? formatDate(task.deadline) : 'Ongoing')}</span></div>
             {isCrisis && <div className="flex items-center gap-1 text-gray-500"><MapPin className="h-4 w-4" /> <span>{task.crisisData?.location}</span></div>}
           </div>
           <div className="flex gap-2 pt-2">
-            <Button onClick={() => setProofModal({isOpen: true, id: task.id, type: isCrisis ? 'crisis' : 'normal', title, orgId: targetOrgId})} className={`font-bold shadow-md ${isCrisis ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-[#043E52] hover:bg-[#033040] text-white'}`}>
+            <Button onClick={() => setProofModal({isOpen: true, id: task.id, type: isCrisis ? 'crisis' : 'normal', title, orgId: targetOrgId})} className={`font-bold shadow-md ${isCrisis ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-[#1C9290] hover:bg-[#157a78] text-white'}`}>
               {isCrisis ? "End Shift & Request Verify" : "Submit for Verification"}
             </Button>
             <Button variant="outline" onClick={() => setSelectedTask(task)} className="border-slate-200 hover:bg-slate-50 font-bold text-slate-600">{isCrisis ? "Mission Briefing" : "Application Details"}</Button>
@@ -215,12 +215,12 @@ export function MyTasks() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="border-t-4 border-t-red-500 shadow-sm"><CardContent className="p-5"><p className="text-xs font-bold text-slate-500 uppercase">Action Required</p><p className="text-2xl font-black text-gray-900 mt-1">{totalActionable}</p></CardContent></Card>
         <Card className="border-t-4 border-t-amber-500 shadow-sm"><CardContent className="p-5"><p className="text-xs font-bold text-slate-500 uppercase">In Review</p><p className="text-2xl font-black text-gray-900 mt-1">{totalVerifying}</p></CardContent></Card>
-        <Card className="border-t-4 border-t-teal-500 shadow-sm"><CardContent className="p-5"><p className="text-xs font-bold text-slate-500 uppercase">Verified Total</p><p className="text-2xl font-black text-gray-900 mt-1">{totalCompleted}</p></CardContent></Card>
+        <Card className="border-t-4 border-t-[#1C9290] shadow-sm"><CardContent className="p-5"><p className="text-xs font-bold text-slate-500 uppercase">Verified Total</p><p className="text-2xl font-black text-gray-900 mt-1">{totalCompleted}</p></CardContent></Card>
         <Card className="border-t-4 border-t-purple-500 shadow-sm bg-purple-50/30"><CardContent className="p-5"><p className="text-xs font-bold text-purple-700 uppercase">Impact Score</p><p className="text-2xl font-black text-purple-800 mt-1">{user?.impactScore || 0}</p></CardContent></Card>
       </div>
 
       <div className="flex flex-wrap gap-3 py-2">
-        <Button variant={statusFilter === 'all' ? 'default' : 'outline'} onClick={() => setStatusFilter('all')} className={`rounded-xl h-10 px-6 font-bold transition-all ${statusFilter === 'all' ? 'bg-slate-800 text-white' : 'text-slate-500 border-slate-200 hover:bg-slate-50'}`}>All Missions</Button>
+        <Button variant={statusFilter === 'all' ? 'default' : 'outline'} onClick={() => setStatusFilter('all')} className={`rounded-xl h-10 px-6 font-bold transition-all ${statusFilter === 'all' ? 'bg-white text-[#1C9290] shadow-sm border-2 border-[#1C9290]' : 'text-slate-500 border-slate-200 hover:bg-slate-50'}`}>All Missions</Button>
         <Button variant={statusFilter === 'actionable' ? 'default' : 'outline'} onClick={() => setStatusFilter('actionable')} className={`rounded-xl h-10 px-6 font-bold transition-all ${statusFilter === 'actionable' ? 'bg-[#E16A3D] text-white shadow-md' : 'text-[#E16A3D] border-orange-200 hover:bg-orange-50'}`}>▶️ Actionable</Button>
         <Button variant={statusFilter === 'verifying' ? 'default' : 'outline'} onClick={() => setStatusFilter('verifying')} className={`rounded-xl h-10 px-6 font-bold transition-all ${statusFilter === 'verifying' ? 'bg-amber-500 text-white shadow-md' : 'text-amber-600 border-amber-200 hover:bg-amber-50'}`}>⏳ In Review</Button>
         <Button variant={statusFilter === 'completed' ? 'default' : 'outline'} onClick={() => setStatusFilter('completed')} className={`rounded-xl h-10 px-6 font-bold transition-all ${statusFilter === 'completed' ? 'bg-[#1C9290] text-white shadow-md' : 'text-[#1C9290] border-teal-200 hover:bg-teal-50'}`}>✅ Verified</Button>
@@ -228,7 +228,7 @@ export function MyTasks() {
 
       <Tabs defaultValue="all" className="w-full">
         <TabsList className="bg-slate-100 p-1 rounded-xl h-12 mb-6">
-          <TabsTrigger value="all" className="rounded-lg data-[state=active]:bg-white font-bold text-slate-500 data-[state=active]:text-[#043E52]">All Types</TabsTrigger>
+          <TabsTrigger value="all" className="rounded-lg data-[state=active]:bg-white font-bold text-slate-500 data-[state=active]:text-[#1C9290]">All Types</TabsTrigger>
           <TabsTrigger value="standard" className="rounded-lg data-[state=active]:bg-white font-bold text-slate-500 data-[state=active]:text-[#1C9290]">Standard Tasks</TabsTrigger>
           <TabsTrigger value="crisis" className="rounded-lg data-[state=active]:bg-white font-bold text-slate-500 data-[state=active]:text-red-600">AVR Deployments</TabsTrigger>
         </TabsList>
@@ -251,14 +251,14 @@ export function MyTasks() {
       {proofModal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in zoom-in-95">
           <Card className="w-full max-w-lg shadow-2xl border-none rounded-2xl overflow-hidden">
-             <CardHeader className="bg-[#043E52] text-white p-6">
+             <CardHeader className="bg-[#1C9290] text-white p-6">
                <div className="flex justify-between items-center">
                   <div className="flex items-center gap-3"><div className="bg-white/20 p-2 rounded-full"><Send className="h-5 w-5" /></div><CardTitle className="text-xl font-bold">Request Verification</CardTitle></div>
                   <Button variant="ghost" onClick={() => setProofModal(null)} className="text-white hover:bg-white/20 rounded-full h-8 w-8 p-0">✕</Button>
                </div>
              </CardHeader>
              <CardContent className="p-6 space-y-5 bg-slate-50">
-                <div className="bg-white p-4 rounded-xl border border-slate-200"><p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Target Mission</p><p className="font-bold text-[#043E52]">{proofModal.title}</p></div>
+                <div className="bg-white p-4 rounded-xl border border-slate-200"><p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Target Mission</p><p className="font-bold text-[#1C9290]">{proofModal.title}</p></div>
                 <div className="space-y-2"><label className="font-bold text-slate-700 block mb-1">Completion Note (Optional)</label><textarea placeholder="e.g. Completed my 4-hour shift today." className="flex min-h-[100px] w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1C9290] resize-none" value={proofNote} onChange={(e) => setProofNote(e.target.value)} /></div>
                 {proofModal.type === 'normal' && (
                   <div className="space-y-2"><label className="font-bold text-slate-700 block mb-1">Deliverable Link (If Remote/Online)</label><input placeholder="e.g. Google Drive link..." className="flex h-11 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1C9290]" value={proofLink} onChange={(e) => setProofLink(e.target.value)} /><p className="text-[10px] text-slate-500 mt-1">Provide proof of work to expedite verification.</p></div>
@@ -274,7 +274,7 @@ export function MyTasks() {
       {selectedTask && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in zoom-in-95">
           <Card className="w-full max-w-2xl shadow-2xl border-none rounded-2xl overflow-hidden flex flex-col max-h-[90vh]">
-             <CardHeader className={`${selectedTask.crisisData ? 'bg-[#E16A3D]' : 'bg-[#043E52]'} text-white p-6 shrink-0`}>
+             <CardHeader className={`${selectedTask.crisisData ? 'bg-[#E16A3D]' : 'bg-[#1C9290]'} text-white p-6 shrink-0`}>
                <div className="flex justify-between items-start">
                   <div>
                     <Badge className="bg-white/20 text-white border-none mb-2 tracking-widest">{selectedTask.crisisData ? 'DEPLOYMENT ORDER' : 'APPLICATION RECORD'}</Badge>
