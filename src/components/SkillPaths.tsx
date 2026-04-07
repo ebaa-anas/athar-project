@@ -11,8 +11,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { 
   Award, Brain, CheckCircle, Heart, Lock, Star, TrendingUp,
   Zap, Trophy, Users, Building2, Clock, BookOpen, ShieldCheck,
-  AlertTriangle, Loader2, Download
+  AlertTriangle, Loader2, Download, ShieldAlert
 } from 'lucide-react';
+import { useUserProfile } from '../hooks/useUserProfile';
 
 // --- FIREBASE CONFIG ---
 const firebaseConfig = {
@@ -109,6 +110,7 @@ const COURSE_CATALOG = [
 ];
 
 export function SkillPaths() {
+  const { user } = useUserProfile(); // 🔥 Added hook to check verification status globally
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [userProgressDb, setUserProgressDb] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
@@ -117,10 +119,10 @@ export function SkillPaths() {
 
   // --- 1. REAL-TIME DATABASE SYNC ---
   useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setCurrentUser(user);
-        const q = query(collection(db, "userSkills"), where("userId", "==", user.uid));
+    const unsubscribeAuth = onAuthStateChanged(auth, (authUser) => {
+      if (authUser) {
+        setCurrentUser(authUser);
+        const q = query(collection(db, "userSkills"), where("userId", "==", authUser.uid));
         
         const unsubSkills = onSnapshot(q, (snapshot) => {
           const progressMap: Record<string, any> = {};
@@ -233,7 +235,7 @@ export function SkillPaths() {
             verifiedSkills: increment(1)
           });
 
-          // 🔥 2. NEW: GENERATE A PERMANENT CERTIFICATE RECORD FOR THE PROFILE PAGE 🔥
+          // 2. GENERATE A PERMANENT CERTIFICATE RECORD
           const certRef = doc(db, "userCertificates", `${currentUser.uid}_skill_${courseId}`);
           await setDoc(certRef, {
             userId: currentUser.uid,
@@ -382,6 +384,9 @@ export function SkillPaths() {
   const completedPaths = activePaths.filter(p => p.isCompleted);
   const reserveSkills = activePaths.filter(path => path.inReserve);
 
+  // 🔥 CHECK GLOBAL VERIFICATION STATUS 🔥
+  const isVerified = user?.verificationStatus === 'verified';
+
   if (loading) {
     return <div className="p-12 text-center text-[#1C9290] font-bold flex flex-col items-center justify-center"><Loader2 className="h-8 w-8 animate-spin mb-4" /> Loading Secure Curriculum...</div>;
   }
@@ -398,6 +403,19 @@ export function SkillPaths() {
           Build verified skills through official curriculums. Complete modules to secure your clearance in the Athar Volunteer Reserve (AVR).
         </p>
       </div>
+
+      {/* 🔥 THE GLOBAL SECURITY BANNER 🔥 */}
+      {!isVerified && (
+        <div className="bg-red-50 border border-red-200 p-4 rounded-xl flex items-center justify-between mb-6 shadow-sm">
+          <div className="flex items-center gap-3">
+            <ShieldAlert className="h-5 w-5 text-red-600" />
+            <div>
+              <h4 className="text-red-800 font-bold text-sm">Identity Verification Required</h4>
+              <p className="text-red-600 text-xs font-medium">You must verify your identity in your profile before enrolling in any official training paths.</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Stats Cards - Cleaner, smaller fonts */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -499,7 +517,7 @@ export function SkillPaths() {
         <TabsContent value="all" className="space-y-4">
           <div className="grid grid-cols-1 gap-4">
             {activePaths.map((path) => (
-              <SkillPathCard key={path.id} path={path} onComplete={handleCompleteModule} isProcessing={isProcessing === path.id} onDownloadCert={handleDownloadCertificate} isGeneratingCert={isGeneratingCert === path.id} />
+              <SkillPathCard key={path.id} path={path} onComplete={handleCompleteModule} isProcessing={isProcessing === path.id} onDownloadCert={handleDownloadCertificate} isGeneratingCert={isGeneratingCert === path.id} isVerified={isVerified} />
             ))}
           </div>
         </TabsContent>
@@ -507,7 +525,7 @@ export function SkillPaths() {
         <TabsContent value="in-progress" className="space-y-4">
           <div className="grid grid-cols-1 gap-4">
             {activePaths.filter(p => p.progress > 0 && !p.isCompleted).map((path) => (
-              <SkillPathCard key={path.id} path={path} onComplete={handleCompleteModule} isProcessing={isProcessing === path.id} onDownloadCert={handleDownloadCertificate} isGeneratingCert={isGeneratingCert === path.id} />
+              <SkillPathCard key={path.id} path={path} onComplete={handleCompleteModule} isProcessing={isProcessing === path.id} onDownloadCert={handleDownloadCertificate} isGeneratingCert={isGeneratingCert === path.id} isVerified={isVerified} />
             ))}
           </div>
         </TabsContent>
@@ -515,7 +533,7 @@ export function SkillPaths() {
         <TabsContent value="completed" className="space-y-4">
           <div className="grid grid-cols-1 gap-4">
             {completedPaths.map((path) => (
-              <SkillPathCard key={path.id} path={path} onComplete={handleCompleteModule} isProcessing={isProcessing === path.id} onDownloadCert={handleDownloadCertificate} isGeneratingCert={isGeneratingCert === path.id} />
+              <SkillPathCard key={path.id} path={path} onComplete={handleCompleteModule} isProcessing={isProcessing === path.id} onDownloadCert={handleDownloadCertificate} isGeneratingCert={isGeneratingCert === path.id} isVerified={isVerified} />
             ))}
           </div>
         </TabsContent>
@@ -525,41 +543,39 @@ export function SkillPaths() {
 }
 
 // --- REFINED CHILD COMPONENT ---
-function SkillPathCard({ path, onComplete, isProcessing, onDownloadCert, isGeneratingCert }: { path: any, onComplete: (id: string) => void, isProcessing: boolean, onDownloadCert: (id: string, title: string, date: string) => void, isGeneratingCert: boolean }) {
+function SkillPathCard({ path, onComplete, isProcessing, onDownloadCert, isGeneratingCert, isVerified }: { path: any, onComplete: (id: string) => void, isProcessing: boolean, onDownloadCert: (id: string, title: string, date: string) => void, isGeneratingCert: boolean, isVerified: boolean }) {
   const Icon = path.icon;
   const isComplete = path.isCompleted;
   
   return (
     <Card className={`overflow-hidden transition-all border ${
         isComplete ? 'border-emerald-200 bg-emerald-50/50' : 
-        path.isLocked ? 'border-slate-200 bg-slate-50 opacity-80' : 
+        (path.isLocked || !isVerified) ? 'border-slate-200 bg-slate-50 opacity-80' : 
         'border-slate-200 bg-white hover:border-[#1C9290]/40'
     }`}>
       <CardContent className="p-0">
         <div className="flex flex-col md:flex-row items-stretch">
           
-          {/* Icon Area - UI Fix: Trophy always wins if complete */}
           <div className={`p-5 flex items-center justify-center border-b md:border-b-0 md:border-r border-slate-100 min-w-[100px] ${
               isComplete ? 'bg-emerald-100/50' :
-              path.isLocked ? 'bg-slate-200/50' :
+              (path.isLocked || !isVerified) ? 'bg-slate-200/50' :
               'bg-slate-50'
           }`}>
             {isComplete ? (
               <Trophy className="h-8 w-8 text-emerald-600" />
-            ) : path.isLocked ? (
+            ) : (path.isLocked || !isVerified) ? (
               <Lock className="h-8 w-8 text-slate-400" />
             ) : (
               <Icon className="h-8 w-8 text-[#043E52]" />
             )}
           </div>
 
-          {/* Content Area */}
           <div className="flex-1 p-5">
             <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
               
               <div className="flex-1 space-y-2">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h3 className={`font-bold text-lg ${path.isLocked && !isComplete ? 'text-slate-500' : 'text-[#043E52]'}`}>{path.title}</h3>
+                  <h3 className={`font-bold text-lg ${(path.isLocked || !isVerified) && !isComplete ? 'text-slate-500' : 'text-[#043E52]'}`}>{path.title}</h3>
                   {path.qualifiesForAVR && !isComplete && (
                     <Badge variant="outline" className="bg-teal-50 text-teal-700 border-teal-200 font-bold text-[10px] uppercase tracking-wider px-2 py-0.5">AVR Eligible</Badge>
                   )}
@@ -582,9 +598,9 @@ function SkillPathCard({ path, onComplete, isProcessing, onDownloadCert, isGener
                 </div>
               </div>
 
-              {/* Action Area - UI Fix: Proper render priority */}
+              {/* Action Area */}
               <div className="flex flex-col items-start md:items-end justify-center min-w-[200px] border-t md:border-t-0 md:border-l border-slate-100 pt-4 md:pt-0 md:pl-5">
-                {!path.isLocked && !isComplete && (
+                {(!path.isLocked && !isComplete && isVerified) && (
                   <div className="w-full space-y-1.5 mb-3">
                     <div className="flex items-center justify-between text-xs font-bold text-slate-500">
                       <span>Module {path.completedModules}/{path.totalModules}</span>
@@ -604,7 +620,16 @@ function SkillPathCard({ path, onComplete, isProcessing, onDownloadCert, isGener
                     {isGeneratingCert ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
                     {isGeneratingCert ? 'Generating PDF...' : 'Download Certificate'}
                   </Button>
+                ) : !isVerified ? (
+                  // 🔥 NEW: IDENTITY LOCK 🔥
+                  <div className="w-full text-center">
+                    <Button disabled variant="outline" className="w-full font-bold text-xs h-10 border-slate-200 bg-slate-100 text-slate-400">
+                      <Lock className="mr-2 h-3.5 w-3.5" /> Locked
+                    </Button>
+                    <p className="text-[10px] font-bold text-red-500 mt-2 text-center uppercase tracking-wider">ID Verification Required</p>
+                  </div>
                 ) : path.isLocked ? (
+                  // ORIGINAL POINTS/PREREQ LOCK
                   <div className="w-full text-center">
                     <Button disabled variant="outline" className="w-full font-bold text-xs h-10 border-slate-200 bg-slate-100 text-slate-400">
                       <Lock className="mr-2 h-3.5 w-3.5" /> Locked

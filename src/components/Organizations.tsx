@@ -6,10 +6,8 @@ import {
   doc, addDoc, serverTimestamp, getDocs 
 } from "firebase/firestore";
 
-// 🔥 FIXED: ADDED THE MISSING LABEL AND SEPARATOR IMPORTS 🔥
 import { Label } from './ui/label';
 import { Separator } from './ui/separator';
-
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
@@ -19,7 +17,7 @@ import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { 
   MapPin, Users, Star, Search, ShieldCheck, Mail, Globe, 
   Briefcase, HeartHandshake, CheckCircle2, X, Target, Phone, Clock, Calendar,
-  Timer, Activity, Users2, Scale, FileText
+  Timer, Activity, Users2, Scale, FileText, ShieldAlert, Lock
 } from 'lucide-react';
 
 import { useUserProfile } from '../hooks/useUserProfile';
@@ -49,6 +47,9 @@ export function Organizations() {
   const [showJoinModal, setShowJoinModal] = useState<any | null>(null);
   const [coverLetter, setCoverLetter] = useState("");
   const [isApplying, setIsApplying] = useState(false);
+
+  // --- 🔥 GLOBAL VERIFICATION CHECK 🔥 ---
+  const isVerified = user?.verificationStatus === 'verified';
 
   // --- 1. FETCH DATA ---
   useEffect(() => {
@@ -121,7 +122,7 @@ export function Organizations() {
   const myPendingCrewOrgIds = myApplications.filter(a => a.status === 'pending' && a.oppId === 'core_crew').map(a => a.orgId);
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto pb-10">
+    <div className="space-y-6 max-w-6xl mx-auto pb-10 animate-in fade-in duration-300">
       
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -142,6 +143,19 @@ export function Organizations() {
         </div>
       </div>
 
+      {/* 🔥 THE GLOBAL SECURITY BANNER 🔥 */}
+      {!isVerified && (
+        <div className="bg-red-50 border border-red-200 p-4 rounded-xl flex items-center justify-between shadow-sm">
+          <div className="flex items-center gap-3">
+            <ShieldAlert className="h-5 w-5 text-red-600" />
+            <div>
+              <h4 className="text-red-800 font-bold text-sm">Identity Verification Required</h4>
+              <p className="text-red-600 text-xs font-medium">You must verify your identity in your profile before applying to join an organization's core crew.</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* My Organizations */}
       {myOrgs.length > 0 && (
         <Card>
@@ -156,14 +170,14 @@ export function Organizations() {
                   <div className="flex items-center gap-3">
                     <Avatar className="h-10 w-10 border border-gray-200">
                       <AvatarImage src={org.photoUrl || org.logoUrl || org.avatarUrl} className="object-cover" />
-                      <AvatarFallback className="bg-teal-100 text-teal-700 font-bold">
+                      <AvatarFallback className="bg-[#006D5B]/10 text-[#006D5B] font-bold">
                         {String(org.name || 'O').charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <div>
                       <h4 className="text-gray-900 font-bold">{org.name}</h4>
                       <p className="text-sm text-gray-500 flex items-center gap-1">
-                        <CheckCircle2 className="h-3 w-3 text-teal-600" /> Core Volunteer
+                        <CheckCircle2 className="h-3 w-3 text-[#006D5B]" /> Core Volunteer
                       </p>
                     </div>
                   </div>
@@ -189,14 +203,14 @@ export function Organizations() {
               <Card key={org.id} className="overflow-hidden hover:shadow-lg transition-shadow flex flex-col h-full bg-white relative">
                 
                 {/* Fixed Card Banner with dynamic cover image! */}
-                <div className="h-20 bg-[#043E52] w-full border-b border-slate-200 relative overflow-hidden">
+                <div className="h-20 bg-[#006D5B] w-full border-b border-slate-200 relative overflow-hidden">
                   {org.coverUrl ? (
                     <img src={org.coverUrl} className="w-full h-full object-cover" alt="Cover" />
                   ) : (
                     <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
                   )}
                   {org.verified && (
-                    <Badge className="absolute top-3 right-3 bg-white text-teal-700 border border-teal-700 shadow-sm z-10 flex items-center gap-1 px-2 py-0.5">
+                    <Badge className="absolute top-3 right-3 bg-white text-[#006D5B] border border-[#006D5B] shadow-sm z-10 flex items-center gap-1 px-2 py-0.5">
                       <ShieldCheck className="h-3 w-3" /> Verified
                     </Badge>
                   )}
@@ -206,7 +220,7 @@ export function Organizations() {
                 <div className="px-5 relative -mt-10 mb-2 z-10">
                   <Avatar className="h-16 w-16 border-4 border-white shadow-sm bg-white rounded-xl">
                     <AvatarImage src={org.photoUrl || org.logoUrl || org.avatarUrl} className="object-cover rounded-xl" />
-                    <AvatarFallback className="bg-teal-50 text-teal-700 text-xl font-black rounded-xl">
+                    <AvatarFallback className="bg-[#006D5B]/10 text-[#006D5B] text-xl font-black rounded-xl">
                       {String(org.name || 'O').charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
@@ -240,13 +254,18 @@ export function Organizations() {
 
                   <div className="flex gap-2 pt-4 border-t border-gray-100 mt-2">
                     {isAccepted ? (
-                      <Button disabled className="flex-1 bg-teal-50 text-teal-700 font-bold opacity-100 border border-teal-100">Joined</Button>
+                      <Button disabled className="flex-1 bg-[#006D5B]/10 text-[#006D5B] font-bold opacity-100 border border-[#006D5B]/20">Joined</Button>
                     ) : isPending ? (
                       <Button disabled className="flex-1 bg-gray-100 text-gray-500 font-bold opacity-100">Pending</Button>
+                    ) : !isVerified ? (
+                      // 🔥 IDENTITY LOCK ON CARD 🔥
+                      <Button disabled variant="outline" className="flex-1 border-slate-200 bg-slate-100 text-slate-400 font-bold text-[10px] uppercase tracking-wider">
+                        <Lock className="mr-1.5 h-3.5 w-3.5" /> ID Required
+                      </Button>
                     ) : (
-                      <Button onClick={() => setShowJoinModal(org)} className="flex-1 bg-teal-700 hover:bg-teal-800 font-bold text-white">Join</Button>
+                      <Button onClick={() => setShowJoinModal(org)} className="flex-1 bg-[#006D5B] hover:bg-[#005244] font-bold text-white">Join</Button>
                     )}
-                    <Button onClick={() => setSelectedOrg(org)} variant="outline" className="flex-1 font-bold border-gray-200 text-[#043E52]">View</Button>
+                    <Button onClick={() => setSelectedOrg(org)} variant="outline" className="flex-1 font-bold border-gray-200 text-[#006D5B]">View</Button>
                   </div>
                 </CardContent>
               </Card>
@@ -259,26 +278,29 @@ export function Organizations() {
       {showJoinModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in zoom-in-95 duration-200">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="bg-[#043E52] p-5 flex items-center justify-between text-white shrink-0">
+            {/* 🔥 Modal Header Color Fixed 🔥 */}
+            <div className="bg-[#006D5B] p-5 flex items-center justify-between text-white shrink-0">
               <div>
                 <Badge className="bg-white/20 text-white border-none mb-1 text-[10px] uppercase">Core Crew Application</Badge>
                 <h3 className="font-bold text-lg leading-none">Join {showJoinModal.name}</h3>
               </div>
-              <button onClick={() => setShowJoinModal(null)} className="text-teal-100 hover:text-white transition-colors p-1 rounded-full"><X size={20} /></button>
+              <button onClick={() => setShowJoinModal(null)} className="text-white/70 hover:text-white transition-colors p-1 rounded-full"><X size={20} /></button>
             </div>
             <div className="p-6 flex-1 overflow-y-auto">
               <label className="block text-sm font-bold text-gray-700 mb-2">Why do you want to join this organization?</label>
               <p className="text-xs text-gray-500 mb-4">Introduce yourself. Tell them why you care about their mission and what skills you can bring to their dedicated team.</p>
+              {/* 🔥 Focus Ring Color Fixed 🔥 */}
               <Textarea 
                 placeholder="I deeply align with your mission because..."
-                className="min-h-[140px] resize-none border-gray-200 focus:border-teal-700 rounded-lg text-sm"
+                className="min-h-[140px] resize-none border-gray-200 focus:border-[#006D5B] focus:ring-[#006D5B]/20 rounded-lg text-sm"
                 value={coverLetter}
                 onChange={(e) => setCoverLetter(e.target.value)}
               />
             </div>
             <div className="p-5 border-t border-gray-100 bg-gray-50 flex gap-3 justify-end shrink-0">
               <Button variant="ghost" onClick={() => setShowJoinModal(null)} className="text-gray-600 font-bold">Cancel</Button>
-              <Button onClick={handleJoinSubmit} disabled={isApplying} className="bg-[#043E52] hover:bg-[#033040] text-white font-bold px-6 shadow-sm">
+              {/* 🔥 Modal Button Color Fixed 🔥 */}
+              <Button onClick={handleJoinSubmit} disabled={isApplying} className="bg-[#006D5B] hover:bg-[#005244] text-white font-bold px-6 shadow-sm">
                 {isApplying ? "Sending..." : "Submit Application"}
               </Button>
             </div>
@@ -298,7 +320,7 @@ export function Organizations() {
              <div className="flex-1 overflow-y-auto relative">
                 
                 <div className="bg-white border-b border-slate-200 shadow-sm relative">
-                  <div className="h-32 md:h-48 w-full relative bg-[#043E52]">
+                  <div className="h-32 md:h-48 w-full relative bg-[#006D5B]">
                     {selectedOrg.coverUrl ? (
                       <img src={selectedOrg.coverUrl} alt="Cover" className="w-full h-full object-cover" />
                     ) : (
@@ -310,7 +332,7 @@ export function Organizations() {
                     <div className="flex flex-col md:flex-row md:items-end gap-5 -mt-10 md:-mt-12 relative z-10">
                       <Avatar className="w-24 h-24 md:w-28 md:h-28 ring-4 ring-white bg-white shadow-sm rounded-xl shrink-0">
                         <AvatarImage src={selectedOrg.photoUrl || selectedOrg.logoUrl || selectedOrg.avatarUrl} className="object-cover rounded-xl" />
-                        <AvatarFallback className="bg-slate-100 text-[#043E52] text-3xl font-bold rounded-xl">
+                        <AvatarFallback className="bg-slate-100 text-[#006D5B] text-3xl font-bold rounded-xl">
                           {String(selectedOrg.name || 'O').charAt(0).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
@@ -318,8 +340,8 @@ export function Organizations() {
                       <div className="flex-1 pb-1 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                         <div className="space-y-1 w-full md:w-auto">
                           <div className="flex items-center gap-2">
-                            <h1 className="text-xl md:text-2xl font-bold text-[#043E52]">{selectedOrg.name || "Unnamed Organization"}</h1>
-                            {selectedOrg.verified && <ShieldCheck className="h-5 w-5 text-[#1C9290]" />}
+                            <h1 className="text-xl md:text-2xl font-bold text-[#006D5B]">{selectedOrg.name || "Unnamed Organization"}</h1>
+                            {selectedOrg.verified && <ShieldCheck className="h-5 w-5 text-[#006D5B]" />}
                           </div>
                           <p className="text-slate-500 font-medium text-sm">{selectedOrg.tagline || selectedOrg.category || "Non-Profit Organization"}</p>
                         </div>
@@ -333,14 +355,14 @@ export function Organizations() {
                   <div className="lg:col-span-2 space-y-6">
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                        {[
-                         { label: 'Hours', val: selectedOrg.stats?.hours || selectedOrg.hours || '0', icon: Timer, color: 'text-[#1C9290]', bg: 'bg-teal-50' },
-                         { label: 'Projects', val: selectedOrg.stats?.projects || selectedOrg.projects || '0', icon: Activity, color: 'text-[#043E52]', bg: 'bg-blue-50' },
+                         { label: 'Hours', val: selectedOrg.stats?.hours || selectedOrg.hours || '0', icon: Timer, color: 'text-[#006D5B]', bg: 'bg-[#006D5B]/10' },
+                         { label: 'Projects', val: selectedOrg.stats?.projects || selectedOrg.projects || '0', icon: Activity, color: 'text-[#006D5B]', bg: 'bg-[#006D5B]/10' },
                          { label: 'Volunteers', val: selectedOrg.stats?.volunteers || selectedOrg.volunteers || '0', icon: Users2, color: 'text-indigo-600', bg: 'bg-indigo-50' },
                          { label: 'Rank', val: selectedOrg.rating || 'N/A', icon: Scale, color: 'text-slate-600', bg: 'bg-slate-100' }
                        ].map((m, i) => (
                          <Card key={i} className="border border-slate-200 shadow-sm p-3 flex flex-col items-center justify-center text-center bg-white rounded-xl">
                            <div className={`p-2 rounded-lg ${m.bg} mb-1.5`}><m.icon className={`h-4 w-4 ${m.color}`} /></div>
-                           <div className="text-xl font-bold text-[#043E52]">{m.val}</div>
+                           <div className="text-xl font-bold text-[#006D5B]">{m.val}</div>
                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{m.label}</div>
                          </Card>
                        ))}
@@ -348,21 +370,21 @@ export function Organizations() {
 
                     <Card className="border border-slate-200 shadow-sm rounded-xl bg-white overflow-hidden">
                       <CardHeader className="px-5 py-4 border-b border-slate-100 bg-slate-50/50">
-                         <CardTitle className="text-base font-bold text-[#043E52] flex items-center gap-2">
-                           <FileText className="h-4 w-4 text-[#1C9290]" /> Organizational Charter
+                         <CardTitle className="text-base font-bold text-[#006D5B] flex items-center gap-2">
+                           <FileText className="h-4 w-4 text-[#006D5B]" /> Organizational Charter
                          </CardTitle>
                       </CardHeader>
                       <CardContent className="p-5 space-y-5">
                          <div className="space-y-1.5">
-                           <Label className="font-bold text-[#043E52] text-xs uppercase tracking-wider">About the Entity</Label>
+                           <Label className="font-bold text-[#006D5B] text-xs uppercase tracking-wider">About the Entity</Label>
                            <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-wrap">{selectedOrg.description || "No description provided yet."}</p>
                          </div>
                          
                          <Separator className="bg-slate-100" />
                          
                          <div className="space-y-1.5">
-                           <Label className="font-bold text-[#043E52] text-xs uppercase tracking-wider">Legal Mission Statement</Label>
-                           <blockquote className="border-l-2 border-[#1C9290] pl-3 py-1 text-sm font-medium text-slate-700 italic">
+                           <Label className="font-bold text-[#006D5B] text-xs uppercase tracking-wider">Legal Mission Statement</Label>
+                           <blockquote className="border-l-2 border-[#006D5B] pl-3 py-1 text-sm font-medium text-slate-700 italic">
                              {selectedOrg.mission || "Mission statement pending."}
                            </blockquote>
                          </div>
@@ -370,14 +392,14 @@ export function Organizations() {
                          <Separator className="bg-slate-100" />
                          
                          <div className="space-y-2">
-                            <Label className="font-bold text-[#043E52] text-xs uppercase tracking-wider flex items-center gap-1.5"><Target className="h-3.5 w-3.5"/> Focus Areas</Label>
+                            <Label className="font-bold text-[#006D5B] text-xs uppercase tracking-wider flex items-center gap-1.5"><Target className="h-3.5 w-3.5"/> Focus Areas</Label>
                             <div className="flex flex-wrap gap-2 pt-1">
                                 {(() => {
                                     const causesData = selectedOrg.focusAreas || selectedOrg.causes || selectedOrg.category || ['Community Support'];
                                     const safeCausesArray = Array.isArray(causesData) ? causesData : [causesData];
                                     
                                     return safeCausesArray.map((cause: any, i: number) => (
-                                        <Badge key={i} variant="secondary" className="bg-teal-50 text-teal-700 border border-teal-100">
+                                        <Badge key={i} variant="secondary" className="bg-[#006D5B]/10 text-[#006D5B] border border-[#006D5B]/20">
                                           {String(cause)}
                                         </Badge>
                                     ));
@@ -390,10 +412,10 @@ export function Organizations() {
 
                   <div className="space-y-6">
                     
-                    <Card className={`border shadow-sm rounded-xl overflow-hidden ${selectedOrg.verified ? 'bg-[#043E52] text-white border-transparent' : 'bg-white border-slate-200'}`}>
+                    <Card className={`border shadow-sm rounded-xl overflow-hidden ${selectedOrg.verified ? 'bg-[#006D5B] text-white border-transparent' : 'bg-white border-slate-200'}`}>
                       <div className="p-5 space-y-4">
                         <div className="flex items-center justify-between">
-                          <ShieldCheck className={`h-6 w-6 ${selectedOrg.verified ? 'text-[#1C9290]' : 'text-amber-500'}`} />
+                          <ShieldCheck className={`h-6 w-6 ${selectedOrg.verified ? 'text-white' : 'text-amber-500'}`} />
                           <Badge variant="outline" className={`text-[10px] uppercase font-bold tracking-wider ${selectedOrg.verified ? 'text-white border-white/20 bg-white/10' : 'text-amber-700 border-amber-200 bg-amber-50'}`}>
                             {selectedOrg.verified ? 'VERIFIED' : 'UNVERIFIED'}
                           </Badge>
@@ -402,11 +424,11 @@ export function Organizations() {
                         {selectedOrg.verified ? (
                           <div className="space-y-1.5">
                              <h3 className="text-lg font-bold">Identity Confirmed</h3>
-                             <p className="text-teal-50 text-xs leading-relaxed">This entity is legally authorized for public operations under Government Framework v4.0.</p>
+                             <p className="text-white/80 text-xs leading-relaxed">This entity is legally authorized for public operations under Government Framework v4.0.</p>
                           </div>
                         ) : (
                           <div className="space-y-1.5">
-                            <h3 className="text-lg font-bold text-[#043E52]">Unverified Entity</h3>
+                            <h3 className="text-lg font-bold text-[#006D5B]">Unverified Entity</h3>
                             <p className="text-xs text-slate-500">This organization has not yet completed the official government audit for verification.</p>
                           </div>
                         )}
@@ -414,11 +436,11 @@ export function Organizations() {
                     </Card>
 
                     <Card className="border border-slate-200 shadow-sm rounded-xl bg-white p-5 space-y-4">
-                       <h4 className="text-xs font-bold text-[#043E52] uppercase tracking-wider flex items-center gap-2 mb-1 border-b border-slate-100 pb-2">
-                         <Globe className="h-4 w-4 text-[#1C9290]" /> Contact Directory
+                       <h4 className="text-xs font-bold text-[#006D5B] uppercase tracking-wider flex items-center gap-2 mb-1 border-b border-slate-100 pb-2">
+                         <Globe className="h-4 w-4 text-[#006D5B]" /> Contact Directory
                        </h4>
                        <div className="space-y-3">
-                         <div className="flex items-center gap-2.5 text-sm text-slate-600"><Globe className="h-3.5 w-3.5 text-slate-400" /> <a href={selectedOrg.website || "#"} target="_blank" rel="noreferrer" className="hover:underline hover:text-[#1C9290] truncate">{selectedOrg.website || "Not provided"}</a></div>
+                         <div className="flex items-center gap-2.5 text-sm text-slate-600"><Globe className="h-3.5 w-3.5 text-slate-400" /> <a href={selectedOrg.website || "#"} target="_blank" rel="noreferrer" className="hover:underline hover:text-[#006D5B] truncate">{selectedOrg.website || "Not provided"}</a></div>
                          <div className="flex items-center gap-2.5 text-sm text-slate-600"><Mail className="h-3.5 w-3.5 text-slate-400" /> <span className="truncate">{selectedOrg.email || "Not provided"}</span></div>
                          <div className="flex items-center gap-2.5 text-sm text-slate-600"><Phone className="h-3.5 w-3.5 text-slate-400" /> {selectedOrg.phone || "Not provided"}</div>
                          <Separator className="bg-slate-100" />
@@ -434,11 +456,16 @@ export function Organizations() {
              <div className="p-4 bg-white border-t border-slate-200 flex justify-end gap-3 shrink-0">
                 <Button variant="ghost" onClick={() => setSelectedOrg(null)} className="text-slate-600 font-bold px-6">Close</Button>
                 {myAcceptedOrgIds.includes(selectedOrg.id) ? (
-                   <Button disabled className="bg-teal-50 text-[#1C9290] border border-teal-100 font-bold px-6 shadow-sm">Joined Team</Button>
+                   <Button disabled className="bg-[#006D5B]/10 text-[#006D5B] border border-[#006D5B]/20 font-bold px-6 shadow-sm">Joined Team</Button>
                 ) : myPendingCrewOrgIds.includes(selectedOrg.id) ? (
                    <Button disabled className="bg-slate-100 text-slate-500 font-bold px-6 shadow-sm">Request Pending</Button>
+                ) : !isVerified ? (
+                  // 🔥 IDENTITY LOCK ON MODAL 🔥
+                  <Button disabled className="bg-slate-100 text-slate-400 font-bold px-6 shadow-sm uppercase tracking-wider text-[10px]">
+                    <Lock className="mr-1.5 h-3.5 w-3.5" /> ID Required to Apply
+                  </Button>
                 ) : (
-                  <Button onClick={() => { setSelectedOrg(null); setShowJoinModal(selectedOrg); }} className="bg-[#043E52] hover:bg-[#033040] text-white font-bold px-6 shadow-sm">
+                  <Button onClick={() => { setSelectedOrg(null); setShowJoinModal(selectedOrg); }} className="bg-[#006D5B] hover:bg-[#005244] text-white font-bold px-6 shadow-sm">
                     Apply to Join
                   </Button>
                 )}

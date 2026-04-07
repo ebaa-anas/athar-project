@@ -7,7 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Progress } from './ui/progress';
-import { Clock, BookOpen, Award, Play, CheckCircle, PlusCircle, Loader2, Download } from 'lucide-react';
+import { Clock, BookOpen, Award, Play, CheckCircle, PlusCircle, Loader2, Download, ShieldAlert, Lock } from 'lucide-react';
+import { useUserProfile } from '../hooks/useUserProfile';
 
 // --- FIREBASE CONFIG ---
 const firebaseConfig = {
@@ -88,6 +89,7 @@ const COURSE_CATALOG = [
 ];
 
 export function Courses() {
+  const { user } = useUserProfile(); // 🔥 Global user profile hook
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [userCoursesDb, setUserCoursesDb] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
@@ -96,10 +98,10 @@ export function Courses() {
 
   // --- 1. REAL-TIME DB SYNC ---
   useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setCurrentUser(user);
-        const q = query(collection(db, "userCourses"), where("userId", "==", user.uid));
+    const unsubscribeAuth = onAuthStateChanged(auth, (authUser) => {
+      if (authUser) {
+        setCurrentUser(authUser);
+        const q = query(collection(db, "userCourses"), where("userId", "==", authUser.uid));
         
         const unsubCourses = onSnapshot(q, (snapshot) => {
           const courseMap: Record<string, any> = {};
@@ -172,13 +174,11 @@ export function Courses() {
     setTimeout(() => setProcessingId(null), 400);
   };
 
-  // --- 🔥 3. THE PDF CERTIFICATE GENERATOR 🔥 ---
+  // --- 3. THE PDF CERTIFICATE GENERATOR ---
   const handleDownloadCertificate = (courseId: string, courseTitle: string, dateAwarded: string) => {
     setIsGeneratingCert(courseId);
     
-    // We use a slight timeout to let the UI show the loading spinner before locking the main thread
     setTimeout(() => {
-      // Fallback name if the user hasn't set a display name in Firebase
       const userName = currentUser?.displayName || currentUser?.email?.split('@')[0] || "Athar Volunteer";
 
       const iframe = document.createElement('iframe');
@@ -197,7 +197,7 @@ export function Courses() {
                 
                 body {
                   margin: 0; padding: 0; display: flex; justify-content: center; align-items: center;
-                  width: 11in; height: 8.5in; /* Landscape Letter Size */
+                  width: 11in; height: 8.5in;
                   font-family: 'Inter', sans-serif;
                   background-color: #f8fafc;
                   -webkit-print-color-adjust: exact;
@@ -206,7 +206,7 @@ export function Courses() {
                 .certificate-container {
                   width: 10.5in; height: 8in;
                   background: white;
-                  border: 12px solid #016A6D; /* Pine Theme */
+                  border: 12px solid #016A6D;
                   outline: 4px solid #1C9290;
                   outline-offset: -20px;
                   padding: 50px;
@@ -285,12 +285,10 @@ export function Courses() {
         `);
         iframeDoc.close();
 
-        // Wait 1 second to ensure Google Fonts load before opening the print dialog
         setTimeout(() => {
           iframe.contentWindow?.focus();
           iframe.contentWindow?.print();
           
-          // Cleanup
           setTimeout(() => {
             document.body.removeChild(iframe);
             setIsGeneratingCert(null);
@@ -316,6 +314,9 @@ export function Courses() {
 
   const availableCourses = COURSE_CATALOG.filter(c => !userCoursesDb[c.id]);
 
+  // 🔥 CHECK GLOBAL VERIFICATION STATUS 🔥
+  const isVerified = user?.verificationStatus === 'verified';
+
   if (loading) {
     return <div className="p-12 text-center text-[#1C9290] font-bold flex flex-col items-center justify-center"><Loader2 className="h-8 w-8 animate-spin mb-4" /> Loading Course Catalog...</div>;
   }
@@ -331,6 +332,19 @@ export function Courses() {
           Enhance your skills, earn official certifications, and prepare for field deployment.
         </p>
       </div>
+
+      {/* 🔥 THE GLOBAL SECURITY BANNER 🔥 */}
+      {!isVerified && (
+        <div className="bg-red-50 border border-red-200 p-4 rounded-xl flex items-center justify-between mb-6 shadow-sm">
+          <div className="flex items-center gap-3">
+            <ShieldAlert className="h-5 w-5 text-red-600" />
+            <div>
+              <h4 className="text-red-800 font-bold text-sm">Identity Verification Required</h4>
+              <p className="text-red-600 text-xs font-medium">You must verify your identity in your profile before enrolling in any official Academy courses.</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* --- MY LEARNING SECTION --- */}
       <Card className="border-slate-200 shadow-sm bg-white overflow-hidden">
@@ -406,22 +420,22 @@ export function Courses() {
         </CardContent>
       </Card>
 
-      {/* --- 🔥 COMPLETED COURSES SECTION (WITH DOWNLOADS) 🔥 --- */}
+      {/* --- 🔥 COMPLETED COURSES SECTION (WITH #006D5B DESIGN FIX) 🔥 --- */}
       {completedCourses.length > 0 && (
         <Card className="border-slate-200 shadow-sm bg-white">
-          <div className="h-1.5 w-full bg-emerald-500" />
+          <div className="h-1.5 w-full bg-[#006D5B]" />
           <CardHeader className="pb-4 border-b border-slate-100">
             <CardTitle className="text-[#016A6D] text-xl flex items-center gap-2">
-              <Award className="h-5 w-5 text-emerald-500" /> Completed Certifications
+              <Award className="h-5 w-5 text-[#006D5B]" /> Completed Certifications
             </CardTitle>
             <CardDescription className="font-semibold text-xs text-slate-500">Your verified achievements. Download your official PDF certificates below.</CardDescription>
           </CardHeader>
           <CardContent className="p-6">
             <div className="grid grid-cols-1 gap-4">
               {completedCourses.map((course) => (
-                <div key={course.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 border border-emerald-200 bg-emerald-50/50 rounded-2xl hover:shadow-md transition-shadow">
+                <div key={course.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 border border-[#006D5B]/30 bg-[#006D5B]/5 rounded-2xl hover:shadow-md transition-shadow">
                   <div className="flex items-center gap-4">
-                    <div className="bg-emerald-500 p-3 rounded-full shadow-sm shrink-0">
+                    <div className="bg-[#006D5B] p-3 rounded-full shadow-sm shrink-0">
                       <CheckCircle className="h-6 w-6 text-white" />
                     </div>
                     <div>
@@ -434,7 +448,7 @@ export function Courses() {
                   <Button 
                     onClick={() => handleDownloadCertificate(course.id, course.title, course.completedDate)}
                     disabled={isGeneratingCert === course.id}
-                    className="w-full sm:w-auto bg-white border-2 border-emerald-500 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 font-black text-xs uppercase tracking-wider h-11 px-6 shadow-sm"
+                    className="w-full sm:w-auto bg-white border-2 border-[#006D5B] text-[#006D5B] hover:bg-[#006D5B]/10 hover:text-[#006D5B] font-black text-xs uppercase tracking-wider h-11 px-6 shadow-sm"
                   >
                     {isGeneratingCert === course.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
                     {isGeneratingCert === course.id ? 'Generating PDF...' : 'Download Certificate'}
@@ -486,14 +500,24 @@ export function Courses() {
                   </div>
                 </div>
                 
-                <Button 
-                  onClick={() => handleEnroll(course.id)}
-                  disabled={processingId === course.id}
-                  className="w-full bg-[#016A6D] hover:bg-[#125d56] text-white font-bold text-xs uppercase tracking-wider h-11 shadow-sm"
-                >
-                  {processingId === course.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlusCircle className="mr-2 h-4 w-4" />}
-                  Enroll in Course
-                </Button>
+                {/* 🔥 THE ZERO-TRUST BUTTON LOCK 🔥 */}
+                {!isVerified ? (
+                  <div className="w-full text-center">
+                    <Button disabled variant="outline" className="w-full font-bold text-xs uppercase tracking-wider h-11 border-slate-200 bg-slate-100 text-slate-400">
+                      <Lock className="mr-2 h-4 w-4" /> Locked
+                    </Button>
+                    <p className="text-[10px] font-bold text-red-500 mt-2 text-center uppercase tracking-wider">ID Verification Required</p>
+                  </div>
+                ) : (
+                  <Button 
+                    onClick={() => handleEnroll(course.id)}
+                    disabled={processingId === course.id}
+                    className="w-full bg-[#016A6D] hover:bg-[#125d56] text-white font-bold text-xs uppercase tracking-wider h-11 shadow-sm"
+                  >
+                    {processingId === course.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlusCircle className="mr-2 h-4 w-4" />}
+                    Enroll in Course
+                  </Button>
+                )}
               </CardContent>
             </Card>
           ))}

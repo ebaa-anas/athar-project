@@ -5,12 +5,11 @@ import {
   getFirestore, collection, onSnapshot, query, where, addDoc, serverTimestamp 
 } from "firebase/firestore";
 
-// 🔥 FIXED: Adjusted import paths for a file in the components folder 🔥
 import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { Hash, Send, MessageSquare, ShieldCheck, Users, Search, ShieldAlert, Lock } from 'lucide-react';
+import { Hash, Send, MessageSquare, ShieldCheck, Users, Search, ShieldAlert, Lock, Clock } from 'lucide-react';
 import { useUserProfile } from '../hooks/useUserProfile'; 
 import { Badge } from './ui/badge';
 
@@ -28,6 +27,19 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
+// Helper for formatting time
+const timeAgo = (timestamp: number) => {
+  if (!timestamp) return '';
+  const seconds = Math.floor((Date.now() - timestamp) / 1000);
+  let interval = seconds / 86400;
+  if (interval > 1) return Math.floor(interval) + "d";
+  interval = seconds / 3600;
+  if (interval > 1) return Math.floor(interval) + "h";
+  interval = seconds / 60;
+  if (interval > 1) return Math.floor(interval) + "m";
+  return "Now";
+};
+
 export function Messages() {
   const { user } = useUserProfile();
   const [channels, setChannels] = useState<any[]>([]);
@@ -35,9 +47,13 @@ export function Messages() {
   const [messages, setMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
+  
+  // --- 🔥 FILTER STATE 🔥 ---
+  const [channelFilter, setChannelFilter] = useState<'all' | 'crisis' | 'group' | 'mission' | 'dm'>('all');
+  const [searchTerm, setSearchTerm] = useState("");
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom of chat
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -46,14 +62,13 @@ export function Messages() {
     scrollToBottom();
   }, [messages]);
 
-  // --- 1. BULLETPROOF CHANNEL FETCHING ---
+  // --- 1. BULLETPROOF CHANNEL FETCHING & SORTING ---
   useEffect(() => {
     if (!user) return;
 
     const qApps = query(collection(db, "applications"), where("volunteerId", "==", user.uid), where("status", "==", "accepted"));
     const qCrisisResp = query(collection(db, "crisisResponses"), where("volunteerId", "==", user.uid), where("status", "==", "accepted"));
     const qAllCrises = query(collection(db, "crises"));
-    // Fetch Direct Messages sent to this user
     const qDMs = query(collection(db, "messages"), where("targetUserId", "==", user.uid));
 
     const unsubApps = onSnapshot(qApps, (appsSnap) => {
@@ -62,10 +77,18 @@ export function Messages() {
                  const unsubDMs = onSnapshot(qDMs, (dmsSnap) => {
 
                      const channelMap = new Map();
+                     
+                     // Helper to map crisis responses to their timestamps
+                     const crisisTimes = new Map();
+                     crisisRespSnap.docs.forEach(d => {
+                       crisisTimes.set(d.data().crisisId, d.data().respondedAt?.toMillis() || Date.now());
+                     });
 
                      // 1. Add standard accepted applications
                      appsSnap.docs.forEach(doc => {
                          const data = doc.data();
+                         const lastAct = data.appliedAt?.toMillis() || Date.now();
+
                          if (data.oppId && !channelMap.has(data.oppId)) {
                              channelMap.set(data.oppId, {
                                  id: data.oppId,
@@ -73,7 +96,9 @@ export function Messages() {
                                  orgName: data.orgName || 'Organization',
                                  isCrisis: data.type === 'emergency' || (data.oppTitle && data.oppTitle.includes('CRISIS')),
                                  isGroup: false,
-                                 isDM: false
+                                 isDM: false,
+                                 type: 'mission',
+                                 lastActivity: lastAct
                              });
                          }
 
@@ -82,79 +107,72 @@ export function Messages() {
                              const groupId = `group_${data.orgId}`;
                              if (!channelMap.has(groupId)) {
                                  channelMap.set(groupId, {
-                                     id: groupId,
-                                     title: `${data.orgName} Team`,
-                                     orgName: data.orgName,
-                                     isCrisis: false,
-                                     isGroup: true,
-                                     isDM: false
+                                     id: groupId, title: `${data.orgName} Team`, orgName: data.orgName,
+                                     isCrisis: false, isGroup: true, isDM: false, type: 'group',
+                                     lastActivity: lastAct
                                  });
+                             } else {
+                               const ext = channelMap.get(groupId);
+                               if (lastAct > ext.lastActivity) { ext.lastActivity = lastAct; channelMap.set(groupId, ext); }
                              }
 
                              const dmId = `dm_${data.orgId}_${user.uid}`;
                              if (!channelMap.has(dmId)) {
                                  channelMap.set(dmId, {
-                                     id: dmId,
-                                     title: `Private: ${data.orgName}`,
-                                     orgName: data.orgName,
-                                     isCrisis: false,
-                                     isGroup: false,
-                                     isDM: true
+                                     id: dmId, title: `Private: ${data.orgName}`, orgName: data.orgName,
+                                     isCrisis: false, isGroup: false, isDM: true, type: 'dm',
+                                     lastActivity: lastAct
                                  });
+                             } else {
+                               const ext = channelMap.get(dmId);
+                               if (lastAct > ext.lastActivity) { ext.lastActivity = lastAct; channelMap.set(dmId, ext); }
                              }
                          }
                      });
 
-                     // Parse crises
-                     const acceptedCrisisIds = crisisRespSnap.docs.map(doc => doc.data().crisisId);
-
+                     // 2. Parse crises
                      allCrisesSnap.docs.forEach(doc => {
-                         if (acceptedCrisisIds.includes(doc.id)) {
+                         if (crisisTimes.has(doc.id)) {
                              const crisisData = doc.data();
+                             const lastAct = crisisTimes.get(doc.id);
                              if (!channelMap.has(doc.id)) {
                                  channelMap.set(doc.id, {
-                                     id: doc.id,
-                                     title: `${crisisData.title}`,
-                                     orgName: crisisData.organization || 'Command Center',
-                                     isCrisis: true,
-                                     isGroup: false,
-                                     isDM: false
+                                     id: doc.id, title: `${crisisData.title}`, orgName: crisisData.organization || 'Command Center',
+                                     isCrisis: true, isGroup: false, isDM: false, type: 'crisis',
+                                     lastActivity: lastAct
                                  });
                              } else {
                                  const existing = channelMap.get(doc.id);
                                  existing.isCrisis = true;
+                                 existing.type = 'crisis';
+                                 if (lastAct > existing.lastActivity) existing.lastActivity = lastAct;
                                  channelMap.set(doc.id, existing);
                              }
                          }
                      });
 
-                     // Inject Direct Message Channels
+                     // 3. Inject Direct Message Channels directly from messages collection
                      dmsSnap.docs.forEach(doc => {
                          const dmData = doc.data();
-                         if (dmData.missionId && !channelMap.has(dmData.missionId)) {
-                             channelMap.set(dmData.missionId, {
-                                 id: dmData.missionId,
-                                 title: dmData.channelTitle || 'Direct Message',
-                                 orgName: dmData.senderName || 'Organization',
-                                 isCrisis: false,
-                                 isGroup: false,
-                                 isDM: true 
-                             });
+                         const lastAct = dmData.timestamp?.toMillis() || Date.now();
+                         if (dmData.missionId) {
+                             if (!channelMap.has(dmData.missionId)) {
+                                 channelMap.set(dmData.missionId, {
+                                     id: dmData.missionId, title: dmData.channelTitle || 'Direct Message', orgName: dmData.senderName || 'Organization',
+                                     isCrisis: false, isGroup: false, isDM: true, type: 'dm',
+                                     lastActivity: lastAct 
+                                 });
+                             } else {
+                               const existing = channelMap.get(dmData.missionId);
+                               if (lastAct > existing.lastActivity) { existing.lastActivity = lastAct; channelMap.set(dmData.missionId, existing); }
+                             }
                          }
                      });
 
                      const fetchedChannels = Array.from(channelMap.values());
                      
-                     // Sort channels: Crises first, then Org Groups, then DMs, then Standard Missions
-                     fetchedChannels.sort((a, b) => {
-                         if (a.isCrisis && !b.isCrisis) return -1;
-                         if (!a.isCrisis && b.isCrisis) return 1;
-                         if (a.isGroup && !b.isGroup) return -1;
-                         if (!a.isGroup && b.isGroup) return 1;
-                         if (a.isDM && !b.isDM) return -1;
-                         if (!a.isDM && b.isDM) return 1;
-                         return 0;
-                     });
+                     // 🔥 SORT BY LAST ACTIVITY (Newest First) 🔥
+                     fetchedChannels.sort((a, b) => b.lastActivity - a.lastActivity);
 
                      setChannels(fetchedChannels);
 
@@ -237,39 +255,61 @@ export function Messages() {
     return 'Recently';
   };
 
-  if (loading) return <div className="p-8 text-center text-[#043E52] font-bold animate-pulse">Syncing secure channels...</div>;
+  // --- FILTERING LOGIC ---
+  const displayedChannels = channels.filter(c => {
+    const matchesFilter = channelFilter === 'all' || c.type === channelFilter;
+    const matchesSearch = c.title.toLowerCase().includes(searchTerm.toLowerCase()) || c.orgName.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesFilter && matchesSearch;
+  });
+
+  if (loading) return <div className="p-8 text-center text-[#016A6D] font-bold animate-pulse">Syncing secure channels...</div>;
 
   return (
-    <div className="max-w-6xl mx-auto h-[calc(100vh-100px)] pb-6">
+    <div className="max-w-6xl mx-auto h-[calc(100vh-100px)] pb-6 animate-in fade-in duration-300">
       
       <Card className="w-full h-full flex flex-col md:flex-row shadow-xl border-slate-200 rounded-2xl overflow-hidden bg-white">
         
         {/* --- LEFT PANEL: CHANNELS LIST --- */}
-        <div className="w-full md:w-[320px] bg-slate-50 flex flex-col border-r border-slate-200 shrink-0">
+        <div className="w-full md:w-[340px] bg-slate-50 flex flex-col border-r border-slate-200 shrink-0">
           
-          <div className="p-5 border-b border-slate-200 bg-[#043E52] text-white">
-            <h2 className="text-lg font-bold flex items-center gap-2">
-              <MessageSquare className="h-5 w-5 text-[#1C9290]" /> My Operations
+          <div className="p-5 border-b border-slate-200 bg-[#016A6D] text-white">
+            <h2 className="text-lg font-bold flex items-center gap-2 tracking-tight">
+              <MessageSquare className="h-5 w-5 text-[#1C9290]" /> Operations Comms
             </h2>
-            <div className="relative mt-3">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <Input placeholder="Search missions..." className="h-10 pl-9 bg-white/10 border-transparent text-white placeholder:text-teal-100/70 text-sm focus:border-[#1C9290] focus:ring-[#1C9290]/20 rounded-xl" />
+            <div className="relative mt-4">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-teal-100" />
+              <Input 
+                placeholder="Search channels..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="h-10 pl-10 bg-white/10 border-transparent text-white placeholder:text-teal-100/70 text-sm focus:border-[#1C9290] focus:ring-[#1C9290]/20 rounded-xl" 
+              />
             </div>
+          </div>
+
+          {/* 🔥 NEW: THE TACTICAL FILTER BAR 🔥 */}
+          <div className="flex gap-2 p-3 overflow-x-auto border-b border-slate-200 bg-white hide-scrollbar shrink-0 shadow-sm z-10">
+            <button onClick={() => setChannelFilter('all')} className={`shrink-0 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors ${channelFilter === 'all' ? 'bg-[#016A6D] text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}>All</button>
+            <button onClick={() => setChannelFilter('crisis')} className={`shrink-0 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors ${channelFilter === 'crisis' ? 'bg-[#E16A3D] text-white' : 'bg-orange-50 text-orange-700 hover:bg-orange-100'}`}>Crises</button>
+            <button onClick={() => setChannelFilter('group')} className={`shrink-0 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors ${channelFilter === 'group' ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-700 hover:bg-blue-100'}`}>Teams</button>
+            <button onClick={() => setChannelFilter('mission')} className={`shrink-0 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors ${channelFilter === 'mission' ? 'bg-[#1C9290] text-white' : 'bg-teal-50 text-teal-700 hover:bg-teal-100'}`}>Missions</button>
+            <button onClick={() => setChannelFilter('dm')} className={`shrink-0 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors ${channelFilter === 'dm' ? 'bg-slate-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>Direct</button>
           </div>
           
           <div className="flex-1 overflow-y-auto p-3 space-y-1.5">
-            {channels.length === 0 ? (
+            {displayedChannels.length === 0 ? (
               <div className="text-center p-6 mt-10">
                 <Hash className="h-10 w-10 text-slate-300 mx-auto mb-3" />
-                <p className="text-sm font-bold text-[#043E52]">No active missions</p>
+                <p className="text-sm font-bold text-[#016A6D]">No channels found</p>
                 <p className="text-xs text-slate-500 mt-1">Accept an invite or deploy to a crisis to start chatting.</p>
               </div>
             ) : (
-              channels.map((channel) => {
+              displayedChannels.map((channel) => {
                 const isActive = activeChannel?.id === channel.id;
-                const isCrisis = channel.isCrisis;
-                const isGroup = channel.isGroup;
-                const isDM = channel.isDM;
+                const isCrisis = channel.type === 'crisis';
+                const isGroup = channel.type === 'group';
+                const isDM = channel.type === 'dm';
+                const isMission = channel.type === 'mission';
                 
                 return (
                   <button
@@ -289,13 +329,18 @@ export function Messages() {
                     </Avatar>
                     
                     <div className="overflow-hidden flex-1">
-                      <p className={`text-sm font-bold truncate ${isActive ? 'text-[#043E52]' : 'text-slate-700'}`}>
-                        {channel.title}
-                      </p>
-                      <p className="text-[11px] truncate mt-0.5 font-medium text-slate-500 flex items-center gap-1">
-                         {isCrisis && <Badge className="px-1 py-0 h-3.5 text-[8px] bg-red-100 text-red-700 border-none">SOS</Badge>}
-                         {isGroup && <Badge className="px-1 py-0 h-3.5 text-[8px] bg-blue-100 text-blue-700 border-none">GROUP</Badge>}
-                         {isDM && <Badge className="px-1 py-0 h-3.5 text-[8px] bg-slate-100 text-slate-600 border-none">PRIVATE</Badge>}
+                      <div className="flex items-start justify-between gap-2">
+                        <p className={`text-sm font-bold truncate ${isActive ? 'text-[#016A6D]' : 'text-slate-700'}`}>
+                          {channel.title}
+                        </p>
+                        <span className="text-[9px] font-bold text-slate-400 shrink-0 pt-0.5">{timeAgo(channel.lastActivity)}</span>
+                      </div>
+                      
+                      <p className="text-[10px] truncate mt-0.5 font-bold text-slate-500 flex items-center gap-1 uppercase tracking-widest">
+                         {isCrisis && <span className="text-[#E16A3D]">SOS • </span>}
+                         {isGroup && <span className="text-blue-600">GROUP • </span>}
+                         {isDM && <span className="text-slate-600">PRIVATE • </span>}
+                         {isMission && <span className="text-[#1C9290]">MISSION • </span>}
                          {!isGroup && !isDM && channel.orgName}
                       </p>
                     </div>
@@ -313,20 +358,20 @@ export function Messages() {
               {/* Chat Header */}
               <div className="bg-white p-5 border-b border-slate-100 flex items-center justify-between shadow-sm z-10 shrink-0">
                 <div className="flex items-center gap-4">
-                  <div className={`p-2.5 rounded-xl ${activeChannel.isCrisis ? 'bg-orange-50' : activeChannel.isGroup ? 'bg-blue-50' : activeChannel.isDM ? 'bg-slate-100' : 'bg-teal-50'}`}>
-                    {activeChannel.isCrisis ? <ShieldAlert className="h-6 w-6 text-[#E16A3D]" /> : activeChannel.isGroup ? <Users className="h-6 w-6 text-blue-600" /> : activeChannel.isDM ? <Lock className="h-6 w-6 text-slate-600" /> : <Hash className="h-6 w-6 text-[#1C9290]" />}
+                  <div className={`p-2.5 rounded-xl ${activeChannel.type === 'crisis' ? 'bg-orange-50' : activeChannel.type === 'group' ? 'bg-blue-50' : activeChannel.type === 'dm' ? 'bg-slate-100' : 'bg-teal-50'}`}>
+                    {activeChannel.type === 'crisis' ? <ShieldAlert className="h-6 w-6 text-[#E16A3D]" /> : activeChannel.type === 'group' ? <Users className="h-6 w-6 text-blue-600" /> : activeChannel.type === 'dm' ? <Lock className="h-6 w-6 text-slate-600" /> : <Hash className="h-6 w-6 text-[#1C9290]" />}
                   </div>
                   <div>
-                    <h2 className="text-lg font-black text-[#043E52] tracking-tight leading-tight">
+                    <h2 className="text-lg font-black text-[#016A6D] tracking-tight leading-tight">
                       {activeChannel.title}
                     </h2>
-                    <div className="flex items-center gap-1.5 mt-1 text-xs text-slate-500 font-medium">
-                      {activeChannel.isDM ? <Lock className="h-3.5 w-3.5 text-slate-400" /> : <ShieldCheck className="h-3.5 w-3.5 text-[#1C9290]" />}
-                      {activeChannel.isDM ? 'Private Encrypted Channel' : `Command: ${activeChannel.orgName}`}
+                    <div className="flex items-center gap-1.5 mt-1 text-[10px] uppercase tracking-widest text-slate-500 font-bold">
+                      {activeChannel.type === 'dm' ? <Lock className="h-3 w-3 text-slate-400" /> : <ShieldCheck className="h-3 w-3 text-[#1C9290]" />}
+                      {activeChannel.type === 'dm' ? 'Private Encrypted Channel' : `Command: ${activeChannel.orgName}`}
                     </div>
                   </div>
                 </div>
-                <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 flex items-center gap-2 px-3 py-1">
+                <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 flex items-center gap-2 px-3 py-1 font-bold text-[10px] uppercase tracking-widest">
                   <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
                   Connected
                 </Badge>
@@ -337,11 +382,11 @@ export function Messages() {
                 {messages.length === 0 ? (
                   <div className="h-full flex flex-col items-center justify-center text-slate-400 space-y-4">
                     <div className="p-5 bg-white rounded-full shadow-sm border border-slate-100">
-                      <MessageSquare className={`h-10 w-10 ${activeChannel.isCrisis ? 'text-[#E16A3D]' : 'text-[#1C9290]'}`} />
+                      <MessageSquare className={`h-10 w-10 ${activeChannel.type === 'crisis' ? 'text-[#E16A3D]' : 'text-[#1C9290]'}`} />
                     </div>
                     <div className="text-center">
-                        <p className="font-bold text-base text-[#043E52]">Secure comms established.</p>
-                        <p className="text-sm mt-1">Send a message to update the Command Center.</p>
+                        <p className="font-bold text-base text-[#016A6D]">Secure comms established.</p>
+                        <p className="text-sm mt-1 font-medium">Send a message to update the channel.</p>
                     </div>
                   </div>
                 ) : (
@@ -351,27 +396,27 @@ export function Messages() {
 
                     return (
                       <div key={msg.id || idx} className={`flex gap-3 max-w-[85%] ${isMe ? 'ml-auto flex-row-reverse' : ''}`}>
-                        <Avatar className={`h-9 w-9 shrink-0 shadow-sm border-2 ${isOrg ? 'border-[#043E52]' : isMe ? 'border-[#1C9290]' : 'border-slate-200'}`}>
+                        <Avatar className={`h-9 w-9 shrink-0 shadow-sm border-2 ${isOrg ? 'border-[#016A6D]' : isMe ? 'border-[#1C9290]' : 'border-slate-200'}`}>
                           <AvatarImage src={msg.avatar} className="object-cover" />
-                          <AvatarFallback className={`text-xs font-bold ${isOrg ? 'bg-[#043E52] text-white' : 'bg-slate-200 text-slate-600'}`}>
+                          <AvatarFallback className={`text-xs font-bold ${isOrg ? 'bg-[#016A6D] text-white' : 'bg-slate-200 text-slate-600'}`}>
                             {msg.senderName?.charAt(0).toUpperCase() || 'U'}
                           </AvatarFallback>
                         </Avatar>
                         
                         <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
                           <div className="flex items-baseline gap-2 mb-1 px-1">
-                            <span className={`text-[12px] font-bold ${isOrg ? 'text-[#043E52]' : 'text-slate-600'}`}>
+                            <span className={`text-[12px] font-bold ${isOrg ? 'text-[#016A6D]' : 'text-slate-600'}`}>
                               {isMe ? 'You' : msg.senderName}
                             </span>
-                            {isOrg && <Badge variant="secondary" className="text-[9px] px-1.5 py-0 h-4 bg-[#043E52] text-white border-none">COMMAND</Badge>}
-                            <span className="text-[10px] text-slate-400 font-medium">{formatTime(msg.timestamp)}</span>
+                            {isOrg && <Badge variant="secondary" className="text-[8px] px-1.5 py-0 h-4 bg-[#016A6D] text-white border-none font-black tracking-widest">COMMAND</Badge>}
+                            <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">{formatTime(msg.timestamp)}</span>
                           </div>
                           
                           <div className={`px-5 py-3 rounded-2xl text-[14px] shadow-sm leading-relaxed font-medium
                             ${isMe 
                               ? 'bg-[#1C9290] text-white rounded-tr-none' 
                               : isOrg 
-                                ? 'bg-white border-2 border-[#043E52]/10 text-[#043E52] rounded-tl-none'
+                                ? 'bg-white border-2 border-[#016A6D]/10 text-[#016A6D] rounded-tl-none'
                                 : 'bg-white border border-slate-200 text-slate-700 rounded-tl-none'}`}
                           >
                             {msg.text}
@@ -390,13 +435,13 @@ export function Messages() {
                   <Input 
                     value={newMessage}
                     onChange={(e: any) => setNewMessage(e.target.value)}
-                    placeholder={`Message ${activeChannel.isCrisis ? 'Command Center' : activeChannel.isDM ? 'securely' : 'the team'}...`}
+                    placeholder={`Message ${activeChannel.type === 'crisis' ? 'Command Center' : activeChannel.type === 'dm' ? 'securely' : 'the team'}...`}
                     className="flex-1 h-12 bg-slate-50 border-slate-200 focus:border-[#1C9290] focus:ring-[#1C9290]/20 rounded-xl px-4 text-[15px] font-medium"
-/>
+                  />
                   <Button 
                     type="submit" 
                     disabled={!newMessage.trim()}
-                    className="h-12 w-14 shrink-0 rounded-xl bg-[#043E52] hover:bg-[#033040] text-white p-0 flex items-center justify-center transition-all active:scale-95 disabled:opacity-50"
+                    className="h-12 w-14 shrink-0 rounded-xl bg-[#016A6D] hover:bg-[#125d56] text-white p-0 flex items-center justify-center transition-all active:scale-95 disabled:opacity-50"
                   >
                     <Send className="h-5 w-5 ml-1" />
                   </Button>
@@ -408,8 +453,8 @@ export function Messages() {
               <div className="bg-white p-8 rounded-full shadow-sm border border-slate-100 mb-5">
                 <Users className="h-12 w-12 text-slate-300" />
               </div>
-              <h3 className="text-xl font-bold text-[#043E52]">Select an Operation</h3>
-              <p className="text-sm text-slate-500 max-w-xs mt-2 leading-relaxed">Choose an active mission, group chat, or direct message from the sidebar to start chatting.</p>
+              <h3 className="text-xl font-bold text-[#016A6D]">Select an Operation</h3>
+              <p className="text-sm text-slate-500 max-w-xs mt-2 leading-relaxed font-medium">Choose an active mission, group chat, or direct message from the sidebar to start chatting.</p>
             </div>
           )}
         </div>

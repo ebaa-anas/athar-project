@@ -17,7 +17,7 @@ import {
   Search, Mail, Phone, Star, Clock, Award,
   MessageSquare, MoreVertical, Filter, Users, X, Send, 
   MapPin, Briefcase, GraduationCap, AlertTriangle, Target,
-  ArrowLeft
+  ArrowLeft, Shield
 } from 'lucide-react';
 
 // --- FIREBASE CONFIG ---
@@ -53,19 +53,24 @@ export function ManageVolunteers() {
   
   const [isSending, setIsSending] = useState(false);
 
-  // --- 1. FETCH DATA ---
+  // --- 1. FETCH DATA (STRICTLY CORE CREW) ---
   useEffect(() => {
     const unsubscribeAuth = auth.onAuthStateChanged(async (user) => {
       if (user) {
         const qApps = query(collection(db, "applications"), where("orgId", "==", user.uid), where("status", "==", "accepted"));
         const unsubscribeApps = onSnapshot(qApps, async (snapshot) => {
-          const uniqueVolunteerIds = new Set<string>();
+          
+          // 🔥 STRICT FILTER: ONLY Add to roster if they are CORE CREW 🔥
+          const coreCrewIds = new Set<string>();
+          
           snapshot.docs.forEach(docSnap => {
             const data = docSnap.data();
-            if (data.volunteerId) uniqueVolunteerIds.add(data.volunteerId);
+            if (data.volunteerId && data.oppId === 'core_crew') {
+                coreCrewIds.add(data.volunteerId);
+            }
           });
 
-          const volunteerPromises = Array.from(uniqueVolunteerIds).map(async (vId) => {
+          const volunteerPromises = Array.from(coreCrewIds).map(async (vId) => {
             const userDoc = await getDoc(doc(db, "users", vId));
             if (userDoc.exists()) {
               const uData = userDoc.data();
@@ -77,6 +82,7 @@ export function ManageVolunteers() {
                 phone: uData.phone || 'No phone provided',
                 avatar: uData.photoUrl || uData.avatarUrl || '',
                 status: 'active',
+                isCoreCrew: true, // Everyone here is Core Crew now
                 rating: Number(uData.rating || 5.0),
                 totalHours: Number(uData.totalHours || 0),
                 completedProjects: Number(uData.completedProjects || 0),
@@ -125,9 +131,8 @@ export function ManageVolunteers() {
       const fallbackLogo = `https://api.dicebear.com/7.x/shapes/svg?seed=${orgName}&backgroundColor=043E52`;
       const finalAvatar = orgData.photoUrl || orgData.logoUrl || fallbackLogo;
 
-      // 🔥 THE FIX: Separate routing for DMs vs Group Broadcasts 🔥
       if (messageTarget) {
-        // DIRECT MESSAGE: Private channel between Org and 1 Volunteer
+        // DIRECT MESSAGE
         await addDoc(collection(db, "messages"), {
           missionId: `dm_${currentUser!.uid}_${messageTarget.id}`,
           text: messageText,
@@ -138,7 +143,7 @@ export function ManageVolunteers() {
           timestamp: serverTimestamp()
         });
       } else {
-        // MESSAGE ALL: Posts to the Organization's general Group channel
+        // MESSAGE ALL
         await addDoc(collection(db, "messages"), {
           missionId: `group_${currentUser!.uid}`, 
           text: messageText,
@@ -213,18 +218,16 @@ export function ManageVolunteers() {
     return (
       <div className="max-w-6xl mx-auto space-y-6 pb-12 animate-in fade-in slide-in-from-right-4 duration-300">
         
-        {/* BACK BUTTON */}
         <Button 
           variant="ghost" 
           onClick={() => setViewProfileData(null)} 
           className="text-slate-500 hover:text-[#043E52] hover:bg-slate-100 -ml-2 font-bold mb-2"
         >
-          <ArrowLeft className="h-4 w-4 mr-2" /> Back to Volunteers Network
+          <ArrowLeft className="h-4 w-4 mr-2" /> Back to Core Crew
         </Button>
 
         <Card className="w-full shadow-sm border-slate-200 rounded-2xl overflow-hidden bg-slate-50">
            <div className="flex-1 overflow-y-auto">
-             {/* Header Block */}
              <div className="bg-white border-b border-slate-200 shadow-sm">
                <div className="h-32 w-full bg-gradient-to-r from-[#043E52] to-[#1C9290]"></div>
                <div className="px-8 pb-8 relative -mt-16">
@@ -236,7 +239,9 @@ export function ManageVolunteers() {
                    <div className="flex-1 pb-2">
                      <div className="flex items-center gap-3">
                        <h1 className="text-2xl font-bold text-gray-900">{viewProfileData.name}</h1>
-                       <Badge className="bg-[#1C9290]/10 text-[#1C9290] border-none font-bold text-[10px]">ACTIVE VOLUNTEER</Badge>
+                       <Badge className="bg-[#043E52]/10 text-[#043E52] border-none font-bold text-[10px] flex items-center gap-1">
+                          <Shield className="h-3 w-3" /> CORE CREW
+                       </Badge>
                      </div>
                      <div className="flex flex-wrap items-center gap-5 mt-2 text-sm text-gray-500 font-medium">
                        <span className="flex items-center gap-1.5"><MapPin size={16} className="text-slate-400" /> {viewProfileData.city || viewProfileData.location || 'Location Not Set'}</span>
@@ -244,7 +249,6 @@ export function ManageVolunteers() {
                        <span className="flex items-center gap-1.5"><Phone size={16} className="text-slate-400" /> {viewProfileData.phone}</span>
                      </div>
                    </div>
-                   {/* Action Buttons inside the Profile! */}
                    <div className="flex gap-3 pb-2">
                       <Button onClick={() => { setMessageTarget(viewProfileData); setMessageModalOpen(true); }} variant="outline" className="border-slate-200 text-slate-700 hover:text-[#043E52] font-bold h-10 px-4">
                         <MessageSquare className="mr-2 h-4 w-4" /> Message
@@ -280,7 +284,7 @@ export function ManageVolunteers() {
                  </Card>
 
                  <Card className="border-slate-200 shadow-sm rounded-xl">
-                   <CardHeader className="pb-3 border-b border-slate-50"><CardTitle className="text-base font-bold uppercase tracking-tight text-[#043E52] flex items-center gap-2"><GraduationCap className="h-5 w-5 text-blue-500" /> Education</CardTitle></CardHeader>
+                   <CardHeader className="pb-3 border-b border-slate-50"><CardTitle className="text-base font-bold uppercase tracking-tight text-[#043E52] flex items-center gap-2"><GraduationCap className="h-5 w-5 text-[#1C9290]" /> Education</CardTitle></CardHeader>
                    <CardContent className="pt-4 space-y-4">
                      {viewProfileData.educations?.length > 0 ? viewProfileData.educations.map((edu: any, i: number) => (
                        <div key={i} className="border-l-2 border-slate-200 pl-4 pb-4 last:pb-0">
@@ -304,18 +308,18 @@ export function ManageVolunteers() {
                       <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Hours Logged</div>
                     </div>
                     <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm text-center">
-                      <Award className="h-5 w-5 text-[#E16A3D] mx-auto mb-2" />
+                      <Award className="h-5 w-5 text-[#1C9290] mx-auto mb-2" />
                       <div className="text-2xl font-black text-[#043E52]">{viewProfileData.completedProjects}</div>
                       <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Missions</div>
                     </div>
                  </div>
 
-                 <Card className="border-rose-200 shadow-sm rounded-xl overflow-hidden">
-                   <div className="bg-rose-600 text-white p-3 flex items-center gap-2 font-bold text-xs uppercase tracking-wider"><AlertTriangle className="h-4 w-4" /> Emergency Profile</div>
-                   <CardContent className="p-5 space-y-4 bg-rose-50/30">
+                 <Card className="border-red-200 shadow-sm rounded-xl overflow-hidden">
+                   <div className="bg-red-600 text-white p-3 flex items-center gap-2 font-bold text-xs uppercase tracking-wider"><AlertTriangle className="h-4 w-4" /> Emergency Profile</div>
+                   <CardContent className="p-5 space-y-4 bg-red-50/30">
                      <div className="flex justify-between text-sm"><span className="text-slate-600 font-medium">Valid Driver</span><span className="font-bold">{viewProfileData.crisisInfo?.drivingLicense ? 'Yes' : 'No'}</span></div>
-                     <Separator className="bg-rose-100"/>
-                     <div className="flex justify-between text-sm"><span className="text-slate-600 font-medium">Blood Type</span><span className="font-bold text-rose-600 bg-rose-100 px-2 rounded text-xs py-0.5">{viewProfileData.crisisInfo?.bloodType || 'N/A'}</span></div>
+                     <Separator className="bg-red-100"/>
+                     <div className="flex justify-between text-sm"><span className="text-slate-600 font-medium">Blood Type</span><span className="font-bold text-red-600 bg-red-100 px-2 rounded text-xs py-0.5">{viewProfileData.crisisInfo?.bloodType || 'N/A'}</span></div>
                    </CardContent>
                  </Card>
 
@@ -359,8 +363,8 @@ export function ManageVolunteers() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-6">
         <div>
-          <h1 className="text-2xl font-bold text-[#043E52] uppercase tracking-tight">Manage Volunteers</h1>
-          <p className="text-slate-500 mt-1 text-sm font-semibold">View and manage your active volunteer network</p>
+          <h1 className="text-2xl font-bold text-[#043E52] uppercase tracking-tight">Manage Core Crew</h1>
+          <p className="text-slate-500 mt-1 text-sm font-semibold">View and manage your official core crew members</p>
         </div>
         <Button 
           onClick={() => { setMessageTarget(null); setMessageModalOpen(true); }}
@@ -373,10 +377,10 @@ export function ManageVolunteers() {
 
       {/* Dynamic Stats Row */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="border-t-4 border-t-[#043E52] shadow-sm"><CardContent className="p-5"><div className="flex items-start justify-between"><div><p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Total Network</p><p className="text-[#043E52] text-2xl font-black mt-1">{totalVolunteers}</p></div><div className="bg-[#043E52]/10 p-3 rounded-xl"><Users className="h-5 w-5 text-[#043E52]" /></div></div></CardContent></Card>
+        <Card className="border-t-4 border-t-[#043E52] shadow-sm"><CardContent className="p-5"><div className="flex items-start justify-between"><div><p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Total Crew</p><p className="text-[#043E52] text-2xl font-black mt-1">{totalVolunteers}</p></div><div className="bg-[#043E52]/10 p-3 rounded-xl"><Users className="h-5 w-5 text-[#043E52]" /></div></div></CardContent></Card>
         <Card className="border-t-4 border-t-[#1C9290] shadow-sm"><CardContent className="p-5"><div className="flex items-start justify-between"><div><p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Active Status</p><p className="text-[#1C9290] text-2xl font-black mt-1">{activeVolunteers}</p></div><div className="bg-[#1C9290]/10 p-3 rounded-xl"><div className="h-4 w-4 bg-[#1C9290] rounded-full shadow-sm animate-pulse" /></div></div></CardContent></Card>
-        <Card className="border-t-4 border-t-[#E16A3D] shadow-sm"><CardContent className="p-5"><div className="flex items-start justify-between"><div><p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Avg Rating</p><p className="text-[#E16A3D] text-2xl font-black mt-1">{avgRating}</p></div><div className="bg-[#E16A3D]/10 p-3 rounded-xl"><Star className="h-5 w-5 text-[#E16A3D] fill-[#E16A3D]" /></div></div></CardContent></Card>
-        <Card className="border-t-4 border-t-blue-600 shadow-sm"><CardContent className="p-5"><div className="flex items-start justify-between"><div><p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Network Hours</p><p className="text-blue-600 text-2xl font-black mt-1">{totalNetworkHours}</p></div><div className="bg-blue-50 p-3 rounded-xl"><Clock className="h-5 w-5 text-blue-600" /></div></div></CardContent></Card>
+        <Card className="border-t-4 border-t-[#043E52] shadow-sm"><CardContent className="p-5"><div className="flex items-start justify-between"><div><p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Avg Rating</p><p className="text-[#043E52] text-2xl font-black mt-1">{avgRating}</p></div><div className="bg-[#043E52]/10 p-3 rounded-xl"><Star className="h-5 w-5 text-[#043E52] fill-[#043E52]" /></div></div></CardContent></Card>
+        <Card className="border-t-4 border-t-[#1C9290] shadow-sm"><CardContent className="p-5"><div className="flex items-start justify-between"><div><p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Crew Hours</p><p className="text-[#1C9290] text-2xl font-black mt-1">{totalNetworkHours}</p></div><div className="bg-teal-50 p-3 rounded-xl"><Clock className="h-5 w-5 text-[#1C9290]" /></div></div></CardContent></Card>
       </div>
 
       {/* Search and Filter */}
@@ -385,20 +389,20 @@ export function ManageVolunteers() {
           <div className="flex flex-col md:flex-row gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <Input placeholder="Search volunteers by name, email, or skills..." className="pl-10 h-11 border-slate-200 focus:border-[#043E52] focus:ring-[#043E52] text-sm rounded-xl" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+              <Input placeholder="Search crew by name, email, or skills..." className="pl-10 h-11 border-slate-200 focus:border-[#043E52] focus:ring-[#043E52] text-sm rounded-xl" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
             </div>
             <Button variant="outline" className="border-slate-200 text-slate-600 hover:text-[#043E52] hover:bg-slate-50 h-11 px-6 rounded-xl font-bold text-xs uppercase tracking-wider"><Filter className="mr-2 h-4 w-4" /> Filter</Button>
           </div>
         </CardContent>
       </Card>
 
-      {loading && <div className="text-center py-10 font-bold text-slate-500 animate-pulse text-sm">Loading Volunteer Network...</div>}
+      {loading && <div className="text-center py-10 font-bold text-slate-500 animate-pulse text-sm">Loading Core Crew...</div>}
       
       {!loading && filteredVolunteers.length === 0 && (
         <div className="text-center py-16 bg-white rounded-2xl border border-slate-200 shadow-sm">
            <Users className="h-10 w-10 text-slate-300 mx-auto mb-3" />
-           <h3 className="text-base font-bold text-slate-600">No volunteers found</h3>
-           <p className="text-slate-500 text-sm mt-1">Accept volunteer applications to build your network.</p>
+           <h3 className="text-base font-bold text-slate-600">No core crew members found</h3>
+           <p className="text-slate-500 text-sm mt-1">Accept Core Crew applications to build your team.</p>
         </div>
       )}
 
@@ -419,7 +423,9 @@ export function ManageVolunteers() {
                     <div>
                       <div className="flex items-center gap-3">
                         <h3 className="text-[#043E52] font-bold text-base">{volunteer.name}</h3>
-                        <Badge variant="outline" className={volunteer.status === 'active' ? 'bg-[#1C9290]/10 text-[#1C9290] border-none font-bold text-[10px] tracking-wider' : 'bg-slate-100 text-slate-600 border-none font-bold text-[10px] tracking-wider'}>{volunteer.status.toUpperCase()}</Badge>
+                        <Badge className="bg-[#043E52]/10 text-[#043E52] hover:bg-[#043E52]/20 border-none font-bold text-[10px] tracking-wider flex items-center gap-1">
+                          <Shield className="h-3 w-3" /> CORE CREW
+                        </Badge>
                       </div>
                       <div className="flex flex-wrap items-center gap-4 mt-1 text-xs text-slate-500 font-medium">
                         <div className="flex items-center gap-1.5"><Mail className="h-3 w-3" /><span>{volunteer.email}</span></div>
@@ -429,7 +435,7 @@ export function ManageVolunteers() {
                   </div>
 
                   <div className="grid grid-cols-2 md:grid-cols-5 gap-4 py-3 border-y border-slate-100">
-                    <div><p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Rating</p><div className="flex items-center gap-1.5 mt-0.5"><Star className="h-3.5 w-3.5 fill-[#E16A3D] text-[#E16A3D]" /><span className="text-sm font-bold text-slate-700">{volunteer.rating}</span></div></div>
+                    <div><p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Rating</p><div className="flex items-center gap-1.5 mt-0.5"><Star className="h-3.5 w-3.5 fill-[#043E52] text-[#043E52]" /><span className="text-sm font-bold text-slate-700">{volunteer.rating}</span></div></div>
                     <div><p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Hours</p><div className="flex items-center gap-1.5 mt-0.5"><Clock className="h-3.5 w-3.5 text-[#1C9290]" /><span className="text-sm font-bold text-slate-700">{volunteer.totalHours}h</span></div></div>
                     <div><p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Projects</p><div className="flex items-center gap-1.5 mt-0.5"><Award className="h-3.5 w-3.5 text-[#043E52]" /><span className="text-sm font-bold text-slate-700">{volunteer.completedProjects}</span></div></div>
                     <div><p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Reliability</p><p className="text-sm font-bold text-[#1C9290] mt-0.5">{volunteer.reliability}%</p></div>
@@ -479,7 +485,7 @@ export function ManageVolunteers() {
                      {messageTarget ? "Direct Message" : "Team Broadcast"}
                    </h3>
                    <p className="text-teal-100 text-[10px] font-semibold mt-1 uppercase tracking-wider">
-                     To: {messageTarget ? messageTarget.name : 'All Active Volunteers in Org'}
+                     To: {messageTarget ? messageTarget.name : 'All Core Crew'}
                    </p>
                  </div>
                </div>

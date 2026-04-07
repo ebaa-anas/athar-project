@@ -13,7 +13,7 @@ import {
   Brain,
   AlertTriangle,
   ChevronRight,
-  MessageSquare // <--- ADDED Message Icon
+  MessageSquare
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
@@ -26,22 +26,20 @@ interface SidebarProps {
   onLogout: () => void;
 }
 
-// <--- REMOVED the stray import { Messages } from here. Routing happens in your Dashboard file!
-
 const menuItems = [
   { id: "profile", label: "My Profile", icon: User },
   { id: "overview", label: "Overview", icon: LayoutDashboard },
-  { id: "messages", label: "Messages", icon: MessageSquare }, // <--- ADDED MESSAGES TAB HERE
-  { id: "crisis-response", label: "Crisis Response", icon: AlertTriangle, badge: 2 },
-  { id: "notifications", label: "Notifications", icon: Bell },
+   { id: "crisis-response", label: "Crisis Response", icon: AlertTriangle, badge: 2 },
+  { id: "messages", label: "Messages", icon: MessageSquare }, 
+  { id: "explore", label: "Explore Opportunities", icon: Search },
   { id: "skill-paths", label: "Skill Paths", icon: TrendingUp },
   { id: "training-simulator", label: "Training Simulator", icon: Brain },
   { id: "tasks", label: "My Tasks", icon: CheckSquare },
   { id: "causes", label: "Causes", icon: Heart },
   { id: "organizations", label: "Organizations", icon: Building2 },
-  { id: "explore", label: "Explore Opportunities", icon: Search },
   { id: "courses", label: "Courses", icon: GraduationCap },
   { id: "certificates", label: "Certificates", icon: Award },
+   { id: "notifications", label: "Notifications", icon: Bell }
 ];
 
 export function Sidebar({ activeSection, onSectionChange, onLogout }: SidebarProps) {
@@ -53,7 +51,7 @@ export function Sidebar({ activeSection, onSectionChange, onLogout }: SidebarPro
   const initials = displayName.split(' ').map((n: string) => n[0]).join('').toUpperCase().substring(0, 2);
 
   return (
-    <aside className="fixed inset-y-0 left-0 w-64 h-screen bg-[#0f766e] flex flex-col shadow-2xl z-50 font-sans border-r border-[#115e59]">
+    <aside className="fixed inset-y-0 left-0 w-64 h-screen bg-[#016A6D] flex flex-col shadow-2xl z-50 font-sans border-r border-[#014d4f]">
       
       {/* --- FIXED UPPER SECTION (Header & Profile) --- */}
       <div className="flex-none flex flex-col">
@@ -70,12 +68,12 @@ export function Sidebar({ activeSection, onSectionChange, onLogout }: SidebarPro
 
         {/* 2. Glass Profile Card */}
         <div className="px-3 mb-2">
-          <div className="flex items-center gap-3 bg-white/10 p-3 rounded-xl border border-white/10 hover:border-[#14b8a6]/50 transition-colors cursor-default backdrop-blur-sm">
-            <Avatar className="w-9 h-9 border border-[#14b8a6]/50">
+          <div className="flex items-center gap-3 bg-white/10 p-3 rounded-xl border border-white/10 hover:border-[#1C9290]/50 transition-colors cursor-default backdrop-blur-sm">
+            <Avatar className="w-9 h-9 border border-[#1C9290]/50">
               {/* Load real image if it exists */}
               <AvatarImage src={user?.photoUrl || ""} className="object-cover" />
               {/* Show dynamic initials if no image */}
-              <AvatarFallback className="bg-[#14b8a6] text-white text-xs font-bold">
+              <AvatarFallback className="bg-[#1C9290] text-white text-xs font-bold">
                 {initials}
               </AvatarFallback>
             </Avatar>
@@ -107,7 +105,7 @@ export function Sidebar({ activeSection, onSectionChange, onLogout }: SidebarPro
                 onClick={() => onSectionChange(item.id)}
                 className={`w-full justify-between group h-10 px-3 transition-all duration-200 rounded-lg mb-1 ${
                   isActive
-                    ? "bg-[#14b8a6] text-white shadow-lg shadow-black/10 font-semibold"
+                    ? "bg-[#1C9290] text-white shadow-lg shadow-black/10 font-semibold"
                     : "text-teal-100 hover:bg-white/10 hover:text-white font-medium"
                 }`}
               >
@@ -122,7 +120,7 @@ export function Sidebar({ activeSection, onSectionChange, onLogout }: SidebarPro
                   {item.badge && (
                     <span className={`px-1.5 h-5 text-[10px] min-w-[20px] flex items-center justify-center rounded-full font-bold ${
                         isActive 
-                        ? "bg-white text-[#0f766e]" 
+                        ? "bg-white text-[#016A6D]" 
                         : "bg-red-500 text-white"
                     }`}>
                       {item.badge}
@@ -137,11 +135,11 @@ export function Sidebar({ activeSection, onSectionChange, onLogout }: SidebarPro
       </div>
 
       {/* --- FIXED BOTTOM SECTION (Logout) --- */}
-      <div className="flex-none p-4 border-t border-white/10 bg-[#0f766e]">
+      <div className="flex-none p-4 border-t border-white/10 bg-[#016A6D]">
         <Button
           variant="ghost"
           onClick={onLogout}
-          className="w-full justify-start text-teal-100 hover:bg-[#115e59] hover:text-white transition-all rounded-lg h-10 px-3 font-medium"
+          className="w-full justify-start text-teal-100 hover:bg-[#014d4f] hover:text-white transition-all rounded-lg h-10 px-3 font-medium"
         >
           <LogOut className="mr-3 h-[18px] w-[18px]" />
           <span className="text-sm">Logout</span>
