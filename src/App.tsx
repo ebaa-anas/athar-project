@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { OverviewDashboard } from './components/OverviewDashboard';
 import { MyProfile } from './components/MyProfile';
-import { Messages } from './components/Messages'; // <--- The import is here
+import { Messages } from './components/Messages'; 
 import { Causes } from './components/Causes';
 import { Organizations } from './components/Organizations';
 import { Courses } from './components/Courses';
@@ -23,17 +23,21 @@ import { OrganizationProfile } from './components/organization/OrganizationProfi
 import { Applications } from './components/organization/Applications';
 import { Events } from './components/organization/Events';
 import { Reports } from './components/organization/Reports';
+
 import { OrganizationNotifications } from './components/organization/OrganizationNotifications';
 import { OrganizationSettings } from './components/organization/OrganizationSettings';
 import { CrisisManagement } from './components/organization/CrisisManagement';
 import { AdminSidebar } from './components/admin/AdminSidebar';
 import { AdminOverview } from './components/admin/AdminOverview';
-import { VerificationRequests } from './components/admin/VerificationRequests';
+import VerificationRequests from './components/admin/VerificationRequests';
 import { UserManagement } from './components/admin/UserManagement';
 import { ContentModeration } from './components/admin/ContentModeration';
 import { PlatformAnalytics } from './components/admin/PlatformAnalytics';
 import { AdminSettings } from './components/admin/AdminSettings';
 import { OrganizationMessages } from './components/organization/OrganizationMessages';
+
+// 🔥 IMPORT YOUR CHATBOT HERE 🔥
+import ChatbotWidget from './chatbot/ChatbotWidget'; 
 
 type UserType = 'volunteer' | 'organization' | 'admin' | null;
 
@@ -60,7 +64,7 @@ export default function App() {
     switch (activeSection) {
       case 'overview': return <OverviewDashboard />;
       case 'profile': return <MyProfile />;
-     case 'messages': return <Messages />;
+      case 'messages': return <Messages />;
       case 'skill-paths': return <SkillPaths />;
       case 'training-simulator': return <TrainingSimulator />;
       case 'crisis-response': return <CrisisResponse />;
@@ -104,18 +108,31 @@ export default function App() {
     }
   };
 
+  // 🔥 Fix 1: Added Chatbot to Landing Page
   if (!userType) {
-    return <LandingPage onSelectUserType={handleUserTypeSelection} />;
+    return (
+      <>
+        <LandingPage onSelectUserType={handleUserTypeSelection} />
+        <ChatbotWidget userType={userType} />
+      </>
+    );
   }
 
+  // 🔥 Fix 2: Added Chatbot to Login Page
   if (!isLoggedIn) {
-    return <LoginSignup onLogin={handleLogin} userType={userType} onClose={handleLogout} />;
+    return (
+      <>
+        <LoginSignup onLogin={handleLogin} userType={userType} onClose={handleLogout} />
+        <ChatbotWidget userType={userType} />
+      </>
+    );
   }
 
+  // 🔥 Fix 3: Passed userType={userType} to the Main Dashboard Chatbot
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
 
-      {/* Sidebar - NOW PASSING LOGOUT PROP TO ALL */}
+      {/* Sidebar */}
       {userType === 'volunteer' && (
         <Sidebar 
           activeSection={activeSection} 
@@ -146,6 +163,10 @@ export default function App() {
           {userType === 'admin' && renderAdminContent()}
         </div>
       </main>
+
+      {/* RENDER CHATBOT HERE */}
+      <ChatbotWidget userType={userType} />
+      
     </div>
   );
 }

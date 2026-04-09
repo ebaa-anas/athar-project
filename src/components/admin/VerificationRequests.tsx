@@ -29,7 +29,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-export function VerificationRequests() {
+export default function VerificationRequests() {
   const [pendingReqs, setPendingReqs] = useState<any[]>([]);
   const [verifiedReqs, setVerifiedReqs] = useState<any[]>([]);
   const [rejectedReqs, setRejectedReqs] = useState<any[]>([]);
