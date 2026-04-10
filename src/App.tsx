@@ -62,7 +62,7 @@ export default function App() {
 
   const renderVolunteerContent = () => {
     switch (activeSection) {
-      case 'overview': return <OverviewDashboard />;
+      case 'overview': return <OverviewDashboard onNavigate={setActiveSection} />;
       case 'profile': return <MyProfile />;
       case 'messages': return <Messages />;
       case 'skill-paths': return <SkillPaths />;
