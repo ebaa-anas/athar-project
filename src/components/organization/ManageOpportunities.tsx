@@ -31,7 +31,7 @@ import { Progress } from '../ui/progress';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { 
   MapPin, Users, Clock, Plus, Edit3, Trash2, CheckCircle, Tag, XCircle, Send,
-  ArrowLeft, MessageSquare, Loader2
+  ArrowLeft, MessageSquare, Loader2, CheckCircle2, Lock, Activity, AlertCircle
 } from 'lucide-react';
 
 export function ManageOpportunities() {
@@ -39,6 +39,9 @@ export function ManageOpportunities() {
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  
+  // 🔥 NEW: State for closing an opportunity 🔥
+  const [closingId, setClosingId] = useState<string | null>(null);
 
   const [skillInput, setSkillInput] = useState('');
   const [skills, setSkills] = useState<string[]>([]);
@@ -58,7 +61,7 @@ export function ManageOpportunities() {
     description: '',
     location: '',
     category: 'Medical', 
-    type: 'One-time', // Added to match the volunteer tabs!
+    type: 'One-time', 
     goal: '',
     contactEmail: '',
     deadline: '',
@@ -76,8 +79,14 @@ export function ManageOpportunities() {
         
         const unsubscribeData = onSnapshot(q, (snapshot) => {
           const opps = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-          // Sort by newest first (done locally to prevent Firebase index errors)
-          opps.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
+          
+          // 🔥 Sort logic: Active first, then closed, then by date 🔥
+          opps.sort((a, b) => {
+            if (a.status === 'closed' && b.status !== 'closed') return 1;
+            if (a.status !== 'closed' && b.status === 'closed') return -1;
+            return (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0);
+          });
+          
           setOpportunities(opps);
         });
         
@@ -163,7 +172,8 @@ export function ManageOpportunities() {
         updatedAt: serverTimestamp(),
         orgId: user.uid,        // The connection ID!
         orgName: orgName,       // The display name!
-        isCrisis: false         // False because this is the normal dashboard
+        isCrisis: false,        // False because this is the normal dashboard
+        status: "active"        // 🔥 ALWAYS SET NEW OPPS TO ACTIVE 🔥
       };
 
       if (editingId) {
@@ -182,7 +192,28 @@ export function ManageOpportunities() {
     setLoading(false);
   };
 
-  // 🔥 UPDATED: BROADCAST TO MISSION COMMS (MESSAGES COLLECTION) 🔥
+  // 🔥 NEW: THE CLOSE FUNCTION 🔥
+  const handleCloseOpportunity = async (oppId: string) => {
+    if (!window.confirm("Are you sure you want to close this mission? It will be archived and volunteers will no longer be able to apply.")) {
+      return;
+    }
+
+    setClosingId(oppId);
+    try {
+      const oppRef = doc(db, "opportunities", oppId);
+      await updateDoc(oppRef, {
+        status: "closed",
+        closedAt: serverTimestamp()
+      });
+    } catch (error) {
+      console.error("Error closing mission:", error);
+      alert("Failed to close mission. Please check your connection.");
+    } finally {
+      setClosingId(null);
+    }
+  };
+
+  // BROADCAST TO MISSION COMMS (MESSAGES COLLECTION)
   const handleBroadcastMessage = async () => {
     if (!broadcastMessage.trim()) return alert("Message cannot be empty.");
     
@@ -241,7 +272,12 @@ export function ManageOpportunities() {
           <div className="md:w-1/3 space-y-6">
             <Card className="border-slate-200 shadow-sm border-t-4 border-t-[#043E52]">
               <CardHeader className="pb-3">
-                <CardTitle className="text-[#043E52] text-lg leading-tight">{selectedOpp.title}</CardTitle>
+                <CardTitle className="text-[#043E52] text-lg leading-tight flex items-center gap-2">
+                  {selectedOpp.title}
+                  {selectedOpp.status === 'closed' && (
+                    <Badge className="bg-slate-200 text-slate-600 text-[10px] uppercase font-black border-none hover:bg-slate-200">Closed</Badge>
+                  )}
+                </CardTitle>
                 <CardDescription className="text-xs font-semibold">Mission Communications Hub</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -259,20 +295,24 @@ export function ManageOpportunities() {
                 <div className="space-y-2 pt-2 border-t border-slate-100">
                   <Label className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">Broadcast to Deployed Team</Label>
                   <Textarea 
-                    placeholder="Type instructions, updates, or meeting links here..." 
+                    placeholder={selectedOpp.status === 'closed' ? "This mission is closed." : "Type instructions, updates, or meeting links here..."} 
                     className="min-h-[120px] resize-none border-slate-200 focus:border-[#1C9290] text-sm"
                     value={broadcastMessage}
                     onChange={(e) => setBroadcastMessage(e.target.value)}
+                    disabled={selectedOpp.status === 'closed'}
                   />
                   <Button 
                     onClick={handleBroadcastMessage} 
-                    disabled={isBroadcasting || deployedCount === 0 || !broadcastMessage.trim()} 
+                    disabled={isBroadcasting || deployedCount === 0 || !broadcastMessage.trim() || selectedOpp.status === 'closed'} 
                     className="w-full bg-[#043E52] hover:bg-[#033040] text-white font-bold mt-2"
                   >
                     {isBroadcasting ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Send className="mr-2 h-4 w-4" /> Send to Mission Comms</>}
                   </Button>
-                  {deployedCount === 0 && (
+                  {deployedCount === 0 && selectedOpp.status !== 'closed' && (
                     <p className="text-[10px] text-orange-600 font-bold text-center mt-2">You need accepted volunteers to broadcast.</p>
+                  )}
+                  {selectedOpp.status === 'closed' && (
+                    <p className="text-[10px] text-slate-500 font-bold text-center mt-2">Broadcasting disabled for closed missions.</p>
                   )}
                 </div>
               </CardContent>
@@ -316,7 +356,7 @@ export function ManageOpportunities() {
                         }`}>
                           {app.status || 'Pending'}
                         </Badge>
-                        {app.status === 'pending' && (
+                        {app.status === 'pending' && selectedOpp.status !== 'closed' && (
                            <span className="text-[10px] text-slate-400 italic">Review in Applications tab</span>
                         )}
                       </div>
@@ -352,63 +392,105 @@ export function ManageOpportunities() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <MetricCard label="Total Missions" value={opportunities.length} icon={Tag} color="text-[#043E52]" bg="bg-slate-50" border="border-[#043E52]" />
         <MetricCard label="Active Applicants" value={opportunities.reduce((a, b) => a + (b.applicantsCount || 0), 0)} icon={Users} color="text-[#1C9290]" bg="bg-teal-50" border="border-[#1C9290]" />
-        <MetricCard label="Live Feeds" value={opportunities.length} icon={Clock} color="text-[#E16A3D]" bg="bg-orange-50" border="border-[#E16A3D]" />
+        {/* Count only active opportunities */}
+        <MetricCard label="Live Feeds" value={opportunities.filter(o => o.status !== 'closed').length} icon={Clock} color="text-[#E16A3D]" bg="bg-orange-50" border="border-[#E16A3D]" />
       </div>
 
       {/* List */}
       <div className="space-y-4">
-        {opportunities.map((opp) => (
-          <Card key={opp.id} className="border-l-4 border-l-[#1C9290]">
-            <CardContent className="p-6">
-              <div className="flex flex-col lg:flex-row gap-6">
-                <div className="flex-1">
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-3">
-                        <h3 className="text-lg font-bold text-[#043E52]">{opp.title}</h3>
-                        <Badge variant="outline" className="text-[#E16A3D] border-[#E16A3D] bg-orange-50 font-bold uppercase text-[10px]">
-                          {opp.category}
-                        </Badge>
-                        <Badge variant="secondary" className="bg-slate-100 text-slate-500 border-none font-bold uppercase text-[10px]">
-                          {opp.type}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-4 text-sm text-slate-500">
-                        <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /> {opp.location}</span>
-                        <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> Deadline: {opp.deadline}</span>
-                      </div>
-                    </div>
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="sm" onClick={() => handleEdit(opp)} className="text-slate-400 hover:text-[#043E52]"><Edit3 size={16} /></Button>
-                      <Button variant="ghost" size="sm" onClick={() => deleteDoc(doc(db, "opportunities", opp.id))} className="text-slate-400 hover:text-red-500"><Trash2 size={16} /></Button>
-                    </div>
-                  </div>
-                  <p className="text-slate-600 text-sm mb-4 bg-slate-50 p-3 rounded-lg border border-slate-100">{opp.description}</p>
-                  <div className="flex flex-wrap gap-2">
-                    {opp.skills?.map((skill: string) => (
-                      <Badge key={skill} variant="secondary" className="bg-white text-[#1C9290] border border-teal-100 text-[10px] font-bold">{skill}</Badge>
-                    ))}
-                  </div>
-                </div>
+        {opportunities.map((opp) => {
+          const isClosed = opp.status === 'closed';
 
-                <div className="lg:w-72 border-l border-slate-100 lg:pl-6">
-                    <div className="flex justify-between text-sm font-semibold mb-1 text-[#043E52]">
-                        <span>Application Progress</span>
-                        <span>{Math.round(((opp.applicantsCount || 0) / (parseInt(opp.goal) || 1)) * 100) || 0}%</span>
+          return (
+            <Card key={opp.id} className={`transition-all duration-300 ${isClosed ? 'opacity-80 bg-slate-50 border-l-4 border-l-slate-300' : 'border-l-4 border-l-[#1C9290]'}`}>
+              <CardContent className="p-6">
+                <div className="flex flex-col lg:flex-row gap-6">
+                  <div className="flex-1">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-3">
+                          {/* 🔥 Show Closed Badge 🔥 */}
+                          {isClosed && (
+                            <div className="h-8 w-8 rounded-lg bg-slate-200 flex items-center justify-center text-slate-500">
+                              <Lock size={16} />
+                            </div>
+                          )}
+                          <h3 className={`text-lg font-bold ${isClosed ? 'text-slate-600 line-through decoration-slate-300' : 'text-[#043E52]'}`}>{opp.title}</h3>
+                          
+                          {isClosed && (
+                            <Badge className="bg-slate-200 text-slate-600 font-black uppercase text-[9px] tracking-wider border-none hover:bg-slate-200">Archived</Badge>
+                          )}
+                          {!isClosed && (
+                            <>
+                              <Badge variant="outline" className="text-[#E16A3D] border-[#E16A3D] bg-orange-50 font-bold uppercase text-[10px]">
+                                {opp.category}
+                              </Badge>
+                              <Badge variant="secondary" className="bg-slate-100 text-slate-500 border-none font-bold uppercase text-[10px]">
+                                {opp.type}
+                              </Badge>
+                            </>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-4 text-sm text-slate-500">
+                          <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /> {opp.location}</span>
+                          {!isClosed && <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> Deadline: {opp.deadline}</span>}
+                        </div>
+                      </div>
+                      
+                      <div className="flex gap-1 flex-col sm:flex-row items-end sm:items-center">
+                        {/* 🔥 CLOSE BUTTON 🔥 */}
+                        {!isClosed && (
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => handleCloseOpportunity(opp.id)}
+                            disabled={closingId === opp.id}
+                            className="h-8 border-orange-200 text-orange-600 hover:bg-orange-50 hover:text-orange-700 font-bold text-[10px] uppercase tracking-widest rounded-md"
+                          >
+                            {closingId === opp.id ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />}
+                            Close
+                          </Button>
+                        )}
+                        {!isClosed && <Button variant="ghost" size="sm" onClick={() => handleEdit(opp)} className="text-slate-400 hover:text-[#043E52] h-8"><Edit3 size={16} /></Button>}
+                        
+                        {/* Keep delete for severe mistakes, but highly discourage it */}
+                        <Button variant="ghost" size="sm" onClick={() => {
+                          if (window.confirm("WARNING: Deleting this completely removes it and all volunteer hours associated with it. Are you absolutely sure?")) {
+                            deleteDoc(doc(db, "opportunities", opp.id))
+                          }
+                        }} className="text-slate-300 hover:text-red-500 h-8"><Trash2 size={16} /></Button>
+                      </div>
                     </div>
-                    <Progress value={((opp.applicantsCount || 0) / (parseInt(opp.goal) || 1)) * 100} className="h-2.5 bg-slate-100" />
-                    <div className="flex justify-between text-xs text-slate-500 mt-1.5">
-                        <span>{opp.applicantsCount || 0} Applied</span>
-                        <span>Goal: {opp.goal}</span>
-                    </div>
-                    <Button onClick={() => setSelectedOpp(opp)} className="w-full mt-4 bg-[#043E52] text-white h-9 text-sm">
-                      Manage Applicants
-                    </Button>
+                    <p className={`text-sm mb-4 p-3 rounded-lg border ${isClosed ? 'bg-white text-slate-400 border-slate-200' : 'bg-slate-50 text-slate-600 border-slate-100'}`}>{opp.description}</p>
+                    
+                    {!isClosed && (
+                      <div className="flex flex-wrap gap-2">
+                        {opp.skills?.map((skill: string) => (
+                          <Badge key={skill} variant="secondary" className="bg-white text-[#1C9290] border border-teal-100 text-[10px] font-bold">{skill}</Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className={`lg:w-72 border-l lg:pl-6 ${isClosed ? 'border-slate-200' : 'border-slate-100'}`}>
+                      <div className={`flex justify-between text-sm font-semibold mb-1 ${isClosed ? 'text-slate-500' : 'text-[#043E52]'}`}>
+                          <span>Application Progress</span>
+                          <span>{Math.round(((opp.applicantsCount || 0) / (parseInt(opp.goal) || 1)) * 100) || 0}%</span>
+                      </div>
+                      <Progress value={((opp.applicantsCount || 0) / (parseInt(opp.goal) || 1)) * 100} className={`h-2.5 ${isClosed ? 'bg-slate-200 [&>div]:bg-slate-400' : 'bg-slate-100'}`} />
+                      <div className="flex justify-between text-xs text-slate-500 mt-1.5">
+                          <span>{opp.applicantsCount || 0} Applied</span>
+                          <span>Goal: {opp.goal}</span>
+                      </div>
+                      <Button onClick={() => setSelectedOpp(opp)} className={`w-full mt-4 h-9 text-sm ${isClosed ? 'bg-slate-200 hover:bg-slate-300 text-slate-700' : 'bg-[#043E52] text-white'}`}>
+                        {isClosed ? 'View Roster' : 'Manage Applicants'}
+                      </Button>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       {/* Form Modal */}

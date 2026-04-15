@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { initializeApp } from "firebase/app";
-import { getFirestore, collection, onSnapshot, query, where, doc, getDoc, getDocs, addDoc, serverTimestamp, writeBatch } from "firebase/firestore";
+import { getFirestore, collection, onSnapshot, query, where, doc, getDoc, getDocs, addDoc, serverTimestamp, writeBatch, updateDoc } from "firebase/firestore";
 
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
@@ -13,7 +13,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { 
   AlertTriangle, MapPin, Users, Clock, Send, XCircle, 
-  Activity, Zap, Plus, ShieldAlert, Megaphone, ShieldX, Phone, Droplet, CheckCircle, Radio, Download
+  Activity, Zap, Plus, ShieldAlert, Megaphone, ShieldX, Phone, Droplet, CheckCircle, Radio, Download,
+  CheckCircle2, Lock, Loader2 // 🔥 Added new icons for the resolve feature
 } from 'lucide-react';
 
 import { useUserProfile } from '../../hooks/useUserProfile';
@@ -38,6 +39,9 @@ export function CrisisManagement() {
   const [crisisEvents, setCrisisEvents] = useState<any[]>([]);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // 🔥 NEW STATE: Tracks which crisis is being resolved
+  const [closingId, setClosingId] = useState<string | null>(null);
   
   const [selectedCrisisForTeam, setSelectedCrisisForTeam] = useState<any | null>(null);
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
@@ -69,7 +73,13 @@ export function CrisisManagement() {
         return { id: docSnap.id, ...data, createdAtText: safeDate, sortTime };
       });
       
-      events.sort((a, b) => b.sortTime - a.sortTime);
+      // Sort: Active first, then by date
+      events.sort((a, b) => {
+        if (a.status === 'Resolved' && b.status !== 'Resolved') return 1;
+        if (a.status !== 'Resolved' && b.status === 'Resolved') return -1;
+        return b.sortTime - a.sortTime;
+      });
+      
       setCrisisEvents(events);
     });
 
@@ -131,22 +141,19 @@ export function CrisisManagement() {
     setIsBroadcasting(false);
   };
 
-  // --- 4. THE FIXED SMART DISPATCH ALGORITHM ---
+  // --- 4. THE SMART DISPATCH ALGORITHM ---
   const handleActivate = async () => {
     if (!user) return;
     if (!newCrisis.title || !newCrisis.description || !newCrisis.location) return alert("Please fill all required fields");
 
     setIsSubmitting(true);
     try {
-      // 1. Fetch EVERY single volunteer from the platform
       const qUsers = query(collection(db, "users"), where("role", "==", "volunteer"));
       const usersSnapshot = await getDocs(qUsers);
       
       const allVolunteers: string[] = [];
       usersSnapshot.forEach(docSnap => {
           const vData = docSnap.data();
-          
-          // 🔥 FIXED THE isAVRMember CHECK HERE 🔥
           const isAVR = 
             vData.isAVRMember === true || 
             vData.isAVRMember === "true" || 
@@ -163,15 +170,12 @@ export function CrisisManagement() {
           }
       });
 
-      // --- FAILSAFE FOR TESTING ---
-      // If the database returns 0, we override it to test the notifications
       let finalDeployList = allVolunteers;
       if (allVolunteers.length === 0) {
           console.warn("No AVR members found. Using fallback to notify ALL volunteers for testing purposes.");
           usersSnapshot.forEach(docSnap => finalDeployList.push(docSnap.id));
       }
 
-      // 2. Save the Crisis to the Database
       const crisisDocRef = await addDoc(collection(db, "crises"), {
         orgId: user.uid, 
         organization: user.name || "Verified Organization", 
@@ -183,13 +187,12 @@ export function CrisisManagement() {
         skillsNeeded: newCrisis.skillsNeeded.split(',').map(s => s.trim()).filter(s => s !== ''), 
         commsLink: newCrisis.commsLink, 
         volunteersNeeded: Number(newCrisis.volunteersNeeded),
-        volunteersActivated: finalDeployList.length, // Log the fleet activation
+        volunteersActivated: finalDeployList.length,
         volunteersResponded: 0,
         status: 'Active',
         createdAt: serverTimestamp()
       });
 
-      // 3. Blast the Red SOS Notification
       if (finalDeployList.length > 0) {
         const batch = writeBatch(db);
         finalDeployList.forEach(vId => {
@@ -225,11 +228,33 @@ export function CrisisManagement() {
     setIsSubmitting(false);
   };
 
+  // 🔥 5. NEW FUNCTION: STAND DOWN (RESOLVE) CRISIS 🔥
+  const handleResolveCrisis = async (crisisId: string) => {
+    if (!window.confirm("Are you sure you want to stand down? This will close the emergency and volunteers will be notified that the crisis is resolved.")) {
+      return;
+    }
+
+    setClosingId(crisisId);
+    try {
+      const crisisRef = doc(db, "crises", crisisId);
+      await updateDoc(crisisRef, {
+        status: "Resolved",
+        resolvedAt: serverTimestamp()
+      });
+      // Optionally blast a final message to the team that they can stand down
+    } catch (error) {
+      console.error("Error resolving crisis:", error);
+      alert("Failed to resolve crisis.");
+    } finally {
+      setClosingId(null);
+    }
+  };
+
 
   // --- SECURITY LOCK ---
   if (loading) return <div className="p-10 font-bold text-[#043E52]">Verifying Organization Status...</div>;
   
-  if (!user?.verified) {
+  if (!user?.verified && user?.verificationStatus !== 'verified') {
     return (
       <div className="flex flex-col items-center justify-center min-h-[70vh] space-y-6 text-center px-4 animate-in fade-in zoom-in-95 duration-500">
         <div className="bg-slate-100 p-8 rounded-full border-4 border-slate-200 shadow-sm">
@@ -246,6 +271,7 @@ export function CrisisManagement() {
     );
   }
 
+  // Use activeEvents for the metric cards at the top
   const activeEvents = crisisEvents.filter(e => e.status === 'Active');
   const totalActivated = activeEvents.reduce((acc, e) => acc + (e.volunteersActivated || 0), 0);
   const totalResponded = activeEvents.reduce((acc, e) => acc + (e.volunteersResponded || 0), 0);
@@ -279,17 +305,20 @@ export function CrisisManagement() {
 
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-[#043E52]">Live Operations Feed</h2>
+            <h2 className="text-lg font-bold text-[#043E52]">Operations Feed</h2>
             <Badge variant="outline" className="text-[#1C9290] border-[#1C9290] bg-teal-50">Auto-Refreshing</Badge>
         </div>
         
-        {activeEvents.length === 0 && <p className="text-slate-500 italic p-4">No active emergencies at this time.</p>}
+        {crisisEvents.length === 0 && <p className="text-slate-500 italic p-4">No emergencies declared yet.</p>}
 
-        {activeEvents.map((event) => {
+        {/* 🔥 Mapping over ALL events, applying soft-close UI to resolved ones 🔥 */}
+        {crisisEvents.map((event) => {
+          const isResolved = event.status === 'Resolved';
           const progress = Math.round((event.volunteersResponded / event.volunteersNeeded) * 100) || 0;
           
           return (
             <Card key={event.id} className={`border-l-4 shadow-sm hover:shadow-md transition-all ${
+                isResolved ? 'border-l-slate-300 opacity-80 bg-slate-50' : 
                 event.severity === 'Critical' ? 'border-l-[#E16A3D]' : 'border-l-orange-400'
             }`}>
                 <CardContent className="p-6">
@@ -298,10 +327,23 @@ export function CrisisManagement() {
                             <div className="flex items-start justify-between mb-2">
                                 <div className="space-y-1">
                                     <div className="flex items-center gap-3">
-                                        <h3 className="text-lg font-bold text-[#043E52]">{event.title}</h3>
-                                        <Badge className={`${event.severity === 'Critical' ? 'bg-[#E16A3D]' : 'bg-orange-500'} text-white border-none`}>
-                                            {event.severity.toUpperCase()}
-                                        </Badge>
+                                        {/* Lock icon for resolved */}
+                                        {isResolved && (
+                                          <div className="h-8 w-8 rounded-lg bg-slate-200 flex items-center justify-center text-slate-500">
+                                            <Lock size={16} />
+                                          </div>
+                                        )}
+                                        <h3 className={`text-lg font-bold ${isResolved ? 'text-slate-600 line-through decoration-slate-300' : 'text-[#043E52]'}`}>{event.title}</h3>
+                                        
+                                        {isResolved ? (
+                                          <Badge className="bg-slate-200 text-slate-600 font-black uppercase text-[9px] tracking-wider border-none">
+                                            Resolved
+                                          </Badge>
+                                        ) : (
+                                          <Badge className={`${event.severity === 'Critical' ? 'bg-[#E16A3D]' : 'bg-orange-500'} text-white border-none`}>
+                                              {event.severity.toUpperCase()}
+                                          </Badge>
+                                        )}
                                     </div>
                                     <div className="flex items-center gap-4 text-sm text-slate-500">
                                         <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /> {event.location}</span>
@@ -309,47 +351,66 @@ export function CrisisManagement() {
                                     </div>
                                 </div>
                             </div>
-                            <p className="text-slate-600 text-sm leading-relaxed mb-4 bg-slate-50 p-3 rounded-lg border border-slate-100">{event.description}</p>
-                            <div className="flex flex-wrap gap-2">
-                                {(event.skillsNeeded || []).map((skill: string) => (
-                                    <Badge key={skill} variant="secondary" className="bg-slate-100 text-slate-600 border border-slate-200">{skill}</Badge>
-                                ))}
-                            </div>
+                            <p className={`text-sm leading-relaxed mb-4 p-3 rounded-lg border ${isResolved ? 'bg-white text-slate-400 border-slate-200' : 'bg-slate-50 text-slate-600 border-slate-100'}`}>
+                              {event.description}
+                            </p>
+                            {!isResolved && (
+                              <div className="flex flex-wrap gap-2">
+                                  {(event.skillsNeeded || []).map((skill: string) => (
+                                      <Badge key={skill} variant="secondary" className="bg-slate-100 text-slate-600 border border-slate-200">{skill}</Badge>
+                                  ))}
+                              </div>
+                            )}
                         </div>
 
-                        <div className="lg:w-72 flex flex-col justify-between border-t lg:border-t-0 lg:border-l border-slate-100 lg:pl-6 pt-4 lg:pt-0">
+                        <div className={`lg:w-80 flex flex-col justify-between border-t lg:border-t-0 lg:border-l lg:pl-6 pt-4 lg:pt-0 ${isResolved ? 'border-slate-200' : 'border-slate-100'}`}>
                             <div className="space-y-4">
                                 <div>
-                                    <div className="flex justify-between text-sm font-semibold mb-1 text-[#043E52]">
+                                    <div className={`flex justify-between text-sm font-semibold mb-1 ${isResolved ? 'text-slate-500' : 'text-[#043E52]'}`}>
                                         <span>Mobilization</span>
                                         <span>{Math.min(progress, 100)}%</span>
                                     </div>
-                                    <Progress value={Math.min(progress, 100)} className="h-2.5 bg-slate-100" />
+                                    <Progress value={Math.min(progress, 100)} className={`h-2.5 ${isResolved ? 'bg-slate-200 [&>div]:bg-slate-400' : 'bg-slate-100'}`} />
                                     <div className="flex justify-between text-xs text-slate-500 mt-1.5">
                                         <span>{event.volunteersResponded} Responded</span>
                                         <span>{event.volunteersActivated} Notified</span>
                                     </div>
                                 </div>
                                 
-                                <div className="grid grid-cols-2 gap-2 text-center">
-                                    <div className="bg-[#1C9290]/5 p-2 rounded-lg border border-[#1C9290]/10">
-                                        <p className="text-xs text-slate-500">Target</p>
-                                        <p className="font-bold text-[#1C9290]">{event.volunteersNeeded}</p>
-                                    </div>
-                                    <div className="bg-[#043E52]/5 p-2 rounded-lg border border-[#043E52]/10">
-                                        <p className="text-xs text-slate-500">Shortfall</p>
-                                        <p className="font-bold text-[#043E52]">{Math.max(0, event.volunteersNeeded - event.volunteersResponded)}</p>
-                                    </div>
-                                </div>
+                                {!isResolved && (
+                                  <div className="grid grid-cols-2 gap-2 text-center">
+                                      <div className="bg-[#1C9290]/5 p-2 rounded-lg border border-[#1C9290]/10">
+                                          <p className="text-xs text-slate-500">Target</p>
+                                          <p className="font-bold text-[#1C9290]">{event.volunteersNeeded}</p>
+                                      </div>
+                                      <div className="bg-[#043E52]/5 p-2 rounded-lg border border-[#043E52]/10">
+                                          <p className="text-xs text-slate-500">Shortfall</p>
+                                          <p className="font-bold text-[#043E52]">{Math.max(0, event.volunteersNeeded - event.volunteersResponded)}</p>
+                                      </div>
+                                  </div>
+                                )}
                             </div>
 
+                            {/* 🔥 ACTION BUTTONS 🔥 */}
                             <div className="flex gap-2 mt-4">
                                 <Button 
                                   onClick={() => handleViewTeam(event)}
-                                  className="flex-1 bg-[#043E52] hover:bg-[#033040] text-white h-12 text-sm font-bold shadow-md"
+                                  className={`flex-1 text-white h-11 text-sm font-bold shadow-sm ${isResolved ? 'bg-slate-400 hover:bg-slate-500' : 'bg-[#043E52] hover:bg-[#033040]'}`}
                                 >
-                                    <Radio className="mr-2 h-4 w-4" /> Command Hub
+                                    <Radio className="mr-2 h-4 w-4" /> {isResolved ? 'View Logs' : 'Command Hub'}
                                 </Button>
+                                
+                                {!isResolved && (
+                                  <Button 
+                                    variant="outline"
+                                    onClick={() => handleResolveCrisis(event.id)}
+                                    disabled={closingId === event.id}
+                                    className="flex-1 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 h-11 text-sm font-bold shadow-sm"
+                                  >
+                                      {closingId === event.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}
+                                      Stand Down
+                                  </Button>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -367,8 +428,13 @@ export function CrisisManagement() {
             <CardHeader className="bg-[#043E52] text-white p-6 shrink-0">
               <div className="flex justify-between items-start">
                 <div>
-                  <Badge className="bg-white/20 text-white border-none mb-2 tracking-widest">COMMAND HUB</Badge>
-                  <CardTitle className="text-2xl font-bold">{selectedCrisisForTeam.title}</CardTitle>
+                  <Badge className="bg-white/20 text-white border-none mb-2 tracking-widest">
+                    {selectedCrisisForTeam.status === 'Resolved' ? 'HISTORICAL LOGS' : 'COMMAND HUB'}
+                  </Badge>
+                  <CardTitle className="text-2xl font-bold flex items-center gap-2">
+                    {selectedCrisisForTeam.title}
+                    {selectedCrisisForTeam.status === 'Resolved' && <Badge className="bg-slate-500 text-white border-none text-[10px] ml-2">RESOLVED</Badge>}
+                  </CardTitle>
                   <p className="text-teal-100 mt-1">{teamMembers.length} Volunteers Deployed to Sector</p>
                 </div>
                 <Button variant="ghost" onClick={() => setSelectedCrisisForTeam(null)} className="text-white hover:bg-white/20 rounded-full h-8 w-8 p-0">✕</Button>
@@ -454,23 +520,27 @@ export function CrisisManagement() {
                     <div className="space-y-3">
                       <Label className="font-bold text-slate-700 uppercase tracking-widest text-xs">Message Payload</Label>
                       <Textarea 
-                        placeholder="e.g., URGENT: The rally point has been moved to the South Gate. Bring heavy gloves. Acknowledge upon receipt."
+                        placeholder={selectedCrisisForTeam.status === 'Resolved' ? "Communications disabled. This crisis is resolved." : "e.g., URGENT: The rally point has been moved to the South Gate. Bring heavy gloves. Acknowledge upon receipt."}
                         className="min-h-[150px] border-slate-200 focus:border-[#E16A3D] focus:ring-[#E16A3D] text-base p-4 rounded-xl resize-none"
                         value={broadcastMessage}
                         onChange={(e) => setBroadcastMessage(e.target.value)}
+                        disabled={selectedCrisisForTeam.status === 'Resolved'}
                       />
                     </div>
 
                     <Button 
-                      disabled={isBroadcasting || teamMembers.length === 0}
+                      disabled={isBroadcasting || teamMembers.length === 0 || selectedCrisisForTeam.status === 'Resolved'}
                       onClick={handleMassBroadcast}
                       className="w-full h-14 bg-[#E16A3D] hover:bg-[#c2562d] text-white font-black text-lg rounded-xl shadow-lg transition-transform active:scale-95"
                     >
                       {isBroadcasting ? "TRANSMITTING TO FLEET..." : `SEND TO ALL ${teamMembers.length} VOLUNTEERS`}
                     </Button>
                     
-                    {teamMembers.length === 0 && (
+                    {teamMembers.length === 0 && selectedCrisisForTeam.status !== 'Resolved' && (
                       <p className="text-center text-red-500 text-sm font-medium">Cannot broadcast: No volunteers have joined yet.</p>
+                    )}
+                    {selectedCrisisForTeam.status === 'Resolved' && (
+                      <p className="text-center text-slate-500 text-sm font-medium">Broadcasting is disabled for resolved crises.</p>
                     )}
                   </div>
                 </TabsContent>

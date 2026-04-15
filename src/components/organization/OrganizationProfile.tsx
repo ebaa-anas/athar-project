@@ -19,6 +19,10 @@ import {
 import { useUserProfile } from '../../hooks/useUserProfile';
 import { updateOrganizationProfile } from '../../lib/authService';
 
+// 🔥 IMPORT FIREBASE DATABASE TOOLS 🔥
+import { db } from '../../lib/firebase';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
+
 // 🔥 PREDEFINED LIST FOR VOLUNTEER MATCHING
 const PREDEFINED_CAUSES = [
   "Disaster Relief", "Education", "Environment & Climate", 
@@ -33,6 +37,9 @@ export function OrganizationProfile() {
   const [isSaving, setIsSaving] = useState(false);
   const [showVerifyModal, setShowVerifyModal] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+
+  // --- LIVE STATS STATE ---
+  const [orgStats, setOrgStats] = useState({ hours: 0, missions: 0, volunteers: 0 });
 
   // --- IMAGE UPLOAD STATES ---
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
@@ -75,7 +82,41 @@ export function OrganizationProfile() {
     }
   }, [user]);
 
-  const isVerified = user?.verified || false;
+  // 🔥 REAL-TIME STATS FETCHING 🔥
+  useEffect(() => {
+    if (!user?.uid) return;
+
+    // 1. Fetch Total Missions (Opportunities created by this org)
+    const qMissions = query(collection(db, "opportunities"), where("orgId", "==", user.uid));
+    const unsubMissions = onSnapshot(qMissions, (snap) => {
+      setOrgStats(prev => ({ ...prev, missions: snap.docs.length }));
+    });
+
+    // 2. Fetch Volunteers and Impact Hours
+    const qApps = query(collection(db, "applications"), where("orgId", "==", user.uid));
+    const unsubApps = onSnapshot(qApps, (snap) => {
+      const apps = snap.docs.map(d => d.data());
+      
+      // Only count accepted or completed applications
+      const activeApps = apps.filter(a => a.status === 'accepted' || a.status === 'completed');
+      
+      // Calculate total hours
+      const totalHours = activeApps.reduce((acc, curr) => acc + (curr.hoursContributed || 0), 0);
+      
+      // Calculate unique volunteers (so a person applying to 3 missions counts as 1 volunteer)
+      const uniqueVolunteers = new Set(activeApps.map(a => a.volunteerId)).size;
+
+      setOrgStats(prev => ({
+        ...prev,
+        volunteers: uniqueVolunteers || activeApps.length, // Fallback
+        hours: totalHours
+      }));
+    });
+
+    return () => { unsubMissions(); unsubApps(); };
+  }, [user]);
+
+  const isVerified = user?.verified || user?.verificationStatus === 'verified' || false;
   const vStatus = user?.verificationStatus || "unverified";
 
   // 🔥 CAUSE TOGGLE LOGIC FOR MATCHING
@@ -266,7 +307,6 @@ export function OrganizationProfile() {
                     <Edit3 className="mr-2 h-4 w-4" /> Edit Profile
                   </Button>
                 ) : (
-                  // 🔥 ORANGE ACCENT APPLIED TO SAVE BUTTON
                   <Button onClick={handleSave} disabled={isSaving} size="sm" className="w-full md:w-auto bg-orange-500 hover:bg-orange-600 text-white font-bold shadow-sm text-xs uppercase tracking-wider h-9 transition-colors">
                     <Save className="mr-2 h-4 w-4" /> {isSaving ? "Saving..." : "Save Changes"}
                   </Button>
@@ -284,10 +324,11 @@ export function OrganizationProfile() {
         <div className="lg:col-span-2 space-y-6">
           
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+             {/* 🔥 REPLACED ZEROES WITH DYNAMIC DATABASE STATS 🔥 */}
              {[
-               { label: 'Impact Hours', val: '0', icon: Timer, color: 'text-[#1C9290]', bg: 'bg-teal-50' },
-               { label: 'Missions', val: '0', icon: Activity, color: 'text-orange-500', bg: 'bg-orange-50' }, // 🔥 Orange applied to stats
-               { label: 'Volunteers', val: '0', icon: Users2, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+               { label: 'Impact Hours', val: orgStats.hours.toString(), icon: Timer, color: 'text-[#1C9290]', bg: 'bg-teal-50' },
+               { label: 'Missions', val: orgStats.missions.toString(), icon: Activity, color: 'text-orange-500', bg: 'bg-orange-50' },
+               { label: 'Volunteers', val: orgStats.volunteers.toString(), icon: Users2, color: 'text-indigo-600', bg: 'bg-indigo-50' },
                { label: 'Trust Rank', val: isVerified ? 'A+' : 'N/A', icon: Scale, color: 'text-amber-600', bg: 'bg-amber-50' }
              ].map((m, i) => (
                <Card key={i} className="border border-slate-200 shadow-sm p-3 flex flex-col items-center justify-center text-center bg-white rounded-xl hover:border-orange-200 transition-colors">
@@ -314,7 +355,6 @@ export function OrganizationProfile() {
                  )}
                </div>
 
-               {/* --- 🔥 CONTROLLED VOCABULARY FOR CAUSES --- */}
                <div className="space-y-3 pt-2">
                  <div className="flex items-center justify-between">
                    <Label className="font-bold text-[#043E52] text-[10px] uppercase tracking-widest flex items-center gap-1.5">
@@ -354,7 +394,6 @@ export function OrganizationProfile() {
                    </div>
                  )}
                </div>
-               {/* -------------------------------------- */}
                
                <Separator className="bg-slate-100" />
                

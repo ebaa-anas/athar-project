@@ -17,11 +17,12 @@ import { Button } from '../ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Badge } from '../ui/badge';
 import atharLogo from "../../assets/athar-logo.png";
+import { useUserProfile } from '../../hooks/useUserProfile';
 
 interface SidebarProps {
   activeSection: string;
   onSectionChange: (section: string) => void;
-  onLogout: () => void; // <--- ADDED THIS
+  onLogout: () => void;
 }
 
 interface MenuItem {
@@ -36,7 +37,7 @@ const menuItems: MenuItem[] = [
   { id: 'profile', label: 'Organization Profile', icon: Building2, badge: undefined },
   { id: 'overview', label: 'Overview', icon: LayoutDashboard, badge: undefined },
   { id: 'crisis-management', label: 'Crisis Management', icon: AlertTriangle, verifiedOnly: true, badge: undefined },
-  { id: "messages", label: "Mission Comms", icon: MessageSquare, badge: undefined} , 
+  { id: "messages", label: "Mission Comms", icon: MessageSquare, badge: undefined }, 
   { id: 'opportunities', label: 'Opportunities', icon: Briefcase, badge: undefined },
   { id: 'volunteers', label: 'Volunteers', icon: Users, badge: undefined },
   { id: 'applications', label: 'Applications', icon: FileText, badge: '3' },
@@ -49,8 +50,11 @@ const menuItems: MenuItem[] = [
 export function OrganizationSidebar({
   activeSection,
   onSectionChange,
-  onLogout // <--- ADDED THIS
+  onLogout 
 }: SidebarProps) {
+  // Pull live data from Firestore
+  const { user } = useUserProfile();
+  
   return (
     <aside className="fixed inset-y-0 left-0 w-64 h-screen bg-[#043E52] flex flex-col shadow-2xl z-50 font-sans">
       
@@ -71,18 +75,27 @@ export function OrganizationSidebar({
         <div className="px-3 mb-2">
           <div className="flex items-center gap-3 bg-white/5 p-3 rounded-xl border border-white/5 hover:border-[#1C9290]/50 transition-colors cursor-default backdrop-blur-sm">
             <Avatar className="w-9 h-9 border border-[#1C9290]/50">
-              <AvatarImage src="https://images.unsplash.com/photo-1557683316-973673baf926?w=100&h=100&fit=crop" />
+              <AvatarImage src={user?.photoURL || "https://images.unsplash.com/photo-1557683316-973673baf926?w=100&h=100&fit=crop"} />
               <AvatarFallback className="bg-[#1C9290] text-white text-xs font-bold">ORG</AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <p className="truncate text-white text-sm font-semibold tracking-tight">Local Food Bank</p>
+              
+              {/* 🔥 DYNAMIC ORGANIZATION NAME 🔥 */}
+              <p className="truncate text-white text-sm font-semibold tracking-tight">
+                {user?.name || user?.orgName || "Organization"}
+              </p>
+              
+              {/* 🔥 DYNAMIC VERIFICATION STATUS 🔥 */}
               <div className="flex items-center gap-1.5 mt-0.5">
                   <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-[#1C9290]"></span>
+                    <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${user?.verificationStatus === 'verified' ? 'bg-emerald-400' : 'bg-orange-400'}`}></span>
+                    <span className={`relative inline-flex rounded-full h-2 w-2 ${user?.verificationStatus === 'verified' ? 'bg-[#1C9290]' : 'bg-orange-500'}`}></span>
                   </span>
-                  <p className="text-[11px] text-slate-300 font-medium">Verified</p>
+                  <p className="text-[11px] text-slate-300 font-medium">
+                    {user?.verificationStatus === 'verified' ? 'Verified' : 'Audit Pending'}
+                  </p>
               </div>
+
             </div>
           </div>
         </div>
@@ -140,7 +153,7 @@ export function OrganizationSidebar({
       <div className="flex-none p-4 border-t border-white/5 bg-[#033040]/30">
         <Button
           variant="ghost"
-          onClick={onLogout} // <--- Connected here
+          onClick={onLogout}
           className="w-full justify-start text-slate-400 hover:bg-[#E16A3D] hover:text-white transition-all rounded-lg h-10 px-3"
         >
           <LogOut className="mr-3 h-[18px] w-[18px]" />

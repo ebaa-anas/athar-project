@@ -4,12 +4,11 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Separator } from './ui/separator';
-import { Mail, Lock, User, ArrowRight, X, ShieldAlert } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, X, ShieldAlert, Eye, EyeOff } from 'lucide-react'; // 🔥 Added Eye & EyeOff
 import atharLogo from '../assets/athar-logo.png';
 import { auth } from '../lib/firebase';
 import { signUpVolunteer, loginUser, signUpOrganization, loginWithGoogle } from '../lib/authService';
 
-// 🔥 NEW: Import the Firebase password reset function 🔥
 import { sendPasswordResetEmail } from 'firebase/auth'; 
 
 interface LoginSignupProps {
@@ -28,6 +27,9 @@ export function LoginSignup({ onLogin, onClose, userType }: LoginSignupProps) {
   const [signupEmail, setSignupEmail] = useState('');
   const [signupPass, setSignupPass] = useState('');
   const [loading, setLoading] = useState(false);
+  
+  // 🔥 NEW: State for Password Visibility 🔥
+  const [showPassword, setShowPassword] = useState(false);
 
   // --- THEME CONFIG ---
   const getTheme = () => {
@@ -71,16 +73,14 @@ export function LoginSignup({ onLogin, onClose, userType }: LoginSignupProps) {
 
     setLoading(true);
     
-    // Use our new loginUser function
     const result = await loginUser(loginEmail, loginPassword);
 
     if (result.success) {
-      // THE MAGIC AUTHORIZATION LOCK
       if (result.role !== userType) {
         alert(`Access Denied: You are registered as a ${result.role}, not an ${userType}.`);
-        auth.signOut(); // Kick them back out of Firebase session
+        auth.signOut(); 
       } else {
-        onLogin(); // Roles match, let them in!
+        onLogin(); 
       }
     } else {
       alert("Login Failed: " + result.error);
@@ -100,7 +100,6 @@ export function LoginSignup({ onLogin, onClose, userType }: LoginSignupProps) {
 
     let success = false;
 
-    // The Magic Switch: Check which portal they are trying to use
     if (userType === 'organization') {
       success = await signUpOrganization(signupEmail, signupPass, signupName);
     } else {
@@ -113,7 +112,6 @@ export function LoginSignup({ onLogin, onClose, userType }: LoginSignupProps) {
     setLoading(false);
   };
 
-  // 🔥 NEW: Forgot Password Handler 🔥
   const handleForgotPassword = async (e: React.MouseEvent) => {
     e.preventDefault();
     
@@ -133,7 +131,6 @@ export function LoginSignup({ onLogin, onClose, userType }: LoginSignupProps) {
 
   const handleSocialLogin = async () => {
     setLoading(true);
-    // Don't allow admins to use social login
     if (userType === 'admin') {
         setLoading(false);
         return; 
@@ -209,7 +206,7 @@ export function LoginSignup({ onLogin, onClose, userType }: LoginSignupProps) {
                 </p>
             </div>
 
-            {/* 🔥 SMART RENDERING: Admins only get Login form, NO Tabs 🔥 */}
+            {/* SMART RENDERING: Admins only get Login form */}
             {userType === 'admin' ? (
               <div className="mt-8">
                 <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl mb-8 flex items-center gap-3">
@@ -231,16 +228,25 @@ export function LoginSignup({ onLogin, onClose, userType }: LoginSignupProps) {
                     <div className="space-y-2">
                         <div className="flex justify-between items-center">
                             <Label htmlFor="password">Secure Password</Label>
-                            {/* 🔥 ADDED: Forgot password for Admins too 🔥 */}
                             <a href="#" onClick={handleForgotPassword} className="text-xs font-semibold text-[#043E52] hover:text-[#033040]">Forgot password?</a>
                         </div>
                         <div className="relative">
                             <Lock className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
                             <Input 
-                                id="password" type="password" placeholder="••••••••" 
-                                className="pl-10 h-11 bg-slate-50 border-slate-200"
+                                id="password" 
+                                type={showPassword ? "text" : "password"} // 🔥 Dynamic Type
+                                placeholder="••••••••" 
+                                className="pl-10 pr-10 h-11 bg-slate-50 border-slate-200" // Added pr-10 for padding
                                 value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)}
                             />
+                            {/* 🔥 Eye Toggle Button 🔥 */}
+                            <button 
+                              type="button"
+                              onClick={() => setShowPassword(!showPassword)}
+                              className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 transition-colors"
+                            >
+                              {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                            </button>
                         </div>
                     </div>
                     <Button type="submit" disabled={loading} className={`w-full h-11 ${theme.button} text-white`}>
@@ -272,16 +278,25 @@ export function LoginSignup({ onLogin, onClose, userType }: LoginSignupProps) {
                           <div className="space-y-2">
                               <div className="flex justify-between items-center">
                                   <Label htmlFor="password">Password</Label>
-                                  {/* 🔥 WIRED UP: Forgot password click handler 🔥 */}
                                   <a href="#" onClick={handleForgotPassword} className="text-xs font-semibold text-slate-500 hover:text-slate-800">Forgot password?</a>
                               </div>
                               <div className="relative">
                                   <Lock className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
                                   <Input 
-                                      id="password" type="password" placeholder="••••••••" 
-                                      className="pl-10 h-11 bg-slate-50 border-slate-200"
+                                      id="password" 
+                                      type={showPassword ? "text" : "password"} // 🔥 Dynamic Type
+                                      placeholder="••••••••" 
+                                      className="pl-10 pr-10 h-11 bg-slate-50 border-slate-200"
                                       value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)}
                                   />
+                                  {/* 🔥 Eye Toggle Button 🔥 */}
+                                  <button 
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 transition-colors"
+                                  >
+                                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                  </button>
                               </div>
                           </div>
                           <Button type="submit" disabled={loading} className={`w-full h-11 ${theme.button} text-white`}>
@@ -328,12 +343,20 @@ export function LoginSignup({ onLogin, onClose, userType }: LoginSignupProps) {
                                   <Lock className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
                                   <Input 
                                       id="signup-pass" 
-                                      type="password" 
+                                      type={showPassword ? "text" : "password"} // 🔥 Dynamic Type
                                       placeholder="••••••••" 
-                                      className="pl-10 h-11 bg-slate-50 border-slate-200"
+                                      className="pl-10 pr-10 h-11 bg-slate-50 border-slate-200"
                                       value={signupPass} 
                                       onChange={(e) => setSignupPass(e.target.value)}
                                   />
+                                  {/* 🔥 Eye Toggle Button 🔥 */}
+                                  <button 
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 transition-colors"
+                                  >
+                                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                  </button>
                               </div>
                           </div>
 
@@ -345,7 +368,7 @@ export function LoginSignup({ onLogin, onClose, userType }: LoginSignupProps) {
               </Tabs>
             )}
 
-            {/* 🔥 SMART RENDERING: Hide Social Logins for Admins 🔥 */}
+            {/* Social Logins */}
             {userType !== 'admin' && (
               <>
                 <div className="relative mt-8">
@@ -353,7 +376,6 @@ export function LoginSignup({ onLogin, onClose, userType }: LoginSignupProps) {
                     <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-slate-400 font-medium">Or continue with</span></div>
                 </div>
 
-                {/* 🔥 UPDATED: Google Button Centered and Sized 🔥 */}
                 <div className="mt-6 flex justify-center">
                     <Button 
                       type="button"
