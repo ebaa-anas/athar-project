@@ -26,7 +26,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 // 🔥 INITIALIZE GEMINI AI 🔥
-const genAI = new GoogleGenerativeAI("AIzaSyDiNP9rAwU2fyxz9E1VgkQGnnV_p8LMjgY");
+const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
 
 export function AdminOverview() {
   const [loading, setLoading] = useState(true);
