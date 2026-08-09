@@ -787,8 +787,11 @@ with:
 
 - [ ] **Step 9: Type-check and build**
 
-Run: `npm run build`
-Expected: succeeds with no TypeScript errors (no remaining references to `chatSession`, `genAI`, or `GoogleGenerativeAI` in this file — check with `grep -n "chatSession\|genAI\|GoogleGenerativeAI" src/components/TrainingSimulator.tsx`, expect no output).
+Run: `npm run build 2>&1 | grep TrainingSimulator.tsx`
+
+Note: `npm run build` itself already fails on this repo — there are ~82 pre-existing TypeScript errors unrelated to this plan, including 6 pre-existing unused-import errors already in this exact file before this task (`AvatarImage`, `AlertCircle`, `ShieldCheck`, `Target`, `Users`, `Icon` at lines 11/15/16/16/16/700) — those are not this task's responsibility and may still appear.
+
+Expected: the grep output contains only those same 6 pre-existing unused-import lines (or fewer, if any of those imports happen to get removed incidentally) — zero lines mentioning `chatSession`, `genAI`, or `GoogleGenerativeAI`. Confirm the latter directly with `grep -n "chatSession\|genAI\|GoogleGenerativeAI" src/components/TrainingSimulator.tsx`, expect no output.
 
 - [ ] **Step 10: Manually verify in the browser**
 
@@ -859,8 +862,11 @@ with:
 
 - [ ] **Step 4: Type-check and build**
 
-Run: `npm run build`
-Expected: succeeds with no TypeScript errors. Confirm with `grep -n "genAI\|GoogleGenerativeAI" src/components/organization/OrganizationMessages.tsx` — expect no output.
+Run: `npm run build 2>&1 | grep OrganizationMessages.tsx`
+
+Note: `npm run build` itself already fails on this repo — there are ~82 pre-existing TypeScript errors unrelated to this plan, in other files. This file has zero pre-existing errors, so unlike `TrainingSimulator.tsx` in Task 3, the bar here is a clean file.
+
+Expected: no output. Confirm with `grep -n "genAI\|GoogleGenerativeAI" src/components/organization/OrganizationMessages.tsx` — expect no output.
 
 - [ ] **Step 5: Manually verify in the browser**
 

@@ -665,8 +665,8 @@ reads `role` from `users/{uid}` to route to the admin dashboard.
 
 - [ ] **Step 4: Verify the app still builds**
 
-Run: `npm run build`
-Expected: succeeds with no TypeScript errors referencing `signUpAdmin`.
+Run: `npm run build 2>&1 | grep -i signUpAdmin`
+Expected: no output. Note: `npm run build` itself already fails with ~82 pre-existing TypeScript errors unrelated to this plan (unused imports, `chart.tsx`/`calendar.tsx` type issues) — that's a pre-existing baseline condition, not something this task introduces or is responsible for fixing. The only thing this step verifies is that no error mentions `signUpAdmin`.
 
 - [ ] **Step 5: Commit**
 
