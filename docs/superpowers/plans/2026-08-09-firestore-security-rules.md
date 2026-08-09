@@ -521,8 +521,11 @@ service cloud.firestore {
       allow create: if request.auth != null
         && request.auth.uid == uid
         && (
-          request.resource.data.get('verified', false) == false
-          || request.resource.data.tier == 'tier1'
+          request.resource.data.tier == 'tier1'
+          || (
+            request.resource.data.get('verified', false) == false
+            && request.resource.data.get('verificationStatus', '') != 'verified'
+          )
         );
 
       allow update: if request.auth != null
@@ -550,7 +553,8 @@ service cloud.firestore {
         || (request.auth != null && request.auth.uid == resource.data.orgId);
 
       allow create: if request.auth != null
-        && request.auth.uid == request.resource.data.orgId;
+        && request.auth.uid == request.resource.data.orgId
+        && request.resource.data.get('status', 'pending') == 'pending';
 
       allow update: if isAdmin();
       allow delete: if false;
@@ -562,6 +566,8 @@ service cloud.firestore {
   }
 }
 ```
+
+Note on the `organizations` create rule: it must constrain **both** `verified` and `verificationStatus` on the tier2/tier3 branch, not just `verified` — the app's own read paths (e.g. `OrganizationOverview.tsx`, `Organizations.tsx`, `admin/VerificationRequests.tsx`) treat `verificationStatus === 'verified'` as equivalent to `verified === true`, so constraining only one field leaves the other as a bypass. Add a test case for this: a tier2 org creating itself with `verified: false` but `verificationStatus: 'verified'` must be rejected.
 
 - [ ] **Step 4: Run the full suite to confirm everything passes**
 
