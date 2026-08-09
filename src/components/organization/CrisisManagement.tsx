@@ -297,41 +297,28 @@ export function CrisisManagement() {
     
     setIsGeneratingTasks(true);
     try {
-      // Connects to OpenRouter using your existing Llama-3 preference
-      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      const response = await fetch("/api/crisis-tasking", {
         method: "POST",
-        headers: {
-          "Authorization": `Bearer ${import.meta.env.VITE_OPENROUTER_API_KEY}`,
-          "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "meta-llama/llama-3-8b-instruct",
-          messages: [
-            {
-              role: "system",
-              content: "You are an expert crisis management AI for Project Athar. Based on the crisis title, location, and severity, quickly generate a professional situation report (description) and a comma-separated list of the 5 most critical skills needed (skillsNeeded). Return ONLY valid JSON with keys: 'description' and 'skillsNeeded'."
-            },
-            {
-              role: "user",
-              content: `Title: ${newCrisis.title}, Location: ${newCrisis.location}, Severity: ${newCrisis.severity}`
-            }
-          ]
-        })
+          title: newCrisis.title,
+          location: newCrisis.location,
+          severity: newCrisis.severity,
+        }),
       });
 
-      const data = await response.json();
-      const aiContent = data.choices[0].message.content;
-      
-      // Clean potential markdown from Llama-3 response
-      const cleanedJson = aiContent.replace(/```json/g, '').replace(/```/g, '').trim();
-      const parsed = JSON.parse(cleanedJson);
+      if (!response.ok) {
+        throw new Error("Crisis tasking proxy request failed");
+      }
+
+      const { description, skillsNeeded } = await response.json();
 
       setNewCrisis(prev => ({
         ...prev,
-        description: parsed.description || prev.description,
-        skillsNeeded: parsed.skillsNeeded || prev.skillsNeeded
+        description: description || prev.description,
+        skillsNeeded: skillsNeeded || prev.skillsNeeded
       }));
-      
+
     } catch (error) {
       console.error("AI Generation Error:", error);
       alert("Failed to generate AI tasks. Please check your API connection.");
