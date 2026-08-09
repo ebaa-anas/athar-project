@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { 
-  collection, onSnapshot, query, where, addDoc, doc, updateDoc, serverTimestamp 
+import {
+  collection, onSnapshot, query, where, addDoc, doc, updateDoc, serverTimestamp
 } from "firebase/firestore";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
@@ -18,14 +17,20 @@ import { Badge } from '../ui/badge';
 // around it, which is almost certainly what caused the white screen.
 import { db } from '../../lib/firebase';
 
-// 🔥 FIX: key now comes from .env instead of being hardcoded in this file.
-// Add this line to your .env file at the project root:
-//   VITE_GEMINI_API_KEY=your_key_here
-// Then restart your dev server (env files are only read on startup).
-// The old key that was here (AIzaSyDiNP9rAwU2fyxz9E1VgkQGnnV_p8LMjgY) was
-// exposed in the browser bundle and has since been shared in chat too —
-// revoke it in Google AI Studio and generate a new one for this.
-const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
+async function callGemini(model: string, message: string): Promise<string> {
+  const response = await fetch("/api/gemini", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ model, history: [], message }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Gemini proxy request failed");
+  }
+
+  const data = await response.json();
+  return data.text;
+}
 
 // Helper for formatting time
 const timeAgo = (timestamp: number) => {
@@ -265,9 +270,7 @@ export function OrganizationMessages() {
       ${chatLog}
       `;
 
-      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-      const result = await model.generateContent(prompt);
-      const responseText = result.response.text();
+      const responseText = await callGemini("gemini-2.5-flash", prompt);
       
       setAiReport(responseText);
 
