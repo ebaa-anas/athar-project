@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { initializeApp } from "firebase/app";
 import { getFirestore, collection, onSnapshot, query, where } from "firebase/firestore";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
@@ -25,8 +24,21 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// 🔥 INITIALIZE GEMINI AI 🔥
-const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
+// 🔥 GEMINI PROXY HELPER 🔥
+async function callGemini(model: string, message: string): Promise<string> {
+  const response = await fetch("/api/gemini", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ model, history: [], message }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Gemini proxy request failed");
+  }
+
+  const data = await response.json();
+  return data.text;
+}
 
 export function AdminOverview() {
   const [loading, setLoading] = useState(true);
@@ -149,8 +161,6 @@ export function AdminOverview() {
   const handleGenerateReport = async () => {
     setIsGenerating(true);
     try {
-      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-
       const dataSummary = `
         Total Registered Users: ${metrics.users}
         Total Volunteers: ${metrics.vols}
@@ -170,8 +180,7 @@ export function AdminOverview() {
       LIVE DATA TO ANALYZE:
       ${dataSummary}`;
 
-      const result = await model.generateContent(prompt);
-      const reportHTML = result.response.text();
+      const reportHTML = await callGemini("gemini-2.5-flash", prompt);
 
       // Create a hidden iframe for PDF Printing
       const iframe = document.createElement('iframe');
