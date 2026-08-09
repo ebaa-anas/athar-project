@@ -84,38 +84,6 @@ export const signUpOrganization = async (email: string, pass: string, orgName: s
   }
 };
 
-// --- 3. ADMIN SIGN UP ---
-export const signUpAdmin = async (email: string, pass: string, adminName: string) => {
-  try {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
-    const user = userCredential.user;
-
-    // A. Create the admin profile in the "admins" database
-    await setDoc(doc(db, "admins", user.uid), {
-      uid: user.uid,
-      name: adminName,
-      email: email,
-      role: "admin", 
-      createdAt: new Date().toISOString(),
-    });
-
-    // B. Leave a tiny "nametag" in users so the login system knows their role
-    await setDoc(doc(db, "users", user.uid), {
-      uid: user.uid,
-      name: adminName,
-      email: email,
-      role: "admin"
-    });
-
-    console.log("Admin created securely in 'admins' collection!");
-    return true;
-  } catch (error) {
-    console.error("Admin Signup Error:", error);
-    alert("Sign Up Failed: " + (error as any).message);
-    return false;
-  }
-};
-
 // --- 4. LOGIN (CHECKS ROLE FROM THE NAMETAG) ---
 export const loginUser = async (email: string, pass: string) => {
   try {
