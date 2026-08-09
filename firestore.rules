@@ -35,6 +35,47 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    match /organizations/{uid} {
+      allow read: if request.auth != null;
+
+      allow create: if request.auth != null
+        && request.auth.uid == uid
+        && (
+          request.resource.data.get('verified', false) == false
+          || request.resource.data.tier == 'tier1'
+        );
+
+      allow update: if request.auth != null
+        && (
+          (
+            request.auth.uid == uid
+            && request.resource.data.get('verified', null) == resource.data.get('verified', null)
+            && request.resource.data.get('tier', null) == resource.data.get('tier', null)
+            && (
+              request.resource.data.get('verificationStatus', null) == resource.data.get('verificationStatus', null)
+              || (
+                resource.data.get('verificationStatus', null) == 'unverified'
+                && request.resource.data.verificationStatus == 'pending'
+              )
+            )
+          )
+          || isAdmin()
+        );
+
+      allow delete: if false;
+    }
+
+    match /verificationRequests/{id} {
+      allow read: if isAdmin()
+        || (request.auth != null && request.auth.uid == resource.data.orgId);
+
+      allow create: if request.auth != null
+        && request.auth.uid == request.resource.data.orgId;
+
+      allow update: if isAdmin();
+      allow delete: if false;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

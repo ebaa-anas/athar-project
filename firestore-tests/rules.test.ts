@@ -129,3 +129,172 @@ describe("admins/{uid}", () => {
     await assertFails(getDoc(doc(alice, "admins/root")));
   });
 });
+
+describe("organizations/{uid}", () => {
+  it("lets a tier1 org self-verify at creation", async () => {
+    const club = testEnv.authenticatedContext("club1").firestore();
+    await assertSucceeds(
+      setDoc(doc(club, "organizations/club1"), {
+        uid: "club1",
+        tier: "tier1",
+        verified: true,
+        verificationStatus: "verified",
+      })
+    );
+  });
+
+  it("blocks a tier2 org from self-verifying at creation", async () => {
+    const org = testEnv.authenticatedContext("org1").firestore();
+    await assertFails(
+      setDoc(doc(org, "organizations/org1"), {
+        uid: "org1",
+        tier: "tier2",
+        verified: true,
+        verificationStatus: "verified",
+      })
+    );
+  });
+
+  it("lets a tier2 org create itself unverified", async () => {
+    const org = testEnv.authenticatedContext("org1").firestore();
+    await assertSucceeds(
+      setDoc(doc(org, "organizations/org1"), {
+        uid: "org1",
+        tier: "tier2",
+        verified: false,
+        verificationStatus: "unverified",
+      })
+    );
+  });
+
+  it("blocks an org from setting verified:true on itself via update", async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), "organizations/org1"), {
+        uid: "org1",
+        tier: "tier2",
+        verified: false,
+        verificationStatus: "unverified",
+      });
+    });
+
+    const org = testEnv.authenticatedContext("org1").firestore();
+    await assertFails(
+      updateDoc(doc(org, "organizations/org1"), { verified: true })
+    );
+  });
+
+  it("lets an org move its own verificationStatus from unverified to pending", async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), "organizations/org1"), {
+        uid: "org1",
+        tier: "tier2",
+        verified: false,
+        verificationStatus: "unverified",
+      });
+    });
+
+    const org = testEnv.authenticatedContext("org1").firestore();
+    await assertSucceeds(
+      updateDoc(doc(org, "organizations/org1"), {
+        verificationStatus: "pending",
+      })
+    );
+  });
+
+  it("blocks an org from jumping straight from unverified to verified", async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), "organizations/org1"), {
+        uid: "org1",
+        tier: "tier2",
+        verified: false,
+        verificationStatus: "unverified",
+      });
+    });
+
+    const org = testEnv.authenticatedContext("org1").firestore();
+    await assertFails(
+      updateDoc(doc(org, "organizations/org1"), {
+        verificationStatus: "verified",
+      })
+    );
+  });
+
+  it("lets an admin verify an organization", async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), "admins/root"), {
+        uid: "root",
+        role: "admin",
+      });
+      await setDoc(doc(context.firestore(), "organizations/org1"), {
+        uid: "org1",
+        tier: "tier2",
+        verified: false,
+        verificationStatus: "pending",
+      });
+    });
+
+    const root = testEnv.authenticatedContext("root").firestore();
+    await assertSucceeds(
+      updateDoc(doc(root, "organizations/org1"), {
+        verified: true,
+        verificationStatus: "verified",
+      })
+    );
+  });
+});
+
+describe("verificationRequests/{id}", () => {
+  it("lets an org create its own verification request", async () => {
+    const org = testEnv.authenticatedContext("org1").firestore();
+    await assertSucceeds(
+      setDoc(doc(org, "verificationRequests/req1"), {
+        orgId: "org1",
+        status: "pending",
+      })
+    );
+  });
+
+  it("blocks an org from creating a request on behalf of another org", async () => {
+    const org = testEnv.authenticatedContext("org1").firestore();
+    await assertFails(
+      setDoc(doc(org, "verificationRequests/req1"), {
+        orgId: "someOtherOrg",
+        status: "pending",
+      })
+    );
+  });
+
+  it("blocks an org from approving its own request", async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), "verificationRequests/req1"), {
+        orgId: "org1",
+        status: "pending",
+      });
+    });
+
+    const org = testEnv.authenticatedContext("org1").firestore();
+    await assertFails(
+      updateDoc(doc(org, "verificationRequests/req1"), { status: "verified" })
+    );
+  });
+
+  it("lets an admin approve a request", async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), "admins/root"), {
+        uid: "root",
+        role: "admin",
+      });
+      await setDoc(doc(context.firestore(), "verificationRequests/req1"), {
+        orgId: "org1",
+        status: "pending",
+      });
+    });
+
+    const root = testEnv.authenticatedContext("root").firestore();
+    await assertSucceeds(
+      updateDoc(doc(root, "verificationRequests/req1"), {
+        status: "verified",
+      })
+    );
+  });
+});
