@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
-import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
 import { 
-  getFirestore, collection, onSnapshot, query, where, addDoc, serverTimestamp 
+  collection, onSnapshot, query, where, addDoc, serverTimestamp 
 } from "firebase/firestore";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
@@ -16,23 +14,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { 
   Users, Briefcase, TrendingUp, MapPin, 
   AlertCircle, Shield, AlertTriangle, 
-  Building2, Crosshair, Radio, ShieldAlert, Loader2
+  Building2, Crosshair, ShieldAlert, Loader2, Target
 } from 'lucide-react';
 import { useUserProfile } from '../../hooks/useUserProfile';
-
-// --- FIREBASE CONFIG ---
-const firebaseConfig = {
-  apiKey: "AIzaSyDRSETgWx1F3RX3_KAzgceyYBJKfpheRQk",
-  authDomain: "athar-project-aa74e.firebaseapp.com",
-  projectId: "athar-project-aa74e",
-  storageBucket: "athar-project-aa74e.firebasestorage.app",
-  messagingSenderId: "715063889584",
-  appId: "1:715063889584:web:3443ae48678c91a7f4b575",
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
+import { db } from '../../lib/firebase';
 
 // --- MAP COORDINATES HELPER ---
 const getCityCoordinates = (locationString: string) => {
@@ -57,6 +42,10 @@ const getCityCoordinates = (locationString: string) => {
 
 export function OrganizationOverview() {
   const { user } = useUserProfile();
+
+  // --- TIER ENFORCEMENT ---
+  const currentTier = user?.tier || 'tier1';
+  const isVerified = user?.verified || user?.verificationStatus === 'verified' || currentTier === 'tier1';
   
   // --- UI STATES ---
   const [isOppModalOpen, setIsOppModalOpen] = useState(false);
@@ -88,28 +77,31 @@ export function OrganizationOverview() {
   useEffect(() => {
     if (!user) return;
 
-    // Fetch All Crises for Map
-    const unsubCrises = onSnapshot(query(collection(db, "crises")), (snapshot) => {
-      const fetchedCrises = snapshot.docs.map((doc, index) => {
-        const data = doc.data() as any; // 🔥 TYPE FIX
-        let baseCoords = getCityCoordinates(data.location || "");
-        if (baseCoords.x === 50 && baseCoords.y === 50) {
-            baseCoords.x = 40 + ((index % 5) * 6);
-            baseCoords.y = 35 + ((index % 4) * 6);
-        } else {
-            baseCoords.x += (index % 2 === 0 ? 1 : -1);
-            baseCoords.y += (index % 3 === 0 ? 1 : -1);
-        }
-        return { id: doc.id, ...data, coords: baseCoords };
-      });
-      setCrises(fetchedCrises);
-      if (fetchedCrises.length > 0 && !activeCrisis) setActiveCrisis(fetchedCrises[0]);
-    });
+    // Fetch All Crises for Map (Strictly Tier 3 only)
+    let unsubCrises = () => {};
+    if (currentTier === 'tier3') {
+        unsubCrises = onSnapshot(query(collection(db, "crises")), (snapshot) => {
+        const fetchedCrises = snapshot.docs.map((doc, index) => {
+            const data = doc.data() as any;
+            let baseCoords = getCityCoordinates(data.location || "");
+            if (baseCoords.x === 50 && baseCoords.y === 50) {
+                baseCoords.x = 40 + ((index % 5) * 6);
+                baseCoords.y = 35 + ((index % 4) * 6);
+            } else {
+                baseCoords.x += (index % 2 === 0 ? 1 : -1);
+                baseCoords.y += (index % 3 === 0 ? 1 : -1);
+            }
+            return { id: doc.id, ...data, coords: baseCoords };
+        });
+        setCrises(fetchedCrises);
+        if (fetchedCrises.length > 0 && !activeCrisis) setActiveCrisis(fetchedCrises[0]);
+        });
+    }
 
     // Fetch Organization's Opportunities
     const qOpps = query(collection(db, "opportunities"), where("orgId", "==", user.uid));
     const unsubOpps = onSnapshot(qOpps, (snapshot) => {
-      const opps = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any)); // 🔥 TYPE FIX
+      const opps = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
       
       const openCount = opps.filter(o => o.status !== 'completed').length;
       
@@ -125,7 +117,7 @@ export function OrganizationOverview() {
     // Fetch Organization's Applications
     const qApps = query(collection(db, "applications"), where("orgId", "==", user.uid));
     const unsubApps = onSnapshot(qApps, (snapshot) => {
-      const apps = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any)); // 🔥 TYPE FIX
+      const apps = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
       
       const pending = apps.filter(a => a.status === 'pending' || !a.status);
       const accepted = apps.filter(a => a.status === 'accepted');
@@ -163,7 +155,7 @@ export function OrganizationOverview() {
     });
 
     return () => { unsubCrises(); unsubOpps(); unsubApps(); };
-  }, [user]);
+  }, [user, currentTier]);
 
   // --- 2. HANDLE POSTING NEW OPPORTUNITY ---
   const handleDeployOpportunity = async (e: React.FormEvent) => {
@@ -206,17 +198,24 @@ export function OrganizationOverview() {
       {/* 1. HEADER & ACTIONS */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-5">
         <div>
-          <h1 className="text-2xl font-bold text-[#043E52] uppercase tracking-tight">Organization Command</h1>
+          <h1 className="text-2xl font-bold text-[#043E52] uppercase tracking-tight">Project Command Center</h1>
           <div className="flex items-center gap-2 mt-1 text-slate-500 font-semibold text-sm">
             <Building2 className="h-4 w-4 text-[#1C9290]" />
             <span>{user?.name || "Verified Partner"}</span>
+            <Badge className={`ml-2 text-[9px] uppercase font-bold px-2 py-0.5 border shadow-none ${
+                currentTier === 'tier3' ? 'bg-rose-100 text-rose-700 border-rose-300' : 
+                currentTier === 'tier2' ? 'bg-indigo-100 text-indigo-700 border-indigo-300' :
+                'bg-emerald-100 text-emerald-700 border-emerald-300'
+            }`}>
+                {currentTier === 'tier3' ? 'Tier 3: Crisis Ops' : currentTier === 'tier2' ? 'Tier 2: NGO' : 'Tier 1: Initiative'}
+            </Badge>
           </div>
         </div>
 
         <div className="flex gap-3">
           <Dialog open={isOppModalOpen} onOpenChange={setIsOppModalOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-[#043E52] hover:bg-[#033040] text-white shadow-md h-10 px-5 font-bold uppercase tracking-wider text-xs">
+              <Button disabled={!isVerified} className="bg-[#043E52] hover:bg-[#033040] text-white shadow-md h-10 px-5 font-bold uppercase tracking-wider text-xs">
                 <Briefcase className="mr-2 h-4 w-4" /> Post Opportunity
               </Button>
             </DialogTrigger>
@@ -289,24 +288,43 @@ export function OrganizationOverview() {
         </div>
       </div>
 
-      {/* 2. CRISIS HUB CARD */}
-      <Card className="border border-[#1C9290]/30 bg-[#1C9290]/5 shadow-sm overflow-hidden relative">
-        <div className="absolute top-0 left-0 w-1 h-full bg-[#1C9290]" />
-        <CardContent className="p-5">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+      {/* 2. DYNAMIC HUB CARD (TIER BASED) */}
+      {currentTier === 'tier3' ? (
+        <Card className="border border-rose-500/30 bg-rose-500/5 shadow-sm overflow-hidden relative">
+          <div className="absolute top-0 left-0 w-1 h-full bg-rose-500" />
+          <CardContent className="p-5">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-4 text-[#043E52]">
+                <div className="bg-rose-500 text-white p-2.5 rounded-lg shadow-sm"><Shield className="h-5 w-5" /></div>
+                <div>
+                  <h3 className="text-base font-bold uppercase tracking-tight">Crisis Operations Command</h3>
+                  <p className="text-slate-600 text-sm">
+                    {isVerified
+                      ? <>Authorized to activate the <span className="font-semibold text-rose-500">Athar Volunteer Reserve (AVR)</span>.</>
+                      : "Complete NDRF verification to unlock crisis response access."}
+                  </p>
+                </div>
+              </div>
+              <Button disabled={!isVerified} onClick={() => window.location.href = '/dashboard/organization/crisis'} className="bg-rose-600 hover:bg-rose-700 text-white font-bold uppercase tracking-wider text-xs px-6 h-10 shadow-md">
+                <AlertTriangle className="mr-2 h-4 w-4" /> Activate Crisis
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ) : currentTier === 'tier2' ? (
+        <Card className="border border-indigo-500/30 bg-indigo-500/5 shadow-sm overflow-hidden relative">
+          <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500" />
+          <CardContent className="p-5">
             <div className="flex items-center gap-4 text-[#043E52]">
-              <div className="bg-[#1C9290] text-white p-2.5 rounded-lg shadow-sm"><Shield className="h-5 w-5" /></div>
+              <div className="bg-indigo-500 text-white p-2.5 rounded-lg shadow-sm"><Target className="h-5 w-5" /></div>
               <div>
-                <h3 className="text-base font-bold uppercase tracking-tight">Verified Partner Hub</h3>
-                <p className="text-slate-600 text-sm">Authorized to activate the <span className="font-semibold text-[#1C9290]">Athar Volunteer Reserve (AVR)</span>.</p>
+                <h3 className="text-base font-bold uppercase tracking-tight">NGO Operations Hub</h3>
+                <p className="text-slate-600 text-sm">Managing civic projects, education, and long-term societal impact initiatives.</p>
               </div>
             </div>
-            <Button onClick={() => window.location.href = '/dashboard/organization/crisis'} className="bg-[#E16A3D] hover:bg-[#c2562d] text-white font-bold uppercase tracking-wider text-xs px-6 h-10 shadow-md">
-              <AlertTriangle className="mr-2 h-4 w-4" /> Activate Crisis
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      ) : null /* Tier 1 sees no banner, keeping their UI lean and focused on their own projects */}
 
       {/* 3. DYNAMIC STATS GRID */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -351,100 +369,102 @@ export function OrganizationOverview() {
         </Card>
       </div>
 
-      {/* 3.5 THE GEOSPATIAL MAP */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[450px]">
-        <Card className="lg:col-span-2 bg-[#021c25] border-slate-800 shadow-md overflow-hidden relative flex flex-col">
-          <div className="p-3 bg-black/40 border-b border-white/5 flex items-center justify-between z-10 relative">
-            <div className="flex items-center gap-2">
-              <Crosshair className="text-[#1C9290] h-4 w-4 animate-pulse" />
-              <h2 className="text-white font-semibold tracking-wider uppercase text-xs">National Crisis Radar</h2>
-            </div>
-            <Badge className="bg-[#1C9290]/20 text-[#1C9290] border-none text-[10px]">TÜRKİYE</Badge>
-          </div>
-
-          <div className="flex-1 relative w-full h-full bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#043E52]/40 to-[#021c25]">
-            <div className="absolute inset-0 bg-[linear-gradient(to_right,#1C929015_1px,transparent_1px),linear-gradient(to_bottom,#1C929015_1px,transparent_1px)] bg-[size:40px_40px]" />
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20">
-               <div className="w-[600px] h-[600px] rounded-full border border-[#1C9290]/30 border-t-[#1C9290] animate-[spin_4s_linear_infinite]" />
+      {/* 3.5 THE GEOSPATIAL MAP (STRICTLY RESTRICTED TO TIER 3 CRISIS OPS) */}
+      {currentTier === 'tier3' && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[450px]">
+          <Card className="lg:col-span-2 bg-[#021c25] border-slate-800 shadow-md overflow-hidden relative flex flex-col">
+            <div className="p-3 bg-black/40 border-b border-white/5 flex items-center justify-between z-10 relative">
+              <div className="flex items-center gap-2">
+                <Crosshair className="text-rose-500 h-4 w-4 animate-pulse" />
+                <h2 className="text-white font-semibold tracking-wider uppercase text-xs">National Crisis Radar</h2>
+              </div>
+              <Badge className="bg-[#1C9290]/20 text-[#1C9290] border-none text-[10px]">TÜRKİYE</Badge>
             </div>
 
-            {crises.map((crisis) => {
-              const isActive = activeCrisis?.id === crisis.id;
-              const isMine = crisis.orgId === user?.uid;
-
-              return (
-                <button
-                  key={crisis.id}
-                  onClick={() => setActiveCrisis(crisis)}
-                  className="absolute transform -translate-x-1/2 -translate-y-1/2 group transition-all"
-                  style={{ left: `${crisis.coords.x}%`, top: `${crisis.coords.y}%` }}
-                >
-                  <div className={`absolute inset-0 rounded-full animate-ping ${isActive ? 'scale-150 opacity-40' : 'scale-110 opacity-20'} ${isMine ? 'bg-[#E16A3D]' : 'bg-[#1C9290]'}`} />
-                  <div className={`relative h-3 w-3 rounded-full border-2 shadow-[0_0_10px_rgba(0,0,0,0.5)] flex items-center justify-center transition-colors
-                    ${isActive ? 'border-white z-20' : 'border-[#043E52] group-hover:bg-[#14b8a6]'} ${isMine ? 'bg-[#E16A3D]' : 'bg-[#1C9290]'}`}
-                  >
-                     <div className="h-1 w-1 bg-white rounded-full" />
-                  </div>
-                  <div className={`absolute top-5 left-1/2 -translate-x-1/2 whitespace-nowrap px-1.5 py-0.5 rounded bg-black/80 backdrop-blur-md border text-[9px] font-bold tracking-wider pointer-events-none transition-all
-                    ${isActive ? 'border-[#E16A3D]/50 text-white z-20 opacity-100 translate-y-0' : 'border-[#1C9290]/30 text-teal-100 opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0'}`}
-                  >
-                    {crisis.location || 'Unknown'}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </Card>
-
-        {/* MAP SIDEBAR */}
-        <Card className="bg-white border-slate-200 shadow-md flex flex-col overflow-hidden">
-          <div className="p-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
-            <h3 className="font-bold text-[#043E52] text-sm flex items-center gap-2">
-              <ShieldAlert className="h-4 w-4 text-[#E16A3D]" /> Crisis Intel
-            </h3>
-          </div>
-
-          <div className="flex-1 overflow-y-auto p-4">
-            {activeCrisis ? (
-              <div className="space-y-4">
-                <div>
-                  <div className="flex gap-2 mb-2">
-                    <Badge className="bg-orange-100 text-orange-800 border-none text-[9px]">ACTIVE</Badge>
-                    {activeCrisis.orgId === user?.uid && <Badge className="bg-teal-100 text-teal-800 border-none text-[9px]">YOUR OPERATION</Badge>}
-                  </div>
-                  <h2 className="text-lg font-bold text-slate-900 leading-tight">{activeCrisis.title}</h2>
-                  <div className="flex items-center gap-1.5 mt-1 text-xs font-medium text-slate-500">
-                    <MapPin className="h-3 w-3" /> {activeCrisis.location || 'Unknown Location'}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-100">
-                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Commanding Org</p>
-                    <p className="font-semibold text-slate-800 text-sm mt-0.5 truncate">{activeCrisis.organization || 'Unknown'}</p>
-                  </div>
-                  <div className="bg-teal-50 p-2.5 rounded-lg border border-teal-100">
-                    <p className="text-[9px] font-bold text-teal-600/70 uppercase tracking-wider">AVR Deployed</p>
-                    <p className="font-semibold text-[#1C9290] text-sm mt-0.5">{activeCrisis.volunteersResponded || 0} Units</p>
-                  </div>
-                </div>
-
-                <div>
-                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Operation Details</p>
-                  <div className="bg-slate-50 rounded-lg p-3 border border-slate-100 text-xs text-slate-600 leading-relaxed whitespace-pre-wrap">
-                    {activeCrisis.description || "No detailed intelligence provided yet."}
-                  </div>
-                </div>
+            <div className="flex-1 relative w-full h-full bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#043E52]/40 to-[#021c25]">
+              <div className="absolute inset-0 bg-[linear-gradient(to_right,#1C929015_1px,transparent_1px),linear-gradient(to_bottom,#1C929015_1px,transparent_1px)] bg-[size:40px_40px]" />
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20">
+                <div className="w-[600px] h-[600px] rounded-full border border-[#1C9290]/30 border-t-[#1C9290] animate-[spin_4s_linear_infinite]" />
               </div>
-            ) : (
-              <div className="h-full flex flex-col items-center justify-center text-center text-slate-400 space-y-2">
-                <ShieldAlert className="h-8 w-8 text-slate-200" />
-                <p className="text-xs font-semibold">Select a target on the map.</p>
-              </div>
-            )}
-          </div>
-        </Card>
-      </div>
+
+              {crises.map((crisis) => {
+                const isActive = activeCrisis?.id === crisis.id;
+                const isMine = crisis.orgId === user?.uid;
+
+                return (
+                  <button
+                    key={crisis.id}
+                    onClick={() => setActiveCrisis(crisis)}
+                    className="absolute transform -translate-x-1/2 -translate-y-1/2 group transition-all"
+                    style={{ left: `${crisis.coords.x}%`, top: `${crisis.coords.y}%` }}
+                  >
+                    <div className={`absolute inset-0 rounded-full animate-ping ${isActive ? 'scale-150 opacity-40' : 'scale-110 opacity-20'} ${isMine ? 'bg-[#E16A3D]' : 'bg-rose-500'}`} />
+                    <div className={`relative h-3 w-3 rounded-full border-2 shadow-[0_0_10px_rgba(0,0,0,0.5)] flex items-center justify-center transition-colors
+                      ${isActive ? 'border-white z-20' : 'border-[#043E52] group-hover:bg-rose-400'} ${isMine ? 'bg-[#E16A3D]' : 'bg-rose-500'}`}
+                    >
+                        <div className="h-1 w-1 bg-white rounded-full" />
+                    </div>
+                    <div className={`absolute top-5 left-1/2 -translate-x-1/2 whitespace-nowrap px-1.5 py-0.5 rounded bg-black/80 backdrop-blur-md border text-[9px] font-bold tracking-wider pointer-events-none transition-all
+                      ${isActive ? 'border-[#E16A3D]/50 text-white z-20 opacity-100 translate-y-0' : 'border-rose-500/30 text-teal-100 opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0'}`}
+                    >
+                      {crisis.location || 'Unknown'}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </Card>
+
+          {/* MAP SIDEBAR */}
+          <Card className="bg-white border-slate-200 shadow-md flex flex-col overflow-hidden">
+            <div className="p-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
+              <h3 className="font-bold text-[#043E52] text-sm flex items-center gap-2">
+                <ShieldAlert className="h-4 w-4 text-rose-500" /> Crisis Intel
+              </h3>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4">
+              {activeCrisis ? (
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex gap-2 mb-2">
+                      <Badge className="bg-rose-100 text-rose-800 border-none text-[9px]">ACTIVE</Badge>
+                      {activeCrisis.orgId === user?.uid && <Badge className="bg-teal-100 text-teal-800 border-none text-[9px]">YOUR OPERATION</Badge>}
+                    </div>
+                    <h2 className="text-lg font-bold text-slate-900 leading-tight">{activeCrisis.title}</h2>
+                    <div className="flex items-center gap-1.5 mt-1 text-xs font-medium text-slate-500">
+                      <MapPin className="h-3 w-3" /> {activeCrisis.location || 'Unknown Location'}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Commanding Org</p>
+                      <p className="font-semibold text-slate-800 text-sm mt-0.5 truncate">{activeCrisis.organization || 'Unknown'}</p>
+                    </div>
+                    <div className="bg-rose-50 p-2.5 rounded-lg border border-rose-100">
+                      <p className="text-[9px] font-bold text-rose-600/70 uppercase tracking-wider">AVR Deployed</p>
+                      <p className="font-semibold text-rose-600 text-sm mt-0.5">{activeCrisis.volunteersResponded || 0} Units</p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Operation Details</p>
+                    <div className="bg-slate-50 rounded-lg p-3 border border-slate-100 text-xs text-slate-600 leading-relaxed whitespace-pre-wrap">
+                      {activeCrisis.description || "No detailed intelligence provided yet."}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="h-full flex flex-col items-center justify-center text-center text-slate-400 space-y-2">
+                  <ShieldAlert className="h-8 w-8 text-slate-200" />
+                  <p className="text-xs font-semibold">Select a target on the map.</p>
+                </div>
+              )}
+            </div>
+          </Card>
+        </div>
+      )}
 
       {/* 4. LISTS GRID */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-2">
@@ -454,7 +474,7 @@ export function OrganizationOverview() {
             <CardHeader className="flex flex-row items-center justify-between border-b border-slate-100 pb-3 pt-4 px-5">
               <div>
                 <CardTitle className="text-base font-bold text-[#043E52] uppercase">Pending Talent</CardTitle>
-                <CardDescription className="text-xs">Review volunteers ready to join.</CardDescription>
+                <CardDescription className="text-xs">Review volunteers ready to join your projects.</CardDescription>
               </div>
               <Badge className="bg-[#E16A3D] text-white font-bold">{recentApps.length} New</Badge>
             </CardHeader>
@@ -472,7 +492,7 @@ export function OrganizationOverview() {
                       </div>
                       <p className="text-xs text-slate-500 mb-2 truncate">Applied for <span className="font-semibold text-[#043E52]">{app.oppTitle || 'Opportunity'}</span></p>
                       <div className="flex gap-2 mt-2">
-                        <Button onClick={() => window.location.href = '/dashboard/organization/applications'} className="h-7 bg-[#1C9290] hover:bg-[#157a78] text-white font-bold text-[10px] px-4">Review</Button>
+                        <Button onClick={() => window.location.href = '/dashboard/organization/applications'} className="h-7 bg-[#1C9290] hover:bg-[#157a78] text-white font-bold text-[10px] px-4">Review Application</Button>
                       </div>
                     </div>
                   </div>
@@ -508,7 +528,7 @@ export function OrganizationOverview() {
 
           <Card className="border-none shadow-sm bg-[#043E52] text-white">
             <CardHeader className="pb-3 pt-4 px-5">
-              <CardTitle className="text-base font-bold uppercase">Upcoming Deployments</CardTitle>
+              <CardTitle className="text-base font-bold uppercase">Upcoming Project Deployments</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 px-5 pb-5">
               {upcomingEvents.length === 0 ? (

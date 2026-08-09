@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
 import { 
-  getFirestore, collection, onSnapshot, query, where, addDoc, doc, updateDoc, serverTimestamp 
+  collection, onSnapshot, query, where, addDoc, doc, updateDoc, serverTimestamp 
 } from "firebase/firestore";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
@@ -14,22 +12,20 @@ import { Hash, Send, Users,ShieldCheck, MessageSquare, ShieldAlert, Radio, Spark
 import { useUserProfile } from '../../hooks/useUserProfile';
 import { Badge } from '../ui/badge';
 
-// --- FIREBASE CONFIG ---
-const firebaseConfig = {
-  apiKey: "AIzaSyDRSETgWx1F3RX3_KAzgceyYBJKfpheRQk",
-  authDomain: "athar-project-aa74e.firebaseapp.com",
-  projectId: "athar-project-aa74e",
-  storageBucket: "athar-project-aa74e.firebasestorage.app",
-  messagingSenderId: "715063889584",
-  appId: "1:715063889584:web:3443ae48678c91a7f4b575",
-};
+// 🔥 FIX: db now comes from the single shared Firebase connection instead of
+// calling initializeApp() again in this file — the duplicate init throws
+// "Firebase App named '[DEFAULT]' already exists" with no error boundary
+// around it, which is almost certainly what caused the white screen.
+import { db } from '../../lib/firebase';
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
-
-// 🔥 INITIALIZE GEMINI AI 🔥
-const genAI = new GoogleGenerativeAI("AIzaSyDiNP9rAwU2fyxz9E1VgkQGnnV_p8LMjgY"); 
+// 🔥 FIX: key now comes from .env instead of being hardcoded in this file.
+// Add this line to your .env file at the project root:
+//   VITE_GEMINI_API_KEY=your_key_here
+// Then restart your dev server (env files are only read on startup).
+// The old key that was here (AIzaSyDiNP9rAwU2fyxz9E1VgkQGnnV_p8LMjgY) was
+// exposed in the browser bundle and has since been shared in chat too —
+// revoke it in Google AI Studio and generate a new one for this.
+const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
 
 // Helper for formatting time
 const timeAgo = (timestamp: number) => {
@@ -53,13 +49,13 @@ export function OrganizationMessages() {
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
   
-  // --- 🔥 FILTER STATE 🔥 ---
   const [channelFilter, setChannelFilter] = useState<'all' | 'crisis' | 'group' | 'standard' | 'dm'>('all');
   const [searchTerm, setSearchTerm] = useState("");
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const activeChannelRef = useRef<any | null>(null);
+  useEffect(() => { activeChannelRef.current = activeChannel; }, [activeChannel]);
 
-  // --- AI TRIAGE STATES ---
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [aiReport, setAiReport] = useState<string | null>(null);
   const [isSavingReport, setIsSavingReport] = useState(false);
@@ -72,7 +68,7 @@ export function OrganizationMessages() {
     scrollToBottom();
   }, [messages]);
 
-  // --- 1. FETCH ORG'S MISSIONS & BUILD CHANNELS (PARALLEL FETCH & ACTIVITY SORT) ---
+  // --- 1. FETCH ORG'S MISSIONS & BUILD CHANNELS ---
   useEffect(() => {
     if (!user) return;
 
@@ -80,13 +76,18 @@ export function OrganizationMessages() {
     const qCrises = query(collection(db, "crises"), where("orgId", "==", user.uid));
     const qApps = query(collection(db, "applications"), where("orgId", "==", user.uid), where("status", "==", "accepted"));
 
+    
+    let unsubCrises = () => {};
+    let unsubApps = () => {};
+
     const unsubOpps = onSnapshot(qOpps, (oppsSnap) => {
-        const unsubCrises = onSnapshot(qCrises, (crisesSnap) => {
-            const unsubApps = onSnapshot(qApps, (appsSnap) => {
+        unsubCrises();
+        unsubCrises = onSnapshot(qCrises, (crisesSnap) => {
+            unsubApps();
+            unsubApps = onSnapshot(qApps, (appsSnap) => {
                 
                 const channelMap = new Map();
 
-                // 1. Add all standard opportunities
                 oppsSnap.docs.forEach(doc => {
                     const data = doc.data();
                     channelMap.set(doc.id, {
@@ -94,12 +95,10 @@ export function OrganizationMessages() {
                         title: data.title || "Standard Mission",
                         type: 'standard',
                         volunteersResponded: data.volunteersResponded || 0,
-                        // Extract Activity time
                         lastActivity: data.lastActivityAt?.toMillis() || data.createdAt?.toMillis() || Date.now()
                     });
                 });
 
-                // 2. Add all crises
                 crisesSnap.docs.forEach(doc => {
                     const data = doc.data();
                     channelMap.set(doc.id, {
@@ -107,12 +106,10 @@ export function OrganizationMessages() {
                         title: data.title || "Emergency Mission",
                         type: 'crisis',
                         volunteersResponded: data.volunteersResponded || 0,
-                        // Extract Activity time
                         lastActivity: data.lastActivityAt?.toMillis() || data.createdAt?.toMillis() || Date.now()
                     });
                 });
 
-                // 3. Create Group Channel and Direct Message Channels based on accepted applications
                 const uniqueVolunteerIds = new Set();
                 appsSnap.docs.forEach(doc => {
                     const data = doc.data();
@@ -121,7 +118,6 @@ export function OrganizationMessages() {
                     if (data.volunteerId) {
                         uniqueVolunteerIds.add(data.volunteerId);
                         
-                        // Add DM channel for this volunteer
                         const dmId = `dm_${user.uid}_${data.volunteerId}`;
                         if (!channelMap.has(dmId)) {
                             channelMap.set(dmId, {
@@ -129,21 +125,18 @@ export function OrganizationMessages() {
                                 title: `DM: ${data.volunteerName || 'Volunteer'}`,
                                 type: 'dm',
                                 targetUserId: data.volunteerId,
-                                volunteersResponded: 1, // It's just one person
+                                volunteersResponded: 1,
                                 lastActivity: lastAct
                             });
                         } else {
                             const ext = channelMap.get(dmId);
-                            // If this new application/DM has later activity, update the Map
                             if (lastAct > ext.lastActivity) { ext.lastActivity = lastAct; channelMap.set(dmId, ext); }
                         }
                     }
                 });
 
-                // Add the main Group Channel if they have any accepted volunteers
                 if (uniqueVolunteerIds.size > 0) {
                     const groupId = `group_${user.uid}`;
-                    // For the global group, we just want it near the top when new people join
                     channelMap.set(groupId, {
                         id: groupId,
                         title: "ALL VOLUNTEERS (GROUP)",
@@ -153,24 +146,24 @@ export function OrganizationMessages() {
                     });
                 }
 
-                // Convert map to array and sort by activity
                 const fetchedChannels = Array.from(channelMap.values());
-                // 🔥 NEW: SORT BY ACTIVITY (Newest First) 🔥
                 fetchedChannels.sort((a, b) => b.lastActivity - a.lastActivity);
 
                 setChannels(fetchedChannels);
 
-                if (fetchedChannels.length > 0 && !activeChannel) {
+                if (fetchedChannels.length > 0 && !activeChannelRef.current) {
                     setActiveChannel(fetchedChannels[0]);
                 }
                 setLoading(false);
             });
-            return () => unsubApps();
         });
-        return () => unsubCrises();
     });
 
-    return () => unsubOpps();
+    return () => {
+      unsubOpps();
+      unsubCrises();
+      unsubApps();
+    };
   }, [user]);
 
 
@@ -225,7 +218,6 @@ export function OrganizationMessages() {
 
       await addDoc(collection(db, "messages"), messagePayload);
 
-      // Only update standard/crisis docs if they exist
       if (activeChannel.type === 'crisis' || activeChannel.type === 'standard') {
         const collectionName = activeChannel.type === 'crisis' ? "crises" : "opportunities";
         await updateDoc(doc(db, collectionName, activeChannel.id), {
@@ -305,7 +297,6 @@ export function OrganizationMessages() {
     setIsSavingReport(false);
   };
 
-  // --- FILTERING LOGIC ---
   const displayedChannels = channels.filter(c => {
     const matchesFilter = channelFilter === 'all' || c.type === channelFilter;
     const matchesSearch = c.title.toLowerCase().includes(searchTerm.toLowerCase());
@@ -317,7 +308,6 @@ export function OrganizationMessages() {
   return (
     <div className="max-w-7xl mx-auto h-[calc(100vh-100px)] flex flex-col md:flex-row gap-4 pb-6 relative animate-in fade-in duration-300">
       
-      {/* LEFT PANEL: CHANNELS */}
       <Card className="w-full md:w-[320px] h-full border-slate-200 shadow-sm rounded-2xl flex flex-col bg-white shrink-0 relative z-10 overflow-hidden">
         <div className="p-5 border-b border-slate-100 bg-[#043E52] text-white">
           <h2 className="text-lg font-bold flex items-center gap-2">
@@ -334,7 +324,6 @@ export function OrganizationMessages() {
           </div>
         </div>
 
-        {/* 🔥 NEW: THE TACTICAL FILTER BAR (Styled for #043E52) 🔥 */}
         <div className="flex gap-2 p-3 overflow-x-auto border-b border-slate-200 bg-white hide-scrollbar shrink-0 shadow-sm z-10">
           <button onClick={() => setChannelFilter('all')} className={`shrink-0 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors ${channelFilter === 'all' ? 'bg-[#043E52] text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}>All</button>
           <button onClick={() => setChannelFilter('crisis')} className={`shrink-0 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors ${channelFilter === 'crisis' ? 'bg-[#E16A3D] text-white' : 'bg-orange-50 text-orange-700 hover:bg-orange-100'}`}>Crises</button>
@@ -392,7 +381,6 @@ export function OrganizationMessages() {
         </div>
       </Card>
 
-      {/* RIGHT PANEL: CHAT */}
       <Card className="flex-1 h-full border-slate-200 shadow-sm rounded-2xl flex flex-col bg-slate-50 relative z-10 overflow-hidden">
         {activeChannel ? (
           <>
@@ -412,7 +400,6 @@ export function OrganizationMessages() {
                 </div>
               </div>
               
-              {/* 🔥 THE ORANGE AI TRIAGE BUTTON 🔥 */}
               {activeChannel.type === 'crisis' && (
                 <Button 
                   onClick={runAITriage} 
@@ -447,7 +434,10 @@ export function OrganizationMessages() {
                       <Avatar className={`h-9 w-9 shrink-0 shadow-sm border-2 ${isMe ? 'border-[#043E52]' : 'border-[#1C9290]'}`}>
                         <AvatarImage src={msg.avatar} className="object-cover" />
                         <AvatarFallback className={`text-xs font-bold ${isMe ? 'bg-[#043E52] text-white' : 'bg-[#1C9290] text-white'}`}>
-                          {msg.senderName.charAt(0).toUpperCase()}
+                          {/* 🔥 FIX: added ?. and a fallback — this used to throw a
+                              TypeError and blank the whole panel if any message
+                              document was ever missing senderName. */}
+                          {msg.senderName?.charAt(0).toUpperCase() || 'U'}
                         </AvatarFallback>
                       </Avatar>
                       
@@ -498,14 +488,13 @@ export function OrganizationMessages() {
         )}
       </Card>
 
-      {/* --- THE ORANGE AI TRIAGE MODAL --- */}
       {aiReport && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#016A6D]/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <Card className="w-full max-w-2xl bg-white shadow-2xl rounded-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-300 border border-slate-200">
             
             <div className="bg-[#E16A3D] p-6 flex items-start justify-between relative shrink-0">
               <div>
-                <Badge className="bg-white/20 text-white border-none mb-2 font-black tracking-widest text-[10px] shadow-none uppercase">GEMINI AI INTEL</Badge>
+                <Badge className="bg-white/20 text-white border-none mb-2 font-black tracking-widest text-[10px] shadow-none uppercase">AI INTEL</Badge>
                 <h2 className="text-2xl font-black text-white flex items-center gap-2 tracking-tight">
                   <BrainCircuit className="h-6 w-6 text-orange-100" /> Auto-Generated SitRep
                 </h2>
@@ -524,7 +513,7 @@ export function OrganizationMessages() {
 
             <div className="p-5 bg-white border-t border-slate-200 flex gap-3 justify-end items-center shrink-0">
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mr-auto flex items-center gap-2">
-                 <Sparkles className="h-4 w-4 text-amber-500" /> Powered by Google Gemini
+                 <Sparkles className="h-4 w-4 text-amber-500" /> AI-generated report
               </span>
               <Button variant="ghost" onClick={() => setAiReport(null)} className="font-bold text-slate-500 text-xs uppercase tracking-wider">Discard</Button>
               <Button 

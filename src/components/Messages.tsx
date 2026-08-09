@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
 import { 
-  getFirestore, collection, onSnapshot, query, where, addDoc, serverTimestamp 
+  collection, onSnapshot, query, where, addDoc, serverTimestamp 
 } from "firebase/firestore";
 
 import { Card } from './ui/card';
@@ -13,19 +11,12 @@ import { Hash, Send, MessageSquare, ShieldCheck, Users, Search, ShieldAlert, Loc
 import { useUserProfile } from '../hooks/useUserProfile'; 
 import { Badge } from './ui/badge';
 
-// --- FIREBASE CONFIG ---
-const firebaseConfig = {
-  apiKey: "AIzaSyDRSETgWx1F3RX3_KAzgceyYBJKfpheRQk",
-  authDomain: "athar-project-aa74e.firebaseapp.com",
-  projectId: "athar-project-aa74e",
-  storageBucket: "athar-project-aa74e.firebasestorage.app",
-  messagingSenderId: "715063889584",
-  appId: "1:715063889584:web:3443ae48678c91a7f4b575",
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
+// 🔥 FIX: db now comes from the single shared Firebase connection instead of
+// calling initializeApp() again in this file. Calling initializeApp() a
+// second time throws "Firebase App named '[DEFAULT]' already exists" —
+// an uncaught error with no boundary around it, which renders as a blank
+// white screen. This was almost certainly your white-screen bug.
+import { db } from '../lib/firebase';
 
 // Helper for formatting time
 const timeAgo = (timestamp: number) => {
@@ -48,11 +39,15 @@ export function Messages() {
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
   
-  // --- 🔥 FILTER STATE 🔥 ---
   const [channelFilter, setChannelFilter] = useState<'all' | 'crisis' | 'group' | 'mission' | 'dm'>('all');
   const [searchTerm, setSearchTerm] = useState("");
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  // 🔥 keep a live ref to the currently-selected channel so the message
+  // listener effect (below) can always read the latest value without
+  // needing activeChannel in its dependency array causing extra re-subscribes
+  const activeChannelRef = useRef<any | null>(null);
+  useEffect(() => { activeChannelRef.current = activeChannel; }, [activeChannel]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -62,7 +57,7 @@ export function Messages() {
     scrollToBottom();
   }, [messages]);
 
-  // --- 1. BULLETPROOF CHANNEL FETCHING & SORTING ---
+  // --- 1. CHANNEL FETCHING & SORTING ---
   useEffect(() => {
     if (!user) return;
 
@@ -71,124 +66,140 @@ export function Messages() {
     const qAllCrises = query(collection(db, "crises"));
     const qDMs = query(collection(db, "messages"), where("targetUserId", "==", user.uid));
 
+    // 🔥 FIX: these three used to be recreated (without ever unsubscribing
+    // the previous copy) every single time the outer listener fired. That
+    // meant every new "applications" write left a stray, still-active
+    // listener behind — over a session, the number of live Firestore
+    // listeners only ever grew. Now each inner listener is explicitly torn
+    // down before its replacement is created.
+    let unsubCrisisResp = () => {};
+    let unsubAllCrises = () => {};
+    let unsubDMs = () => {};
+
     const unsubApps = onSnapshot(qApps, (appsSnap) => {
-        const unsubCrisisResp = onSnapshot(qCrisisResp, (crisisRespSnap) => {
-             const unsubAllCrises = onSnapshot(qAllCrises, (allCrisesSnap) => {
-                 const unsubDMs = onSnapshot(qDMs, (dmsSnap) => {
+      unsubCrisisResp();
+      unsubCrisisResp = onSnapshot(qCrisisResp, (crisisRespSnap) => {
+        unsubAllCrises();
+        unsubAllCrises = onSnapshot(qAllCrises, (allCrisesSnap) => {
+          unsubDMs();
+          unsubDMs = onSnapshot(qDMs, (dmsSnap) => {
 
-                     const channelMap = new Map();
-                     
-                     // Helper to map crisis responses to their timestamps
-                     const crisisTimes = new Map();
-                     crisisRespSnap.docs.forEach(d => {
-                       crisisTimes.set(d.data().crisisId, d.data().respondedAt?.toMillis() || Date.now());
-                     });
+            const channelMap = new Map();
+            
+            const crisisTimes = new Map();
+            crisisRespSnap.docs.forEach(d => {
+              crisisTimes.set(d.data().crisisId, d.data().respondedAt?.toMillis() || Date.now());
+            });
 
-                     // 1. Add standard accepted applications
-                     appsSnap.docs.forEach(doc => {
-                         const data = doc.data();
-                         const lastAct = data.appliedAt?.toMillis() || Date.now();
+            // 1. Standard accepted applications
+            appsSnap.docs.forEach(doc => {
+                const data = doc.data();
+                const lastAct = data.appliedAt?.toMillis() || Date.now();
 
-                         if (data.oppId && !channelMap.has(data.oppId)) {
-                             channelMap.set(data.oppId, {
-                                 id: data.oppId,
-                                 title: data.oppTitle || 'Organization Mission',
-                                 orgName: data.orgName || 'Organization',
-                                 isCrisis: data.type === 'emergency' || (data.oppTitle && data.oppTitle.includes('CRISIS')),
-                                 isGroup: false,
-                                 isDM: false,
-                                 type: 'mission',
-                                 lastActivity: lastAct
-                             });
-                         }
+                if (data.oppId && !channelMap.has(data.oppId)) {
+                    channelMap.set(data.oppId, {
+                        id: data.oppId,
+                        title: data.oppTitle || 'Organization Mission',
+                        orgName: data.orgName || 'Organization',
+                        isCrisis: data.type === 'emergency' || (data.oppTitle && data.oppTitle.includes('CRISIS')),
+                        isGroup: false,
+                        isDM: false,
+                        type: 'mission',
+                        lastActivity: lastAct
+                    });
+                }
 
-                         // The Organization Group Channel & DM Channel
-                         if (data.orgId && data.orgName) {
-                             const groupId = `group_${data.orgId}`;
-                             if (!channelMap.has(groupId)) {
-                                 channelMap.set(groupId, {
-                                     id: groupId, title: `${data.orgName} Team`, orgName: data.orgName,
-                                     isCrisis: false, isGroup: true, isDM: false, type: 'group',
-                                     lastActivity: lastAct
-                                 });
-                             } else {
-                               const ext = channelMap.get(groupId);
-                               if (lastAct > ext.lastActivity) { ext.lastActivity = lastAct; channelMap.set(groupId, ext); }
-                             }
+                // The Organization Group Channel & DM Channel
+                if (data.orgId && data.orgName) {
+                    const groupId = `group_${data.orgId}`;
+                    if (!channelMap.has(groupId)) {
+                        channelMap.set(groupId, {
+                            id: groupId, title: `${data.orgName} Team`, orgName: data.orgName,
+                            isCrisis: false, isGroup: true, isDM: false, type: 'group',
+                            lastActivity: lastAct
+                        });
+                    } else {
+                      const ext = channelMap.get(groupId);
+                      if (lastAct > ext.lastActivity) { ext.lastActivity = lastAct; channelMap.set(groupId, ext); }
+                    }
 
-                             const dmId = `dm_${data.orgId}_${user.uid}`;
-                             if (!channelMap.has(dmId)) {
-                                 channelMap.set(dmId, {
-                                     id: dmId, title: `Private: ${data.orgName}`, orgName: data.orgName,
-                                     isCrisis: false, isGroup: false, isDM: true, type: 'dm',
-                                     lastActivity: lastAct
-                                 });
-                             } else {
-                               const ext = channelMap.get(dmId);
-                               if (lastAct > ext.lastActivity) { ext.lastActivity = lastAct; channelMap.set(dmId, ext); }
-                             }
-                         }
-                     });
+                    const dmId = `dm_${data.orgId}_${user.uid}`;
+                    if (!channelMap.has(dmId)) {
+                        channelMap.set(dmId, {
+                            // 🔥 FIX: orgId now stored on the DM channel object.
+                            // Without this, sending a reply had nowhere correct
+                            // to point targetUserId at (see handleSendMessage).
+                            id: dmId, title: `Private: ${data.orgName}`, orgName: data.orgName, orgId: data.orgId,
+                            isCrisis: false, isGroup: false, isDM: true, type: 'dm',
+                            lastActivity: lastAct
+                        });
+                    } else {
+                      const ext = channelMap.get(dmId);
+                      if (lastAct > ext.lastActivity) { ext.lastActivity = lastAct; channelMap.set(dmId, ext); }
+                    }
+                }
+            });
 
-                     // 2. Parse crises
-                     allCrisesSnap.docs.forEach(doc => {
-                         if (crisisTimes.has(doc.id)) {
-                             const crisisData = doc.data();
-                             const lastAct = crisisTimes.get(doc.id);
-                             if (!channelMap.has(doc.id)) {
-                                 channelMap.set(doc.id, {
-                                     id: doc.id, title: `${crisisData.title}`, orgName: crisisData.organization || 'Command Center',
-                                     isCrisis: true, isGroup: false, isDM: false, type: 'crisis',
-                                     lastActivity: lastAct
-                                 });
-                             } else {
-                                 const existing = channelMap.get(doc.id);
-                                 existing.isCrisis = true;
-                                 existing.type = 'crisis';
-                                 if (lastAct > existing.lastActivity) existing.lastActivity = lastAct;
-                                 channelMap.set(doc.id, existing);
-                             }
-                         }
-                     });
+            // 2. Parse crises
+            allCrisesSnap.docs.forEach(doc => {
+                if (crisisTimes.has(doc.id)) {
+                    const crisisData = doc.data();
+                    const lastAct = crisisTimes.get(doc.id);
+                    if (!channelMap.has(doc.id)) {
+                        channelMap.set(doc.id, {
+                            id: doc.id, title: `${crisisData.title}`, orgName: crisisData.organization || 'Command Center',
+                            isCrisis: true, isGroup: false, isDM: false, type: 'crisis',
+                            lastActivity: lastAct
+                        });
+                    } else {
+                        const existing = channelMap.get(doc.id);
+                        existing.isCrisis = true;
+                        existing.type = 'crisis';
+                        if (lastAct > existing.lastActivity) existing.lastActivity = lastAct;
+                        channelMap.set(doc.id, existing);
+                    }
+                }
+            });
 
-                     // 3. Inject Direct Message Channels directly from messages collection
-                     dmsSnap.docs.forEach(doc => {
-                         const dmData = doc.data();
-                         const lastAct = dmData.timestamp?.toMillis() || Date.now();
-                         if (dmData.missionId) {
-                             if (!channelMap.has(dmData.missionId)) {
-                                 channelMap.set(dmData.missionId, {
-                                     id: dmData.missionId, title: dmData.channelTitle || 'Direct Message', orgName: dmData.senderName || 'Organization',
-                                     isCrisis: false, isGroup: false, isDM: true, type: 'dm',
-                                     lastActivity: lastAct 
-                                 });
-                             } else {
-                               const existing = channelMap.get(dmData.missionId);
-                               if (lastAct > existing.lastActivity) { existing.lastActivity = lastAct; channelMap.set(dmData.missionId, existing); }
-                             }
-                         }
-                     });
+            // 3. Direct Message Channels from messages collection
+            dmsSnap.docs.forEach(doc => {
+                const dmData = doc.data();
+                const lastAct = dmData.timestamp?.toMillis() || Date.now();
+                if (dmData.missionId) {
+                    if (!channelMap.has(dmData.missionId)) {
+                        channelMap.set(dmData.missionId, {
+                            // 🔥 FIX: capture the org's uid from the incoming message's
+                            // senderId, so a reply from this screen has a valid target.
+                            id: dmData.missionId, title: dmData.channelTitle || 'Direct Message', orgName: dmData.senderName || 'Organization', orgId: dmData.senderId,
+                            isCrisis: false, isGroup: false, isDM: true, type: 'dm',
+                            lastActivity: lastAct 
+                        });
+                    } else {
+                      const existing = channelMap.get(dmData.missionId);
+                      if (lastAct > existing.lastActivity) { existing.lastActivity = lastAct; channelMap.set(dmData.missionId, existing); }
+                    }
+                }
+            });
 
-                     const fetchedChannels = Array.from(channelMap.values());
-                     
-                     // 🔥 SORT BY LAST ACTIVITY (Newest First) 🔥
-                     fetchedChannels.sort((a, b) => b.lastActivity - a.lastActivity);
+            const fetchedChannels = Array.from(channelMap.values());
+            fetchedChannels.sort((a, b) => b.lastActivity - a.lastActivity);
+            setChannels(fetchedChannels);
 
-                     setChannels(fetchedChannels);
-
-                     if (fetchedChannels.length > 0 && !activeChannel) {
-                        setActiveChannel(fetchedChannels[0]);
-                     }
-                     setLoading(false);
-                 });
-                 return () => unsubDMs();
-             });
-             return () => unsubAllCrises();
+            if (fetchedChannels.length > 0 && !activeChannelRef.current) {
+               setActiveChannel(fetchedChannels[0]);
+            }
+            setLoading(false);
+          });
         });
-        return () => unsubCrisisResp();
+      });
     });
 
-    return () => unsubApps();
+    return () => {
+      unsubApps();
+      unsubCrisisResp();
+      unsubAllCrises();
+      unsubDMs();
+    };
   }, [user]);
 
   // --- 2. FETCH MESSAGES FOR ACTIVE CHANNEL ---
@@ -236,7 +247,13 @@ export function Messages() {
     };
 
     if (activeChannel.isDM) {
-        messagePayload.targetUserId = user.uid; 
+        // 🔥 FIX: this used to be set to the volunteer's OWN uid
+        // (targetUserId = user.uid), which means a DM "to the org" was
+        // actually addressed to the sender. It now points at the org's
+        // uid, captured on the channel object above.
+        if (activeChannel.orgId) {
+          messagePayload.targetUserId = activeChannel.orgId;
+        }
     }
 
     try {
@@ -255,7 +272,6 @@ export function Messages() {
     return 'Recently';
   };
 
-  // --- FILTERING LOGIC ---
   const displayedChannels = channels.filter(c => {
     const matchesFilter = channelFilter === 'all' || c.type === channelFilter;
     const matchesSearch = c.title.toLowerCase().includes(searchTerm.toLowerCase()) || c.orgName.toLowerCase().includes(searchTerm.toLowerCase());
@@ -269,7 +285,6 @@ export function Messages() {
       
       <Card className="w-full h-full flex flex-col md:flex-row shadow-xl border-slate-200 rounded-2xl overflow-hidden bg-white">
         
-        {/* --- LEFT PANEL: CHANNELS LIST --- */}
         <div className="w-full md:w-[340px] bg-slate-50 flex flex-col border-r border-slate-200 shrink-0">
           
           <div className="p-5 border-b border-slate-200 bg-[#016A6D] text-white">
@@ -287,7 +302,6 @@ export function Messages() {
             </div>
           </div>
 
-          {/* 🔥 NEW: THE TACTICAL FILTER BAR 🔥 */}
           <div className="flex gap-2 p-3 overflow-x-auto border-b border-slate-200 bg-white hide-scrollbar shrink-0 shadow-sm z-10">
             <button onClick={() => setChannelFilter('all')} className={`shrink-0 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors ${channelFilter === 'all' ? 'bg-[#016A6D] text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}>All</button>
             <button onClick={() => setChannelFilter('crisis')} className={`shrink-0 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors ${channelFilter === 'crisis' ? 'bg-[#E16A3D] text-white' : 'bg-orange-50 text-orange-700 hover:bg-orange-100'}`}>Crises</button>
@@ -351,11 +365,9 @@ export function Messages() {
           </div>
         </div>
 
-        {/* --- RIGHT PANEL: CHAT AREA --- */}
         <div className="flex-1 flex flex-col bg-white min-w-0">
           {activeChannel ? (
             <>
-              {/* Chat Header */}
               <div className="bg-white p-5 border-b border-slate-100 flex items-center justify-between shadow-sm z-10 shrink-0">
                 <div className="flex items-center gap-4">
                   <div className={`p-2.5 rounded-xl ${activeChannel.type === 'crisis' ? 'bg-orange-50' : activeChannel.type === 'group' ? 'bg-blue-50' : activeChannel.type === 'dm' ? 'bg-slate-100' : 'bg-teal-50'}`}>
@@ -377,7 +389,6 @@ export function Messages() {
                 </Badge>
               </div>
 
-              {/* Chat Feed */}
               <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-5 bg-slate-50/50">
                 {messages.length === 0 ? (
                   <div className="h-full flex flex-col items-center justify-center text-slate-400 space-y-4">
@@ -429,7 +440,6 @@ export function Messages() {
                 <div ref={messagesEndRef} />
               </div>
 
-              {/* Input Area */}
               <div className="p-4 bg-white border-t border-slate-200 shrink-0">
                 <form onSubmit={handleSendMessage} className="flex gap-3">
                   <Input 

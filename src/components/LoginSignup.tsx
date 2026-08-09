@@ -4,11 +4,10 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Separator } from './ui/separator';
-import { Mail, Lock, User, ArrowRight, X, ShieldAlert, Eye, EyeOff } from 'lucide-react'; // 🔥 Added Eye & EyeOff
+import { Mail, Lock, User, ArrowRight, X, ShieldAlert, Eye, EyeOff, Building2, Phone, FileText, CheckSquare } from 'lucide-react'; 
 import atharLogo from '../assets/athar-logo.png';
 import { auth } from '../lib/firebase';
 import { signUpVolunteer, loginUser, signUpOrganization, loginWithGoogle } from '../lib/authService';
-
 import { sendPasswordResetEmail } from 'firebase/auth'; 
 
 interface LoginSignupProps {
@@ -25,11 +24,18 @@ export function LoginSignup({ onLogin, onClose, userType }: LoginSignupProps) {
   // New State for Sign Up
   const [signupName, setSignupName] = useState('');
   const [signupEmail, setSignupEmail] = useState('');
+  const [signupPhone, setSignupPhone] = useState('');
+  const [officialId, setOfficialId] = useState(''); // Now only used for Organizations
   const [signupPass, setSignupPass] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [confirmPass, setConfirmPass] = useState('');
+  const [acceptTerms, setAcceptTerms] = useState(false);
   
-  // 🔥 NEW: State for Password Visibility 🔥
+  // State for 3-Tier Architecture 
+  const [orgTier, setOrgTier] = useState('tier1'); 
+  
+  const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // --- THEME CONFIG ---
   const getTheme = () => {
@@ -72,7 +78,6 @@ export function LoginSignup({ onLogin, onClose, userType }: LoginSignupProps) {
     }
 
     setLoading(true);
-    
     const result = await loginUser(loginEmail, loginPassword);
 
     if (result.success) {
@@ -90,20 +95,37 @@ export function LoginSignup({ onLogin, onClose, userType }: LoginSignupProps) {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-
-    if (!signupName || !signupEmail || !signupPass) {
-      alert("Please fill in all fields");
-      setLoading(false);
+    
+    // Core Form Validation (No officialId for volunteers)
+    if (!signupName || !signupEmail || !signupPass || !confirmPass || !signupPhone) {
+      alert("Please fill in all mandatory fields.");
       return;
     }
 
+    // Organization-Specific Validation
+    if (userType === 'organization' && !officialId) {
+      alert("Please provide your Organization Tax/Registration Number.");
+      return;
+    }
+
+    if (signupPass !== confirmPass) {
+      alert("Security Alert: Passwords do not match. Please try again.");
+      return;
+    }
+
+    if (!acceptTerms) {
+      alert("You must agree to the Terms of Service and Data Privacy Policy.");
+      return;
+    }
+
+    setLoading(true);
     let success = false;
 
     if (userType === 'organization') {
-      success = await signUpOrganization(signupEmail, signupPass, signupName);
+      success = await signUpOrganization(signupEmail, signupPass, signupName, orgTier, signupPhone, officialId);
     } else {
-      success = await signUpVolunteer(signupEmail, signupPass, signupName);
+      // Volunteer signup (Phone included, National ID removed)
+      success = await signUpVolunteer(signupEmail, signupPass, signupName, signupPhone);
     }
 
     if (success) {
@@ -114,17 +136,14 @@ export function LoginSignup({ onLogin, onClose, userType }: LoginSignupProps) {
 
   const handleForgotPassword = async (e: React.MouseEvent) => {
     e.preventDefault();
-    
     if (!loginEmail) {
       alert("Please enter your email address in the Email field above, then click 'Forgot password?'.");
       return;
     }
-
     try {
       await sendPasswordResetEmail(auth, loginEmail);
       alert("Password reset email sent! Please check your inbox and spam folders.");
     } catch (error: any) {
-      console.error("Password reset error:", error);
       alert("Failed to send reset email. Please ensure your email is correct.");
     }
   };
@@ -137,7 +156,6 @@ export function LoginSignup({ onLogin, onClose, userType }: LoginSignupProps) {
     }
 
     const result = await loginWithGoogle(userType);
-    
     if (result.success) {
       onLogin();
     } else {
@@ -188,8 +206,8 @@ export function LoginSignup({ onLogin, onClose, userType }: LoginSignupProps) {
       </div>
 
       {/* RIGHT SIDE: The Form */}
-      <div className="w-full lg:w-1/2 bg-white flex items-center justify-center p-8">
-        <div className="w-full max-w-md space-y-8">
+      <div className="w-full lg:w-1/2 bg-white flex items-center justify-center p-8 overflow-y-auto">
+        <div className="w-full max-w-md space-y-8 my-auto">
             
             <div className="lg:hidden flex justify-center mb-8">
                 <img src={atharLogo} alt="Athar" className="w-12 h-12" />
@@ -213,6 +231,8 @@ export function LoginSignup({ onLogin, onClose, userType }: LoginSignupProps) {
                   <ShieldAlert className="h-5 w-5 text-[#043E52]" />
                   <p className="text-xs font-bold text-[#043E52] uppercase tracking-wider">Authorized Personnel Only</p>
                 </div>
+                
+                {/* ADMIN LOGIN FORM */}
                 <form onSubmit={handleLogin} className="space-y-5">
                     <div className="space-y-2">
                         <Label htmlFor="email">Administrator Email</Label>
@@ -234,12 +254,11 @@ export function LoginSignup({ onLogin, onClose, userType }: LoginSignupProps) {
                             <Lock className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
                             <Input 
                                 id="password" 
-                                type={showPassword ? "text" : "password"} // 🔥 Dynamic Type
+                                type={showPassword ? "text" : "password"} 
                                 placeholder="••••••••" 
-                                className="pl-10 pr-10 h-11 bg-slate-50 border-slate-200" // Added pr-10 for padding
+                                className="pl-10 pr-10 h-11 bg-slate-50 border-slate-200" 
                                 value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)}
                             />
-                            {/* 🔥 Eye Toggle Button 🔥 */}
                             <button 
                               type="button"
                               onClick={() => setShowPassword(!showPassword)}
@@ -261,7 +280,7 @@ export function LoginSignup({ onLogin, onClose, userType }: LoginSignupProps) {
                       <TabsTrigger value="signup" className="rounded-lg data-[state=active]:bg-white shadow-sm">Sign Up</TabsTrigger>
                   </TabsList>
 
-                  {/* LOGIN FORM */}
+                  {/* STANDARD LOGIN FORM */}
                   <TabsContent value="login">
                       <form onSubmit={handleLogin} className="space-y-5">
                           <div className="space-y-2">
@@ -284,12 +303,11 @@ export function LoginSignup({ onLogin, onClose, userType }: LoginSignupProps) {
                                   <Lock className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
                                   <Input 
                                       id="password" 
-                                      type={showPassword ? "text" : "password"} // 🔥 Dynamic Type
+                                      type={showPassword ? "text" : "password"} 
                                       placeholder="••••••••" 
                                       className="pl-10 pr-10 h-11 bg-slate-50 border-slate-200"
                                       value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)}
                                   />
-                                  {/* 🔥 Eye Toggle Button 🔥 */}
                                   <button 
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
@@ -307,14 +325,16 @@ export function LoginSignup({ onLogin, onClose, userType }: LoginSignupProps) {
 
                   {/* SIGN UP FORM */}
                   <TabsContent value="signup">
-                      <form onSubmit={handleSignup} className="space-y-5">
+                      <form onSubmit={handleSignup} className="space-y-4">
+                          
+                          {/* Row 1: Full Name */}
                           <div className="space-y-2">
-                              <Label htmlFor="name">Full Name / Organization Name</Label>
+                              <Label htmlFor="name">{userType === 'organization' ? 'Organization Name' : 'Full Legal Name'}</Label>
                               <div className="relative">
                                   <User className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
                                   <Input 
                                       id="name" 
-                                      placeholder="e.g. John Doe or Red Crescent" 
+                                      placeholder={userType === 'organization' ? 'e.g. Red Crescent' : 'e.g. John Doe'} 
                                       className="pl-10 h-11 bg-slate-50 border-slate-200"
                                       value={signupName} 
                                       onChange={(e) => setSignupName(e.target.value)}
@@ -322,46 +342,143 @@ export function LoginSignup({ onLogin, onClose, userType }: LoginSignupProps) {
                               </div>
                           </div>
 
-                          <div className="space-y-2">
-                              <Label htmlFor="signup-email">Email Address</Label>
-                              <div className="relative">
-                                  <Mail className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
-                                  <Input 
-                                      id="signup-email" 
-                                      type="email" 
-                                      placeholder="name@example.com" 
-                                      className="pl-10 h-11 bg-slate-50 border-slate-200"
-                                      value={signupEmail} 
-                                      onChange={(e) => setSignupEmail(e.target.value)}
-                                  />
-                              </div>
+                          {/* Row 2: Grid for Email & Phone */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="signup-email">Official Email</Label>
+                                <div className="relative">
+                                    <Mail className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
+                                    <Input 
+                                        id="signup-email" 
+                                        type="email" 
+                                        placeholder="name@example.com" 
+                                        className="pl-10 h-11 bg-slate-50 border-slate-200"
+                                        value={signupEmail} 
+                                        onChange={(e) => setSignupEmail(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="signup-phone">Contact Number</Label>
+                                <div className="relative">
+                                    <Phone className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
+                                    <Input 
+                                        id="signup-phone" 
+                                        type="tel" 
+                                        placeholder="+90 5XX XXX XX XX" 
+                                        className="pl-10 h-11 bg-slate-50 border-slate-200"
+                                        value={signupPhone} 
+                                        onChange={(e) => setSignupPhone(e.target.value)}
+                                    />
+                                </div>
+                            </div>
                           </div>
 
-                          <div className="space-y-2">
-                              <Label htmlFor="signup-pass">Create Password</Label>
-                              <div className="relative">
-                                  <Lock className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
-                                  <Input 
-                                      id="signup-pass" 
-                                      type={showPassword ? "text" : "password"} // 🔥 Dynamic Type
-                                      placeholder="••••••••" 
-                                      className="pl-10 pr-10 h-11 bg-slate-50 border-slate-200"
-                                      value={signupPass} 
-                                      onChange={(e) => setSignupPass(e.target.value)}
-                                  />
-                                  {/* 🔥 Eye Toggle Button 🔥 */}
-                                  <button 
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 transition-colors"
-                                  >
-                                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                                  </button>
-                              </div>
+                          {/* Row 3: Organization Specific Fields (Only renders for Organizations) */}
+                          {userType === 'organization' && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="official-id">Tax/Registration No.</Label>
+                                    <div className="relative">
+                                        <FileText className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
+                                        <Input 
+                                            id="official-id" 
+                                            placeholder="Required for verification" 
+                                            className="pl-10 h-11 bg-slate-50 border-slate-200"
+                                            value={officialId} 
+                                            onChange={(e) => setOfficialId(e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="org-tier">Entity Classification</Label>
+                                    <div className="relative">
+                                        <Building2 className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
+                                        <select 
+                                            id="org-tier"
+                                            value={orgTier}
+                                            onChange={(e) => setOrgTier(e.target.value)}
+                                            className="w-full pl-10 pr-4 h-11 bg-slate-50 border border-slate-200 rounded-md text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#016A6D] appearance-none"
+                                        >
+                                            <option value="tier1">Tier 1: Student Club / Youth Forum</option>
+                                            <option value="tier2">Tier 2: Society / Standard NGO</option>
+                                            <option value="tier3">Tier 3: Disaster Response NGO</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                          )}
+
+                          {/* Row 4: Grid for Passwords */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="signup-pass">Create Password</Label>
+                                <div className="relative">
+                                    <Lock className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
+                                    <Input 
+                                        id="signup-pass" 
+                                        type={showPassword ? "text" : "password"} 
+                                        placeholder="••••••••" 
+                                        className="pl-10 pr-10 h-11 bg-slate-50 border-slate-200"
+                                        value={signupPass} 
+                                        onChange={(e) => setSignupPass(e.target.value)}
+                                    />
+                                    <button 
+                                      type="button"
+                                      onClick={() => setShowPassword(!showPassword)}
+                                      className="absolute right-3 top-3 text-slate-400 hover:text-slate-600"
+                                    >
+                                      {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="confirm-pass">Confirm Password</Label>
+                                <div className="relative">
+                                    <Lock className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
+                                    <Input 
+                                        id="confirm-pass" 
+                                        type={showConfirmPassword ? "text" : "password"} 
+                                        placeholder="••••••••" 
+                                        className="pl-10 pr-10 h-11 bg-slate-50 border-slate-200"
+                                        value={confirmPass} 
+                                        onChange={(e) => setConfirmPass(e.target.value)}
+                                    />
+                                    <button 
+                                      type="button"
+                                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                      className="absolute right-3 top-3 text-slate-400 hover:text-slate-600"
+                                    >
+                                      {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                    </button>
+                                </div>
+                            </div>
                           </div>
 
-                          <Button type="submit" disabled={loading} className={`w-full h-11 ${theme.button} text-white`}>
-                              {loading ? "Creating Account..." : "Create Account"}
+                          {/* Row 5: Terms and Conditions */}
+                          <div className="flex items-start space-x-3 pt-2">
+                              <button 
+                                type="button" 
+                                onClick={() => setAcceptTerms(!acceptTerms)}
+                                className="mt-0.5 focus:outline-none"
+                              >
+                                {acceptTerms ? (
+                                  <CheckSquare className="h-5 w-5 text-[#016A6D]" />
+                                ) : (
+                                  <div className="h-5 w-5 border-2 border-slate-300 rounded-[4px]" />
+                                )}
+                              </button>
+                              <Label className="text-xs text-slate-500 leading-tight cursor-pointer" onClick={() => setAcceptTerms(!acceptTerms)}>
+                                I certify that the information provided is accurate and agree to the 
+                                <span className="text-[#016A6D] font-semibold hover:underline mx-1">Terms of Service</span> 
+                                and 
+                                <span className="text-[#016A6D] font-semibold hover:underline ml-1">Data Privacy Policy</span> 
+                                regarding security vetting.
+                              </Label>
+                          </div>
+
+                          <Button type="submit" disabled={loading} className={`w-full h-11 mt-4 ${theme.button} text-white`}>
+                              {loading ? "Processing Secure Verification..." : "Submit Registration Request"}
                           </Button>
                       </form>
                   </TabsContent>

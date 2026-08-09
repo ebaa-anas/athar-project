@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -11,19 +11,17 @@ import { Checkbox } from '../ui/checkbox';
 import { Progress } from '../ui/progress';
 import { 
   Mail, Phone, MapPin, Globe, Edit3, Save, CheckCircle2, ShieldCheck, 
-  Users2, Timer, Activity, Scale, Fingerprint, FileText, Gavel,
-  Camera, Loader2, Image as ImageIcon, Landmark, FileDigit, Building, 
-  ShieldAlert, UploadCloud, Check, FileCheck, Shield, HeartHandshake
+  Users2, Timer, Activity, Scale, Fingerprint, Landmark, FileDigit, Building, 
+  ShieldAlert, UploadCloud, Check, FileCheck, Shield, HeartHandshake, Camera, Loader2, Image as ImageIcon, Gavel, X
 } from 'lucide-react';
 
 import { useUserProfile } from '../../hooks/useUserProfile';
 import { updateOrganizationProfile } from '../../lib/authService';
 
-// 🔥 IMPORT FIREBASE DATABASE TOOLS 🔥
 import { db } from '../../lib/firebase';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+// ADDED: doc and getDoc for fetching the specific organization record
+import { collection, query, where, onSnapshot, doc, getDoc } from 'firebase/firestore';
 
-// 🔥 PREDEFINED LIST FOR VOLUNTEER MATCHING
 const PREDEFINED_CAUSES = [
   "Disaster Relief", "Education", "Environment & Climate", 
   "Healthcare", "Poverty Alleviation", "Food Security", 
@@ -38,16 +36,12 @@ export function OrganizationProfile() {
   const [showVerifyModal, setShowVerifyModal] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
 
-  // --- LIVE STATS STATE ---
   const [orgStats, setOrgStats] = useState({ hours: 0, missions: 0, volunteers: 0 });
-
-  // --- IMAGE UPLOAD STATES ---
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [isUploadingCover, setIsUploadingCover] = useState(false);
   const logoInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
 
-  // --- AUDIT DOCUMENT UPLOAD STATES ---
   const [uploadingDoc, setUploadingDoc] = useState<string | null>(null);
   const [isSubmittingAudit, setIsSubmittingAudit] = useState(false); 
   const [auditFiles, setAuditFiles] = useState<Record<string, string | null>>({
@@ -67,77 +61,154 @@ export function OrganizationProfile() {
     foundingDate: '', signatoryName: '', signatoryRole: ''
   });
 
+  // UPDATED: Async useEffect to fetch the full organization document
   useEffect(() => {
-    if (user) {
-      setProfileData({
-        name: user.name || '', tagline: user.tagline || '', email: user.email || '',
-        phone: user.phone || '', website: user.website || '', address: user.address || '',
-        city: user.city || '', country: user.country || '', description: user.description || '',
-        mission: user.mission || '', impactSummary: user.impactSummary || '',
-        category: user.category || 'Non-Profit', photoUrl: user.photoUrl || user.logoUrl || '',
-        coverUrl: user.coverUrl || '', registrationId: user.registrationId || '',
-        yearFounded: user.yearFounded || '', boardMembers: user.boardMembers || '',
-        safeguardingPolicy: user.safeguardingPolicy || '', causes: user.causes || '' 
-      });
-    }
+    const loadOrganizationData = async () => {
+      if (user) {
+        // 1. Fill basic known details from the user "nametag" document
+        let currentData = {
+          name: user.name || user.legalName || '', 
+          tagline: user.tagline || '', 
+          email: user.email || '',
+          phone: user.phone || '', 
+          website: user.website || '', 
+          address: user.address || '',
+          city: user.city || '', 
+          country: user.country || '', 
+          description: user.description || '',
+          mission: user.mission || '', 
+          impactSummary: user.impactSummary || '0 projects verified.',
+          category: user.category || 'Non-Profit Organization', 
+          photoUrl: user.photoUrl || user.logoUrl || '',
+          coverUrl: user.coverUrl || '', 
+          registrationId: user.registrationId || user.officialId || '',
+          yearFounded: user.yearFounded || '', 
+          boardMembers: user.boardMembers || '',
+          safeguardingPolicy: user.safeguardingPolicy || '', 
+          causes: user.causes || '' 
+        };
+
+        // 2. Fetch the rich profile straight from the "organizations" collection
+        if (user.uid) {
+          try {
+            const orgRef = doc(db, "organizations", user.uid);
+            const orgSnap = await getDoc(orgRef);
+            
+            if (orgSnap.exists()) {
+              const orgData = orgSnap.data();
+              // Merge data, prioritizing the specific organization database fields
+              currentData = {
+                ...currentData,
+                ...orgData,
+                name: orgData.name || currentData.name,
+                phone: orgData.phone || currentData.phone,
+                registrationId: orgData.registrationId || currentData.registrationId,
+                email: orgData.email || currentData.email
+              };
+            }
+          } catch (error) {
+            console.error("Failed to fetch organization specific data:", error);
+          }
+        }
+
+        setProfileData(currentData);
+
+        // 🔥 AUTO-EDIT MAGIC 🔥
+        if (!currentData.description || !currentData.mission || !currentData.address || !currentData.phone || !currentData.causes) {
+           setIsEditing(true);
+        }
+      }
+    };
+
+    loadOrganizationData();
   }, [user]);
 
-  // 🔥 REAL-TIME STATS FETCHING 🔥
   useEffect(() => {
     if (!user?.uid) return;
-
-    // 1. Fetch Total Missions (Opportunities created by this org)
     const qMissions = query(collection(db, "opportunities"), where("orgId", "==", user.uid));
-    const unsubMissions = onSnapshot(qMissions, (snap) => {
-      setOrgStats(prev => ({ ...prev, missions: snap.docs.length }));
-    });
+    const unsubMissions = onSnapshot(qMissions, (snap) => setOrgStats(prev => ({ ...prev, missions: snap.docs.length })));
 
-    // 2. Fetch Volunteers and Impact Hours
     const qApps = query(collection(db, "applications"), where("orgId", "==", user.uid));
     const unsubApps = onSnapshot(qApps, (snap) => {
       const apps = snap.docs.map(d => d.data());
-      
-      // Only count accepted or completed applications
       const activeApps = apps.filter(a => a.status === 'accepted' || a.status === 'completed');
-      
-      // Calculate total hours
       const totalHours = activeApps.reduce((acc, curr) => acc + (curr.hoursContributed || 0), 0);
-      
-      // Calculate unique volunteers (so a person applying to 3 missions counts as 1 volunteer)
       const uniqueVolunteers = new Set(activeApps.map(a => a.volunteerId)).size;
-
-      setOrgStats(prev => ({
-        ...prev,
-        volunteers: uniqueVolunteers || activeApps.length, // Fallback
-        hours: totalHours
-      }));
+      setOrgStats(prev => ({ ...prev, volunteers: uniqueVolunteers || activeApps.length, hours: totalHours }));
     });
 
     return () => { unsubMissions(); unsubApps(); };
   }, [user]);
 
-  const isVerified = user?.verified || user?.verificationStatus === 'verified' || false;
+  // --- TIER LOGIC ---
+  const currentTier = user?.tier || 'tier1';
+  const isVerified = user?.verified || user?.verificationStatus === 'verified' || currentTier === 'tier1';
   const vStatus = user?.verificationStatus || "unverified";
 
-  // 🔥 CAUSE TOGGLE LOGIC FOR MATCHING
+  // --- 🛡️ STRICT ENTERPRISE VALIDATION ENGINE 🛡️ ---
+  const getProfileErrors = () => {
+    const errs = [];
+    if (!profileData.name || profileData.name.trim().length < 3) errs.push("Legal Entity Name");
+    if (!profileData.description || profileData.description.trim().length < 50) errs.push("About Entity (min. 50 characters required)");
+    if (!profileData.mission || profileData.mission.trim().length < 20) errs.push("Mission Statement (min. 20 characters required)");
+    if (!profileData.registrationId || profileData.registrationId.trim().length < 5) errs.push("Valid Registration / Tax ID");
+    if (!profileData.address || profileData.address.trim().length < 10) errs.push("Complete Physical HQ Address");
+    if (!profileData.phone || profileData.phone.trim().length < 8) errs.push("Valid Contact Phone Number");
+    if (!profileData.causes || profileData.causes.trim().length === 0) errs.push("At least one Core Cause selected");
+    
+    if (profileData.website && !/^https?:\/\/[^\s$.?#].[^\s]*$/.test(profileData.website)) {
+        errs.push("Website must be a valid URL (e.g., https://www...)");
+    }
+
+    if (currentTier !== 'tier1') {
+        if (!profileData.boardMembers || profileData.boardMembers.trim().length < 15) errs.push("Board of Directors Roster (Required for Tier 2/3)");
+        if (!profileData.safeguardingPolicy || profileData.safeguardingPolicy.trim().length < 30) errs.push("Safeguarding Policy (min. 30 characters required)");
+    }
+
+    return errs;
+  };
+
+  const profileErrors = getProfileErrors();
+  const isProfileComplete = profileErrors.length === 0;
+
+  const getRequiredDocs = () => {
+    if (currentTier === 'tier2') {
+      return [
+        { id: 'incorporation', title: 'Certificate of Incorporation', desc: 'Proof of Legal NGO Status', icon: FileCheck },
+        { id: 'financial', title: 'Latest Financial Audit', desc: 'Fiduciary Transparency', icon: Landmark },
+        { id: 'signatoryId', title: 'Signatory Official ID', desc: 'Passport or National ID', icon: Fingerprint }
+      ];
+    }
+    return [
+      { id: 'incorporation', title: 'Certificate of Incorporation', desc: 'Proof of Legal Status', icon: FileCheck },
+      { id: 'financial', title: 'Latest Financial Audit (Form 990)', desc: 'Fiduciary Transparency', icon: Landmark },
+      { id: 'safeguarding', title: 'Data Protection Policy', desc: 'GDPR & Minor Protection', icon: ShieldAlert },
+      { id: 'insurance', title: 'Comprehensive Liability Insurance', desc: 'Volunteer Civil Liability', icon: Shield },
+      { id: 'signatoryId', title: 'Signatory Government ID', desc: 'Passport or National ID', icon: Fingerprint }
+    ];
+  };
+
+  const requiredDocs = getRequiredDocs();
+
   const toggleCause = (cause: string) => {
     if (!isEditing) return;
     let currentCauses = profileData.causes ? profileData.causes.split(',').map(c => c.trim()).filter(Boolean) : [];
-    
     if (currentCauses.includes(cause)) {
       currentCauses = currentCauses.filter(c => c !== cause);
     } else {
-      if (currentCauses.length < 5) { // Optional: Limit to top 5 causes
-        currentCauses.push(cause);
-      } else {
-        alert("You can select a maximum of 5 core causes.");
-      }
+      if (currentCauses.length < 5) currentCauses.push(cause);
+      else alert("You can select a maximum of 5 core causes.");
     }
     setProfileData({ ...profileData, causes: currentCauses.join(',') });
   };
 
   const handleSave = async () => {
     if (!user) return;
+
+    if (!isProfileComplete) {
+      return alert("Incomplete Profile: You must fill out all mandatory sections before saving:\n\n- " + profileErrors.join('\n- '));
+    }
+
     setIsSaving(true);
     await updateOrganizationProfile(user.uid, profileData);
     setIsEditing(false);
@@ -203,9 +274,7 @@ export function OrganizationProfile() {
     }, 1500);
   };
 
-  const areAllDocsUploaded = () => {
-    return auditFiles.incorporation && auditFiles.financial && auditFiles.safeguarding && auditFiles.insurance && auditFiles.signatoryId;
-  };
+  const areAllDocsUploaded = () => requiredDocs.every(doc => auditFiles[doc.id]);
 
   const handleSubmitAudit = async () => {
     if (!user) return;
@@ -215,7 +284,7 @@ export function OrganizationProfile() {
         verificationStatus: "pending", auditData: auditData,
         auditFiles: auditFiles, auditSubmittedAt: new Date().toISOString()
       });
-      alert("Audit Package securely transmitted to the Ministry Queue. You will be notified via email upon review completion.");
+      alert("Audit Package securely transmitted to the Queue. You will be notified via email upon review completion.");
       setShowVerifyModal(false);
     } catch (error) {
       console.error("Error submitting audit:", error);
@@ -231,6 +300,19 @@ export function OrganizationProfile() {
 
   return (
     <div className="bg-slate-50 min-h-screen pb-12 font-sans space-y-6">
+
+      {/* COMPREHENSIVE PROFILE COMPLETION WARNING BANNER */}
+      {!isProfileComplete && (
+        <div className="bg-rose-50 border border-rose-200 p-4 rounded-b-2xl shadow-sm mb-6 flex items-start sm:items-center gap-4 max-w-6xl mx-auto border-t-0">
+          <div className="bg-rose-600 p-2.5 rounded-xl text-white shrink-0"><ShieldAlert size={20} /></div>
+          <div>
+            <h4 className="text-rose-900 font-bold text-sm">Action Required: Complete Organization Profile</h4>
+            <p className="text-rose-700 text-xs font-medium mt-0.5">
+              Your profile is incomplete. <strong>You cannot post any volunteering opportunities</strong> until all mandatory fields (About Entity, Mission Statement, Causes, Contact, and Location) are completed.
+            </p>
+          </div>
+        </div>
+      )}
       
       {/* --- 1. COMPACT PROFILE HEADER --- */}
       <div className="bg-white border-b border-orange-500/10 shadow-sm">
@@ -272,29 +354,40 @@ export function OrganizationProfile() {
 
             <div className="flex-1 pb-1 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div className="space-y-1 w-full md:w-auto">
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                   {isEditing ? (
                     <Input 
                       value={profileData.name} 
                       onChange={(e) => setProfileData({...profileData, name: e.target.value})} 
                       className="text-lg font-bold text-[#043E52] h-9 w-full md:w-72 border-orange-200 focus:ring-orange-500"
-                      placeholder="Official Organization Name"
+                      placeholder="Official Organization Name *"
                     />
                   ) : (
-                    <h1 className="text-xl md:text-2xl font-bold text-[#043E52]">{profileData.name || "Unnamed Organization"}</h1>
+                    <div className="flex items-center gap-2">
+                      <h1 className="text-xl md:text-2xl font-bold text-[#043E52]">{profileData.name || "Unnamed Organization"}</h1>
+                      {isVerified && !isEditing && <ShieldCheck className="h-5 w-5 text-orange-500" title="Verified" />}
+                    </div>
                   )}
-                  {isVerified && !isEditing && <ShieldCheck className="h-5 w-5 text-orange-500" title="Government Verified" />}
+                  {!isEditing && (
+                    <Badge className={`text-[10px] uppercase font-bold px-2 py-0.5 border shadow-none ${
+                        currentTier === 'tier3' ? 'bg-rose-100 text-rose-700 border-rose-300' : 
+                        currentTier === 'tier2' ? 'bg-indigo-100 text-indigo-700 border-indigo-300' :
+                        'bg-emerald-100 text-emerald-700 border-emerald-300'
+                    }`}>
+                        {currentTier === 'tier3' ? 'Tier 3: Crisis Ops' : currentTier === 'tier2' ? 'Tier 2: NGO' : 'Tier 1: Initiative'}
+                    </Badge>
+                  )}
                 </div>
                 
                 {isEditing ? (
                   <Input 
                     value={profileData.tagline} 
                     onChange={(e) => setProfileData({...profileData, tagline: e.target.value})} 
-                    className="text-slate-600 text-sm h-8 w-full md:w-80 border-slate-300 focus:ring-orange-500"
+                    className="text-slate-600 text-sm h-8 w-full md:w-80 border-slate-300 focus:ring-orange-500 mt-2"
                     placeholder="Short mission tagline..."
                   />
                 ) : (
-                  <p className="text-slate-500 font-medium text-sm flex items-center gap-2">
+                  <p className="text-slate-500 font-medium text-sm flex items-center gap-2 mt-1">
                     {profileData.tagline || "Official Entity"}
                     {!isVerified && <Badge variant="secondary" className="bg-amber-100 text-amber-700 hover:bg-amber-100 border-none text-[9px] px-1.5 uppercase">Audit Pending</Badge>}
                   </p>
@@ -307,9 +400,16 @@ export function OrganizationProfile() {
                     <Edit3 className="mr-2 h-4 w-4" /> Edit Profile
                   </Button>
                 ) : (
-                  <Button onClick={handleSave} disabled={isSaving} size="sm" className="w-full md:w-auto bg-orange-500 hover:bg-orange-600 text-white font-bold shadow-sm text-xs uppercase tracking-wider h-9 transition-colors">
-                    <Save className="mr-2 h-4 w-4" /> {isSaving ? "Saving..." : "Save Changes"}
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button onClick={handleSave} disabled={isSaving} size="sm" className="w-full md:w-auto bg-orange-500 hover:bg-orange-600 text-white font-bold shadow-sm text-xs uppercase tracking-wider h-9 transition-colors">
+                      <Save className="mr-2 h-4 w-4" /> {isSaving ? "Saving..." : "Save Changes"}
+                    </Button>
+                    {isProfileComplete && (
+                      <Button onClick={() => setIsEditing(false)} size="sm" variant="outline" className="border-slate-300 text-slate-600 font-bold shadow-sm text-xs uppercase tracking-wider h-9 transition-colors">
+                         <X className="mr-2 h-4 w-4" /> Cancel
+                      </Button>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
@@ -324,7 +424,6 @@ export function OrganizationProfile() {
         <div className="lg:col-span-2 space-y-6">
           
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-             {/* 🔥 REPLACED ZEROES WITH DYNAMIC DATABASE STATS 🔥 */}
              {[
                { label: 'Impact Hours', val: orgStats.hours.toString(), icon: Timer, color: 'text-[#1C9290]', bg: 'bg-teal-50' },
                { label: 'Missions', val: orgStats.missions.toString(), icon: Activity, color: 'text-orange-500', bg: 'bg-orange-50' },
@@ -347,18 +446,28 @@ export function OrganizationProfile() {
             </CardHeader>
             <CardContent className="p-5 space-y-6">
                <div className="space-y-2">
-                 <Label className="font-bold text-[#043E52] text-[10px] uppercase tracking-widest flex items-center gap-1.5"><Building className="h-3.5 w-3.5" /> About the Entity</Label>
+                 <Label className="font-bold text-[#043E52] text-[10px] uppercase tracking-widest flex items-center gap-1.5"><Building className="h-3.5 w-3.5" /> About the Entity *</Label>
                  {isEditing ? (
-                   <Textarea value={profileData.description} onChange={(e)=>setProfileData({...profileData, description: e.target.value})} className="bg-white border-slate-300 p-3 text-sm min-h-[100px] rounded-lg focus:ring-[#1C9290]" placeholder="Provide a comprehensive operational description..." />
+                   <Textarea value={profileData.description} onChange={(e)=>setProfileData({...profileData, description: e.target.value})} className="bg-white border-slate-300 p-3 text-sm min-h-[100px] rounded-lg focus:ring-[#1C9290]" placeholder="Provide a detailed operational description..." />
                  ) : (
                    <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-wrap">{profileData.description || "Operational description pending."}</p>
+                 )}
+               </div>
+
+               {/* FULLY RESTORED IMPACT SUMMARY */}
+               <div className="space-y-2 pt-2">
+                 <Label className="font-bold text-[#043E52] text-[10px] uppercase tracking-widest flex items-center gap-1.5"><Activity className="h-3.5 w-3.5" /> Impact Summary</Label>
+                 {isEditing ? (
+                   <Textarea value={profileData.impactSummary} onChange={(e)=>setProfileData({...profileData, impactSummary: e.target.value})} className="bg-white border-slate-300 p-3 text-sm min-h-[80px] rounded-lg focus:ring-[#1C9290]" placeholder="Provide a brief summary of organizational impact (e.g. 100+ projects completed)..." />
+                 ) : (
+                   <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-wrap">{profileData.impactSummary || "No impact summary provided."}</p>
                  )}
                </div>
 
                <div className="space-y-3 pt-2">
                  <div className="flex items-center justify-between">
                    <Label className="font-bold text-[#043E52] text-[10px] uppercase tracking-widest flex items-center gap-1.5">
-                     <HeartHandshake className="h-3.5 w-3.5 text-orange-500" /> Core Causes (Matching Keywords)
+                     <HeartHandshake className="h-3.5 w-3.5 text-orange-500" /> Core Causes (Matching Keywords) *
                    </Label>
                    {isEditing && <span className="text-[10px] text-slate-400">{currentCausesArray.length}/5 Selected</span>}
                  </div>
@@ -398,7 +507,7 @@ export function OrganizationProfile() {
                <Separator className="bg-slate-100" />
                
                <div className="space-y-2">
-                 <Label className="font-bold text-[#043E52] text-[10px] uppercase tracking-widest flex items-center gap-1.5"><Scale className="h-3.5 w-3.5" /> Legal Mission Statement</Label>
+                 <Label className="font-bold text-[#043E52] text-[10px] uppercase tracking-widest flex items-center gap-1.5"><Scale className="h-3.5 w-3.5" /> Legal Mission Statement *</Label>
                  {isEditing ? (
                    <Textarea value={profileData.mission} onChange={(e)=>setProfileData({...profileData, mission: e.target.value})} className="bg-white border-slate-300 p-3 text-sm min-h-[60px] rounded-lg focus:ring-[#1C9290]" placeholder="Enter official registered mission statement..." />
                  ) : (
@@ -408,24 +517,26 @@ export function OrganizationProfile() {
                  )}
                </div>
 
+               {/* FULLY RESTORED: Removed Tier visual lock so anyone can edit, but required for tier2/3 validation */}
                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
-                  <div className="space-y-2">
-                    <Label className="font-bold text-[#043E52] text-[10px] uppercase tracking-widest flex items-center gap-1.5"><Users2 className="h-3.5 w-3.5" /> Board of Directors</Label>
-                    {isEditing ? (
-                      <Textarea value={profileData.boardMembers} onChange={(e)=>setProfileData({...profileData, boardMembers: e.target.value})} className="bg-white border-slate-300 text-sm h-20" placeholder="List key board members/trustees..." />
-                    ) : (
-                      <p className="text-slate-600 text-xs leading-relaxed">{profileData.boardMembers || "Board roster not disclosed publicly."}</p>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="font-bold text-[#043E52] text-[10px] uppercase tracking-widest flex items-center gap-1.5"><ShieldAlert className="h-3.5 w-3.5" /> Safeguarding Policy</Label>
-                    {isEditing ? (
-                      <Textarea value={profileData.safeguardingPolicy} onChange={(e)=>setProfileData({...profileData, safeguardingPolicy: e.target.value})} className="bg-white border-slate-300 text-sm h-20" placeholder="Briefly detail volunteer/minor safeguarding protocols..." />
-                    ) : (
-                      <p className="text-slate-600 text-xs leading-relaxed">{profileData.safeguardingPolicy || "Safeguarding and liability policies pending."}</p>
-                    )}
-                  </div>
+                   <div className="space-y-2">
+                       <Label className="font-bold text-[#043E52] text-[10px] uppercase tracking-widest flex items-center gap-1.5"><Users2 className="h-3.5 w-3.5" /> Board of Directors {currentTier !== 'tier1' && '*'}</Label>
+                       {isEditing ? (
+                       <Textarea value={profileData.boardMembers} onChange={(e)=>setProfileData({...profileData, boardMembers: e.target.value})} className="bg-white border-slate-300 text-sm h-20" placeholder="List key board members/trustees..." />
+                       ) : (
+                       <p className="text-slate-600 text-xs leading-relaxed">{profileData.boardMembers || "Board roster not disclosed publicly."}</p>
+                       )}
+                   </div>
+                   <div className="space-y-2">
+                       <Label className="font-bold text-[#043E52] text-[10px] uppercase tracking-widest flex items-center gap-1.5"><ShieldAlert className="h-3.5 w-3.5" /> Safeguarding Policy {currentTier !== 'tier1' && '*'}</Label>
+                       {isEditing ? (
+                       <Textarea value={profileData.safeguardingPolicy} onChange={(e)=>setProfileData({...profileData, safeguardingPolicy: e.target.value})} className="bg-white border-slate-300 text-sm h-20" placeholder="Briefly detail volunteer/minor safeguarding protocols..." />
+                       ) : (
+                       <p className="text-slate-600 text-xs leading-relaxed">{profileData.safeguardingPolicy || "Safeguarding and liability policies pending."}</p>
+                       )}
+                   </div>
                </div>
+               
             </CardContent>
           </Card>
         </div>
@@ -436,16 +547,25 @@ export function OrganizationProfile() {
           <Card className={`border shadow-sm rounded-xl overflow-hidden ${isVerified ? 'bg-[#043E52] text-white border-transparent' : 'bg-white border-slate-200'}`}>
             <div className="p-5 space-y-4">
               <div className="flex items-center justify-between">
-                <ShieldCheck className={`h-7 w-7 ${isVerified ? 'text-orange-400' : 'text-amber-500'}`} />
+                <ShieldCheck className={`h-7 w-7 ${isVerified ? 'text-emerald-400' : 'text-amber-500'}`} />
                 <Badge variant="outline" className={`text-[9px] uppercase font-black tracking-widest px-2 py-0.5 ${isVerified ? 'text-white border-white/20 bg-white/10' : 'text-amber-700 border-amber-200 bg-amber-50'}`}>
-                  {isVerified ? 'GOVERNMENT VERIFIED' : 'AUDIT REQUIRED'}
+                  {isVerified ? (currentTier === 'tier3' ? 'GOV VERIFIED' : 'VERIFIED ACTIVE') : 'AUDIT REQUIRED'}
                 </Badge>
               </div>
               
-              {isVerified ? (
+              {currentTier === 'tier1' ? (
+                <div className="space-y-3">
+                   <h3 className="text-lg font-bold">Community Initiative</h3>
+                   <p className="text-teal-50/80 text-xs leading-relaxed">As a Tier 1 entity, your profile is auto-verified to create local community missions. Advanced legal audits are only required for Tier 2 (NGO) or Tier 3 (Crisis Ops).</p>
+                </div>
+              ) : isVerified ? (
                 <div className="space-y-3">
                    <h3 className="text-lg font-bold">Fiduciary Identity Confirmed</h3>
-                   <p className="text-slate-300 text-xs leading-relaxed">This entity has passed the National Disaster Response Framework (NDRF) audit and is legally authorized for public deployment.</p>
+                   <p className="text-slate-300 text-xs leading-relaxed">
+                     {currentTier === 'tier3' 
+                        ? 'This entity has passed the National Disaster Response Framework (NDRF) audit and is legally authorized for public crisis deployment.' 
+                        : 'This entity has passed the standard verification audit and is authorized for regular platform operations.'}
+                   </p>
                    <div className="bg-[#033040] rounded-lg p-3 space-y-2 mt-2 border border-white/10">
                       <div className="flex justify-between text-xs"><span className="text-teal-100/60 font-semibold uppercase tracking-wider text-[9px]">Reg ID</span><span className="font-bold font-mono text-teal-100">{profileData.registrationId || 'Verified'}</span></div>
                       <div className="flex justify-between text-xs"><span className="text-teal-100/60 font-semibold uppercase tracking-wider text-[9px]">Founded</span><span className="font-bold">{profileData.yearFounded || 'Verified'}</span></div>
@@ -454,7 +574,7 @@ export function OrganizationProfile() {
               ) : vStatus === "pending" ? (
                 <div className="space-y-3">
                    <h3 className="text-lg font-bold text-[#043E52] tracking-tight">Audit in Progress</h3>
-                   <p className="text-xs text-slate-500 leading-relaxed">Your corporate documents are currently under review by the Ministry Compliance Team.</p>
+                   <p className="text-xs text-slate-500 leading-relaxed">Your corporate documents are currently under review by the Compliance Team.</p>
                    <div className="bg-orange-50 border border-orange-200 p-3 rounded-lg flex flex-col gap-2 mt-2">
                       <div className="flex justify-between items-center text-xs font-bold text-orange-800 uppercase tracking-wider">
                         <span>Review Queue</span>
@@ -465,12 +585,45 @@ export function OrganizationProfile() {
                    </div>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-3 relative">
                   <h3 className="text-lg font-bold text-[#043E52] tracking-tight">Unverified Entity</h3>
-                  <p className="text-xs text-slate-500 leading-relaxed">To access the Athar Volunteer Reserve (AVR) and deploy missions, you must complete a fiduciary compliance audit.</p>
-                  <Button onClick={() => setShowVerifyModal(true)} className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold h-10 rounded-lg text-xs uppercase tracking-wider mt-2 transition-colors">
-                    Initiate Audit Now
-                  </Button>
+                  <p className="text-xs text-slate-500 leading-relaxed">
+                    {currentTier === 'tier3' 
+                        ? 'To access the Athar Volunteer Reserve (AVR) crisis portal, you must complete the mandatory government NDRF audit.' 
+                        : 'To officially post public volunteer opportunities on the platform, you must submit foundational verification documents.'}
+                  </p>
+                  
+                  {/* 🔥 STRICT VALIDATION GATEWAY 🔥 */}
+                  {!isProfileComplete ? (
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mt-2 space-y-2">
+                      <p className="text-[10px] font-bold text-amber-800 uppercase tracking-wider flex items-center gap-1.5">
+                        <ShieldAlert className="h-3.5 w-3.5 text-amber-600" /> Action Required: Incomplete Profile
+                      </p>
+                      <p className="text-[11px] text-amber-700 leading-relaxed font-medium">
+                        Click <strong>"Edit Profile"</strong> and resolve the following to unlock the audit portal:
+                      </p>
+                      <ul className="list-disc pl-4 text-[10px] text-amber-700 font-medium space-y-0.5">
+                        {profileErrors.map((errorMsg, idx) => (
+                           <li key={idx}>{errorMsg}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : isEditing ? (
+                    <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 mt-2">
+                      <p className="text-xs text-slate-500 font-medium text-center">Save your profile changes to initiate the audit.</p>
+                    </div>
+                  ) : (
+                    <Button 
+                      className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold h-10 rounded-lg text-xs uppercase tracking-wider mt-2 transition-colors relative z-10 cursor-pointer"
+                      onClick={(e) => {
+                        e.preventDefault(); 
+                        e.stopPropagation(); 
+                        setShowVerifyModal(true);
+                      }}
+                    >
+                      {currentTier === 'tier3' ? 'Initiate Gov Audit Now' : 'Submit Verification Docs'}
+                    </Button>
+                  )}
                 </div>
               )}
             </div>
@@ -483,12 +636,19 @@ export function OrganizationProfile() {
              
              {isEditing ? (
                <div className="space-y-3">
-                 <div className="space-y-1"><Label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Gov Registration / Tax ID</Label><Input value={profileData.registrationId} onChange={(e)=>setProfileData({...profileData, registrationId: e.target.value})} placeholder="e.g. EIN-12345" className="h-9 text-xs rounded-md border-slate-200 focus:ring-orange-500" /></div>
+                 <div className="space-y-1"><Label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Gov Registration / Tax ID *</Label><Input value={profileData.registrationId} onChange={(e)=>setProfileData({...profileData, registrationId: e.target.value})} placeholder="e.g. EIN-12345" className="h-9 text-xs rounded-md border-slate-200 focus:ring-orange-500" /></div>
                  <div className="space-y-1"><Label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Year Founded</Label><Input value={profileData.yearFounded} onChange={(e)=>setProfileData({...profileData, yearFounded: e.target.value})} placeholder="e.g. 2010" type="number" className="h-9 text-xs rounded-md border-slate-200 focus:ring-orange-500" /></div>
                  <div className="space-y-1"><Label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Website</Label><Input value={profileData.website} onChange={(e)=>setProfileData({...profileData, website: e.target.value})} placeholder="https://..." className="h-9 text-xs rounded-md border-slate-200 focus:ring-orange-500" /></div>
                  <div className="space-y-1"><Label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Public Email</Label><Input value={profileData.email} onChange={(e)=>setProfileData({...profileData, email: e.target.value})} placeholder="contact@org.com" className="h-9 text-xs rounded-md border-slate-200 focus:ring-orange-500" /></div>
-                 <div className="space-y-1"><Label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Phone</Label><Input value={profileData.phone} onChange={(e)=>setProfileData({...profileData, phone: e.target.value})} placeholder="+90..." className="h-9 text-xs rounded-md border-slate-200 focus:ring-orange-500" /></div>
-                 <div className="space-y-1"><Label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">HQ Address</Label><Textarea value={profileData.address} onChange={(e)=>setProfileData({...profileData, address: e.target.value})} placeholder="Full Address..." className="h-16 text-xs resize-none rounded-md border-slate-200 focus:ring-orange-500" /></div>
+                 <div className="space-y-1"><Label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Phone *</Label><Input value={profileData.phone} onChange={(e)=>setProfileData({...profileData, phone: e.target.value})} placeholder="+90..." className="h-9 text-xs rounded-md border-slate-200 focus:ring-orange-500" /></div>
+                 
+                 {/* FULLY RESTORED CITY & COUNTRY ALONGSIDE ADDRESS */}
+                 <div className="grid grid-cols-2 gap-3">
+                   <div className="space-y-1"><Label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">City</Label><Input value={profileData.city} onChange={(e)=>setProfileData({...profileData, city: e.target.value})} placeholder="City" className="h-9 text-xs rounded-md border-slate-200 focus:ring-orange-500" /></div>
+                   <div className="space-y-1"><Label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Country</Label><Input value={profileData.country} onChange={(e)=>setProfileData({...profileData, country: e.target.value})} placeholder="Country" className="h-9 text-xs rounded-md border-slate-200 focus:ring-orange-500" /></div>
+                 </div>
+                 
+                 <div className="space-y-1"><Label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">HQ Address *</Label><Textarea value={profileData.address} onChange={(e)=>setProfileData({...profileData, address: e.target.value})} placeholder="Full Address..." className="h-16 text-xs resize-none rounded-md border-slate-200 focus:ring-orange-500" /></div>
                </div>
              ) : (
                <div className="space-y-3.5">
@@ -497,16 +657,26 @@ export function OrganizationProfile() {
                  <div className="flex items-center gap-3 text-sm text-slate-600"><Mail className="h-4 w-4 text-orange-400 shrink-0" /> <span className="truncate font-medium">{profileData.email || "Not provided"}</span></div>
                  <div className="flex items-center gap-3 text-sm text-slate-600"><Phone className="h-4 w-4 text-orange-400 shrink-0" /> <span className="font-medium">{profileData.phone || "Not provided"}</span></div>
                  <Separator className="bg-slate-100" />
-                 <div className="flex items-start gap-3 text-sm text-slate-600 leading-relaxed"><MapPin className="h-4 w-4 text-orange-400 shrink-0 mt-0.5" /> <span className="font-medium">{profileData.address || "HQ Location Not Logged"}</span></div>
+                 
+                 {/* COMBINED LOCATION DISPLAY */}
+                 <div className="flex items-start gap-3 text-sm text-slate-600 leading-relaxed">
+                    <MapPin className="h-4 w-4 text-orange-400 shrink-0 mt-0.5" /> 
+                    <div>
+                        <span className="font-medium block">{profileData.address || "HQ Location Not Logged"}</span>
+                        {(profileData.city || profileData.country) && (
+                            <span className="text-xs text-slate-500 mt-0.5 block">{profileData.city}{profileData.city && profileData.country && ', '}{profileData.country}</span>
+                        )}
+                    </div>
+                 </div>
                </div>
              )}
           </Card>
         </div>
       </div>
 
-      {/* --- 3. UPGRADED GOVERNMENT AUDIT MODAL --- */}
+      {/* --- 3. UPGRADED DYNAMIC AUDIT MODAL --- */}
       {showVerifyModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#043E52]/80 backdrop-blur-sm p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#043E52]/90 backdrop-blur-sm p-4 overflow-y-auto">
           <Card className="w-full max-w-4xl bg-white rounded-2xl shadow-2xl overflow-hidden border-none my-auto flex flex-col md:flex-row h-full max-h-[90vh]">
             
             {/* Sidebar */}
@@ -516,15 +686,21 @@ export function OrganizationProfile() {
               </div>
               <div className="relative z-10">
                 <Landmark className="h-10 w-10 text-orange-500 mb-5" />
-                <h2 className="text-2xl font-black leading-tight mb-2 tracking-tight">Regulatory<br/>Compliance Audit</h2>
-                <p className="text-teal-200 text-[10px] font-bold uppercase tracking-widest mt-4">National Disaster Framework v4.2</p>
+                <h2 className="text-2xl font-black leading-tight mb-2 tracking-tight whitespace-pre-line">
+                    {currentTier === 'tier3' ? 'Regulatory\nCompliance Audit' : 'Platform\nVerification'}
+                </h2>
+                <p className="text-teal-200 text-[10px] font-bold uppercase tracking-widest mt-4">
+                    {currentTier === 'tier3' ? 'National Disaster Framework v4.2' : 'Standard Trust & Safety Audit'}
+                </p>
                 <p className="text-slate-300 text-xs leading-relaxed mt-6">
-                  Under the NDRF regulations, organizations seeking to deploy volunteers to active crises must prove fiduciary transparency, legal accountability, and robust liability coverage.
+                  {currentTier === 'tier3' 
+                    ? 'Under the NDRF regulations, organizations seeking to deploy volunteers to active crises must prove fiduciary transparency, legal accountability, and robust liability coverage.' 
+                    : 'To officially register and deploy community missions, you must submit foundational legal and financial documentation to ensure platform transparency.'}
                 </p>
               </div>
               <div className="space-y-3 text-[11px] font-bold text-orange-400 mt-8 md:mt-0 relative z-10 uppercase tracking-wider">
                  <p className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-orange-500" /> Secure 256-bit Encryption</p>
-                 <p className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-orange-500" /> Ministry Direct Routing</p>
+                 <p className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-orange-500" /> {currentTier === 'tier3' ? 'Ministry Direct Routing' : 'Platform Safe Routing'}</p>
               </div>
             </div>
 
@@ -559,14 +735,7 @@ export function OrganizationProfile() {
                   <p className="text-xs text-slate-500 mb-4">Please upload the following official documents in PDF format. Maximum file size is 10MB per document.</p>
                   
                   <div className="space-y-3">
-                    
-                    {[
-                      { id: 'incorporation', title: 'Certificate of Incorporation', desc: 'Proof of Legal Status', icon: FileCheck },
-                      { id: 'financial', title: 'Latest Financial Audit (Form 990)', desc: 'Fiduciary Transparency', icon: Landmark },
-                      { id: 'safeguarding', title: 'Data Protection & Safeguarding Policy', desc: 'GDPR/KVKK & Minor Protection', icon: ShieldAlert },
-                      { id: 'insurance', title: 'Comprehensive Liability Insurance', desc: 'Volunteer Medical & Civil Liability', icon: Shield },
-                      { id: 'signatoryId', title: 'Signatory Government ID', desc: 'Passport or National ID', icon: Fingerprint }
-                    ].map((docItem) => (
+                    {requiredDocs.map((docItem) => (
                       <label key={docItem.id} className="flex items-center justify-between p-4 bg-white rounded-xl border border-dashed border-slate-300 hover:border-orange-400 transition-colors cursor-pointer group">
                          <div className="flex items-center gap-3">
                             <div className={`p-2 rounded-lg ${auditFiles[docItem.id] ? 'bg-orange-50' : 'bg-slate-100 group-hover:bg-orange-50'}`}>
@@ -593,7 +762,6 @@ export function OrganizationProfile() {
                          </Button>
                       </label>
                     ))}
-
                   </div>
                 </div>
 
@@ -601,13 +769,23 @@ export function OrganizationProfile() {
                 <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-3">
                   <div className="flex items-center gap-2 text-[#043E52]">
                      <Gavel className="h-5 w-5 text-orange-500" />
-                     <h3 className="font-bold text-sm uppercase tracking-tight">Regulatory Terms & Oath</h3>
+                     <h3 className="font-bold text-sm uppercase tracking-tight">{currentTier === 'tier3' ? 'Regulatory Terms & Oath' : 'Platform Code of Conduct'}</h3>
                   </div>
                   <div className="h-28 overflow-y-auto pr-2 text-xs text-slate-600 space-y-2.5 font-medium bg-slate-50 p-3 rounded-lg border border-slate-100">
-                     <p><strong>1. Verification Authority:</strong> By submitting this audit, the Organization grants the Ministry and its agents explicit permission to verify legal standings with relevant state departments.</p>
-                     <p><strong>2. Operational Accountability:</strong> The Organization assumes full fiduciary and civil liability for all field operations conducted through the Athar platform.</p>
-                     <p><strong>3. Vetting Requirements:</strong> The Organization certifies under penalty of perjury that all internal personnel managing volunteers have undergone mandatory background clearance.</p>
-                     <p><strong>4. Audit Revocation:</strong> Verification status may be revoked without notice if operational irregularities or safeguarding violations are detected.</p>
+                    {currentTier === 'tier3' ? (
+                      <>
+                        <p><strong>1. Verification Authority:</strong> By submitting this audit, the Organization grants explicit permission to verify legal standings with government regulatory departments.</p>
+                        <p><strong>2. Operational Accountability:</strong> The Organization assumes full fiduciary and civil liability for all disaster field operations conducted through the AVR portal.</p>
+                        <p><strong>3. Vetting Requirements:</strong> The Organization certifies under penalty of perjury that all internal personnel have undergone mandatory background clearance.</p>
+                        <p><strong>4. Audit Revocation:</strong> Status may be revoked without notice if operational irregularities are detected.</p>
+                      </>
+                    ) : (
+                      <>
+                        <p><strong>1. Document Review:</strong> By submitting, you grant the platform compliance team permission to review the provided foundational documentation.</p>
+                        <p><strong>2. Accuracy of Information:</strong> The Organization certifies that all uploaded documents are true, accurate, and current representations of legal standing.</p>
+                        <p><strong>3. Community Guidelines:</strong> The Organization agrees to strictly adhere to the standard safety and volunteer management guidelines of the platform.</p>
+                      </>
+                    )}
                   </div>
                   <div className="flex items-center space-x-3 pt-3 mt-3">
                      <Checkbox id="terms" checked={agreedToTerms} onCheckedChange={(c)=>setAgreedToTerms(c as boolean)} className="h-5 w-5 border-slate-300 data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500" />
@@ -617,7 +795,7 @@ export function OrganizationProfile() {
               </div>
 
               <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6 mt-6 border-t border-slate-200 shrink-0">
-                <Button variant="outline" className="text-slate-500 font-bold uppercase tracking-wider text-xs h-11" onClick={() => setShowVerifyModal(false)}>Cancel Audit</Button>
+                <Button variant="outline" className="text-slate-500 font-bold uppercase tracking-wider text-xs h-11" onClick={() => setShowVerifyModal(false)}>Cancel</Button>
                 
                 <Button 
                   disabled={!agreedToTerms || !auditData.legalName || !auditData.licenseId || !areAllDocsUploaded() || isSubmittingAudit}
@@ -625,7 +803,7 @@ export function OrganizationProfile() {
                   onClick={handleSubmitAudit}
                 >
                   {isSubmittingAudit ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}
-                  {isSubmittingAudit ? "Transmitting..." : "Sign & Submit Audit"}
+                  {isSubmittingAudit ? "Transmitting..." : "Sign & Submit"}
                 </Button>
               </div>
             </div>

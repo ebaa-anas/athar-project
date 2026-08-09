@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { 
   LayoutDashboard, 
   Briefcase, 
@@ -19,6 +20,10 @@ import { Badge } from '../ui/badge';
 import atharLogo from "../../assets/athar-logo.png";
 import { useUserProfile } from '../../hooks/useUserProfile';
 
+// 🔥 IMPORT FIREBASE FUNCTIONS 🔥
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { db } from "../../lib/firebase"; 
+
 interface SidebarProps {
   activeSection: string;
   onSectionChange: (section: string) => void;
@@ -26,25 +31,25 @@ interface SidebarProps {
 }
 
 interface MenuItem {
-  badge: any;
   id: string;
   label: string;
   icon: any;
   verifiedOnly?: boolean;
 }
 
+// Removed the static 'badge' property from the base array
 const menuItems: MenuItem[] = [
-  { id: 'profile', label: 'Organization Profile', icon: Building2, badge: undefined },
-  { id: 'overview', label: 'Overview', icon: LayoutDashboard, badge: undefined },
-  { id: 'crisis-management', label: 'Crisis Management', icon: AlertTriangle, verifiedOnly: true, badge: undefined },
-  { id: "messages", label: "Mission Comms", icon: MessageSquare, badge: undefined }, 
-  { id: 'opportunities', label: 'Opportunities', icon: Briefcase, badge: undefined },
-  { id: 'volunteers', label: 'Volunteers', icon: Users, badge: undefined },
-  { id: 'applications', label: 'Applications', icon: FileText, badge: '3' },
-  { id: 'events', label: 'Events', icon: Calendar, badge: undefined },
-  { id: 'reports', label: 'Reports & Analytics', icon: BarChart3, badge: undefined },
-  { id: 'notifications', label: 'Notifications', icon: Bell, badge: '5' },
-  { id: 'settings', label: 'Settings', icon: Settings, badge: undefined },
+  { id: 'profile', label: 'Organization Profile', icon: Building2 },
+  { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+  { id: 'crisis-management', label: 'Crisis Management', icon: AlertTriangle, verifiedOnly: true },
+  { id: "messages", label: "Mission Comms", icon: MessageSquare }, 
+  { id: 'opportunities', label: 'Opportunities', icon: Briefcase },
+  { id: 'volunteers', label: 'Volunteers', icon: Users },
+  { id: 'applications', label: 'Applications', icon: FileText },
+  { id: 'events', label: 'Events', icon: Calendar },
+  { id: 'reports', label: 'Reports & Analytics', icon: BarChart3 },
+  { id: 'notifications', label: 'Notifications', icon: Bell },
+  { id: 'settings', label: 'Settings', icon: Settings },
 ];
 
 export function OrganizationSidebar({
@@ -52,15 +57,63 @@ export function OrganizationSidebar({
   onSectionChange,
   onLogout 
 }: SidebarProps) {
-  // Pull live data from Firestore
   const { user } = useUserProfile();
   
+  // 🔥 STATE FOR DYNAMIC BADGES 🔥
+  const [pendingAppsCount, setPendingAppsCount] = useState<number>(0);
+  const [unreadNotifsCount, setUnreadNotifsCount] = useState<number>(0);
+
+  // 🔥 REAL-TIME FIREBASE LISTENERS 🔥
+  useEffect(() => {
+    // Wait until we have the user's ID before querying
+    if (!user?.uid) return;
+
+    // 1. Listen for Pending Applications
+    const appsRef = collection(db, 'applications');
+    const appsQuery = query(
+      appsRef, 
+      where('organizationId', '==', user.uid), 
+      where('status', '==', 'pending')
+    );
+    
+    const unsubscribeApps = onSnapshot(appsQuery, (snapshot) => {
+      setPendingAppsCount(snapshot.size);
+    });
+
+    // 2. Listen for Unread Notifications
+    const notifsRef = collection(db, 'notifications');
+    const notifsQuery = query(
+      notifsRef, 
+      where('organizationId', '==', user.uid), 
+      where('read', '==', false)
+    );
+    
+    const unsubscribeNotifs = onSnapshot(notifsQuery, (snapshot) => {
+      setUnreadNotifsCount(snapshot.size);
+    });
+
+    // Cleanup listeners when component unmounts
+    return () => {
+      unsubscribeApps();
+      unsubscribeNotifs();
+    };
+  }, [user?.uid]);
+
+  // Security Gate: Filter tabs based on Tier
+  const visibleMenuItems = menuItems.filter((item) => {
+    if (item.id === 'crisis-management') {
+      return user?.tier === 'tier3';
+    }
+    return true; 
+  });
+
+  const isVerified = user?.verified === true;
+
   return (
     <aside className="fixed inset-y-0 left-0 w-64 h-screen bg-[#043E52] flex flex-col shadow-2xl z-50 font-sans">
       
-      {/* --- FIXED UPPER SECTION (Does not scroll) --- */}
+      {/* --- FIXED UPPER SECTION --- */}
       <div className="flex-none flex flex-col">
-        {/* 1. Logo Header */}
         <div className="px-6 pt-8 pb-4">
           <div className="flex items-center gap-3">
               <img src={atharLogo} alt="Athar" className="w-10 h-10 brightness-0 invert" />
@@ -71,7 +124,6 @@ export function OrganizationSidebar({
           </div>
         </div>
 
-        {/* 2. Profile Card */}
         <div className="px-3 mb-2">
           <div className="flex items-center gap-3 bg-white/5 p-3 rounded-xl border border-white/5 hover:border-[#1C9290]/50 transition-colors cursor-default backdrop-blur-sm">
             <Avatar className="w-9 h-9 border border-[#1C9290]/50">
@@ -79,23 +131,19 @@ export function OrganizationSidebar({
               <AvatarFallback className="bg-[#1C9290] text-white text-xs font-bold">ORG</AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              
-              {/* 🔥 DYNAMIC ORGANIZATION NAME 🔥 */}
               <p className="truncate text-white text-sm font-semibold tracking-tight">
                 {user?.name || user?.orgName || "Organization"}
               </p>
               
-              {/* 🔥 DYNAMIC VERIFICATION STATUS 🔥 */}
               <div className="flex items-center gap-1.5 mt-0.5">
                   <span className="relative flex h-2 w-2">
-                    <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${user?.verificationStatus === 'verified' ? 'bg-emerald-400' : 'bg-orange-400'}`}></span>
-                    <span className={`relative inline-flex rounded-full h-2 w-2 ${user?.verificationStatus === 'verified' ? 'bg-[#1C9290]' : 'bg-orange-500'}`}></span>
+                    <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isVerified ? 'bg-emerald-400' : 'bg-orange-400'}`}></span>
+                    <span className={`relative inline-flex rounded-full h-2 w-2 ${isVerified ? 'bg-[#1C9290]' : 'bg-orange-500'}`}></span>
                   </span>
                   <p className="text-[11px] text-slate-300 font-medium">
-                    {user?.verificationStatus === 'verified' ? 'Verified' : 'Audit Pending'}
+                    {isVerified ? 'Verified Active' : 'Audit Pending'}
                   </p>
               </div>
-
             </div>
           </div>
         </div>
@@ -105,13 +153,22 @@ export function OrganizationSidebar({
         </div>
       </div>
 
-      {/* --- SCROLLABLE MIDDLE SECTION (Hidden scrollbar) --- */}
+      {/* --- SCROLLABLE MIDDLE SECTION --- */}
       <div className="flex-1 overflow-y-auto px-3 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         <nav className="space-y-1 py-2">
-          {menuItems.map((item) => {
+          {visibleMenuItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeSection === item.id;
             const isCrisis = item.id === 'crisis-management';
+
+            // 🔥 DYNAMICALLY ASSIGN BADGE VALUES HERE 🔥
+            let displayBadge = null;
+            if (item.id === 'applications' && pendingAppsCount > 0) {
+              displayBadge = pendingAppsCount;
+            }
+            if (item.id === 'notifications' && unreadNotifsCount > 0) {
+              displayBadge = unreadNotifsCount;
+            }
 
             return (
               <Button
@@ -132,13 +189,14 @@ export function OrganizationSidebar({
                 </div>
                 
                 <div className="flex items-center gap-2">
-                    {item.badge && (
+                    {/* Render badge only if displayBadge has a value */}
+                    {displayBadge !== null && (
                     <Badge className={`px-1.5 h-5 text-[10px] min-w-[20px] justify-center border-none ${
                         isActive 
                         ? "bg-white text-[#1C9290] font-bold" 
                         : "bg-[#E16A3D] text-white font-bold"
                     }`}>
-                        {item.badge}
+                        {displayBadge}
                     </Badge>
                     )}
                     {isActive && <ChevronRight className="h-3 w-3 text-white/50" />}
@@ -149,7 +207,7 @@ export function OrganizationSidebar({
         </nav>
       </div>
 
-      {/* --- FIXED BOTTOM SECTION (Does not scroll) --- */}
+      {/* --- FIXED BOTTOM SECTION --- */}
       <div className="flex-none p-4 border-t border-white/5 bg-[#033040]/30">
         <Button
           variant="ghost"

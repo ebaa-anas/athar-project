@@ -1,7 +1,6 @@
 export const getAtharResponse = async (messagesHistory, userType) => {
 
-  const API_KEY = "***REMOVED-LEAKED-OPENROUTER-KEY***";
-  
+  const API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY;
   const ATHAR_CONTEXT = `
 Athar is a web-based platform that connects verified volunteers with organizations.
 

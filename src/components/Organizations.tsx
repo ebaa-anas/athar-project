@@ -17,7 +17,7 @@ import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { 
   MapPin, Users, Star, Search, ShieldCheck, Mail, Globe, 
   Briefcase, HeartHandshake, CheckCircle2, X, Target, Phone, Clock, Calendar,
-  Timer, Activity, Users2, Scale, FileText, ShieldAlert, Lock
+  Timer, Activity, Users2, Scale, FileText, ShieldAlert, Lock, AlertTriangle, Radio
 } from 'lucide-react';
 
 import { useUserProfile } from '../hooks/useUserProfile';
@@ -41,15 +41,40 @@ export function Organizations() {
   const [organizations, setOrganizations] = useState<any[]>([]);
   const [myApplications, setMyApplications] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [tierFilter, setTierFilter] = useState("all");
   
   // Modals State
   const [selectedOrg, setSelectedOrg] = useState<any | null>(null);
   const [showJoinModal, setShowJoinModal] = useState<any | null>(null);
-  const [coverLetter, setCoverLetter] = useState("");
+  
+  // Advanced Form Fields
+  const [formState, setFormState] = useState({
+    coverLetter: "",
+    portfolioUrl: "",           // For Tier 2
+    radioCallsign: "",         // For Tier 3
+    hazardClearance: "No",     // For Tier 3
+    deploymentNotes: ""        // For Tier 3
+  });
+
   const [isApplying, setIsApplying] = useState(false);
 
-  // --- 🔥 GLOBAL VERIFICATION CHECK 🔥 ---
-  const isVerified = user?.verificationStatus === 'verified';
+  // --- 🔥 GLOBAL VERIFICATION & FULL PROFILE COMPLETION GATEWAY 🔥 ---
+  const isVerified = user?.verificationStatus === 'verified' || user?.verified === true;
+  const isAvrMember = user?.isAvrMember === true || user?.avrStatus === 'active' || user?.tier === 'tier3';
+  
+  const userData = user as any;
+  const isProfileComplete = Boolean(
+    userData?.name?.trim() && 
+    userData?.city?.trim() && 
+    userData?.phone?.trim() && 
+    userData?.bio?.trim() &&
+    userData?.crisisInfo?.bloodType?.trim() &&
+    userData?.crisisInfo?.emergencyName?.trim() &&
+    userData?.crisisInfo?.emergencyPhone?.trim() &&
+    (userData?.availability?.weekdays || userData?.availability?.weekends) &&
+    (userData?.skills && userData?.skills.length > 0) &&
+    (userData?.languages && userData?.languages.length > 0)
+  );
 
   // --- 1. FETCH DATA ---
   useEffect(() => {
@@ -69,14 +94,22 @@ export function Organizations() {
     return () => unsubOrgs();
   }, [user]);
 
-  // --- 2. SUBMIT APPLICATION ---
+  // --- 2. SUBMIT TIER-SPECIFIC APPLICATION ---
   const handleJoinSubmit = async () => {
     if (!user) return alert("Must be logged in.");
-    if (!coverLetter.trim()) return alert("Please provide a brief motivation message.");
+    if (!isProfileComplete) return alert("Action Blocked: You must fully complete all mandatory profile sections before applying to any organization.");
+    
+    const org = showJoinModal;
+    const orgTier = org.tier || 'tier1';
+
+    if (!formState.coverLetter.trim()) return alert("Please provide a brief motivation message.");
+
+    if (orgTier === 'tier3' && !isAvrMember) {
+      return alert("Access Denied: Tier 3 Crisis Operations require verified Athar Volunteer Reserve (AVR) membership.");
+    }
     
     setIsApplying(true);
     try {
-      const org = showJoinModal;
       await addDoc(collection(db, "applications"), {
         oppId: "core_crew", 
         oppTitle: "Core Volunteer Crew",
@@ -84,7 +117,8 @@ export function Organizations() {
         orgName: org.name,
         volunteerId: user.uid,
         volunteerName: user.name || "Volunteer",
-        coverLetter: coverLetter,
+        orgTier: orgTier,
+        ...formState,
         status: "pending",
         type: "normal",
         appliedAt: serverTimestamp()
@@ -92,8 +126,8 @@ export function Organizations() {
 
       await addDoc(collection(db, "notifications"), {
         orgId: org.id,
-        title: 'New Crew Member Application!',
-        message: `${user.name || 'A volunteer'} wants to join your Core Volunteer Crew.`,
+        title: 'New Core Crew Application!',
+        message: `${user.name || 'A volunteer'} applied to join (${orgTier.toUpperCase()}) team.`,
         type: 'volunteer',
         read: false,
         createdAt: serverTimestamp(),
@@ -102,8 +136,8 @@ export function Organizations() {
 
       setMyApplications(prev => [...prev, { orgId: org.id, oppId: 'core_crew', status: 'pending' }]);
       setShowJoinModal(null);
-      setCoverLetter("");
-      alert("Application sent! The organization will review your profile.");
+      setFormState({ coverLetter: "", portfolioUrl: "", radioCallsign: "", hazardClearance: "No", deploymentNotes: "" });
+      alert("Application sent successfully!");
     } catch (e) {
       console.error(e);
       alert("Failed to submit application.");
@@ -111,31 +145,34 @@ export function Organizations() {
     setIsApplying(false);
   };
 
-  // --- 3. FILTERING ---
-  const filteredOrgs = organizations.filter(org => 
-    org.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    org.description?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // --- 3. FILTERING ENGINE ---
+  const filteredOrgs = organizations.filter(org => {
+    const matchesSearch = org.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          org.description?.toLowerCase().includes(searchTerm.toLowerCase());
+    const orgTier = org.tier || 'tier1';
+    const matchesTier = tierFilter === 'all' || orgTier === tierFilter;
+    return matchesSearch && matchesTier;
+  });
 
   const myAcceptedOrgIds = myApplications.filter(a => a.status === 'accepted').map(a => a.orgId);
   const myOrgs = organizations.filter(o => myAcceptedOrgIds.includes(o.id));
   const myPendingCrewOrgIds = myApplications.filter(a => a.status === 'pending' && a.oppId === 'core_crew').map(a => a.orgId);
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto pb-10 animate-in fade-in duration-300">
+    <div className="space-y-6 max-w-6xl mx-auto pb-10 animate-in fade-in duration-300 font-sans">
       
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-gray-900 text-2xl font-bold">Organizations</h1>
-          <p className="text-gray-500 mt-1">Discover and connect with non-profit organizations</p>
+          <h1 className="text-slate-900 text-2xl font-black tracking-tight">Organizations Network</h1>
+          <p className="text-slate-500 mt-1 font-medium text-sm">Discover community initiatives, standard NGOs, and tactical crisis response teams</p>
         </div>
         <div className="flex gap-2">
           <div className="relative flex-1 md:w-80">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-3.5 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
             <Input 
               placeholder="Search organizations..." 
-              className="pl-10"
+              className="pl-10 h-11 rounded-xl border-slate-200 focus:border-[#1C9290]"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -143,47 +180,75 @@ export function Organizations() {
         </div>
       </div>
 
-      {/* 🔥 THE GLOBAL SECURITY BANNER 🔥 */}
+      {/* HEADER TIER FILTER TABS */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-slate-100">
+        {[
+          { id: 'all', label: 'All Entities' },
+          { id: 'tier1', label: 'Tier 1: Community Initiatives' },
+          { id: 'tier2', label: 'Tier 2: NGOs' },
+          { id: 'tier3', label: 'Tier 3: Crisis Ops' },
+        ].map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setTierFilter(tab.id)}
+            className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
+              tierFilter === tab.id 
+                ? 'bg-[#1C9290] text-white shadow-md' 
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* SECURITY / PROFILE COMPLETION BANNERS */}
       {!isVerified && (
-        <div className="bg-red-50 border border-red-200 p-4 rounded-xl flex items-center justify-between shadow-sm">
-          <div className="flex items-center gap-3">
-            <ShieldAlert className="h-5 w-5 text-red-600" />
-            <div>
-              <h4 className="text-red-800 font-bold text-sm">Identity Verification Required</h4>
-              <p className="text-red-600 text-xs font-medium">You must verify your identity in your profile before applying to join an organization's core crew.</p>
-            </div>
+        <div className="bg-orange-50 border border-orange-200 p-4 rounded-2xl flex items-center gap-4 shadow-sm">
+          <div className="bg-orange-500 p-2.5 rounded-xl text-white"><ShieldAlert size={20} /></div>
+          <div>
+            <h4 className="text-orange-900 font-bold text-sm">Identity Verification Required</h4>
+            <p className="text-orange-700 text-xs font-medium">Verify your ID in your profile settings to apply for organizational core crews.</p>
+          </div>
+        </div>
+      )}
+
+      {!isProfileComplete && (
+        <div className="bg-rose-50 border border-rose-200 p-4 rounded-2xl flex items-center gap-4 shadow-sm">
+          <div className="bg-rose-600 p-2.5 rounded-xl text-white"><Lock size={20} /></div>
+          <div>
+            <h4 className="text-rose-900 font-bold text-sm">Profile Incomplete</h4>
+            <p className="text-rose-700 text-xs font-medium">You must fully complete all mandatory profile sections (Main Info, About Me, Emergency Deployment, Availability, Skills, and Languages) before applying to any organization.</p>
           </div>
         </div>
       )}
 
       {/* My Organizations */}
       {myOrgs.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>My Organizations</CardTitle>
-            <p className="text-sm text-slate-500">Organizations you're currently volunteering with</p>
+        <Card className="border-slate-200 shadow-sm rounded-2xl overflow-hidden">
+          <CardHeader className="bg-slate-50 border-b border-slate-100 pb-3">
+            <CardTitle className="text-base font-bold text-[#043E52]">My Affiliated Organizations</CardTitle>
+            <p className="text-xs text-slate-500 font-medium">Entities where your core crew membership is active</p>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-4">
             <div className="space-y-3">
               {myOrgs.map((org) => (
-                <div key={org.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg bg-gray-50/50 hover:bg-gray-50 transition-colors">
+                <div key={org.id} className="flex items-center justify-between p-4 border border-slate-100 rounded-xl bg-slate-50/50 hover:bg-slate-50 transition-colors">
                   <div className="flex items-center gap-3">
-                    <Avatar className="h-10 w-10 border border-gray-200">
-                      <AvatarImage src={org.photoUrl || org.logoUrl || org.avatarUrl} className="object-cover" />
-                      <AvatarFallback className="bg-[#006D5B]/10 text-[#006D5B] font-bold">
+                    <Avatar className="h-10 w-10 border border-slate-200 rounded-xl">
+                      <AvatarImage src={org.photoUrl || org.logoUrl || org.avatarUrl} className="object-cover rounded-xl" />
+                      <AvatarFallback className="bg-[#1C9290]/10 text-[#1C9290] font-bold rounded-xl">
                         {String(org.name || 'O').charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <h4 className="text-gray-900 font-bold">{org.name}</h4>
-                      <p className="text-sm text-gray-500 flex items-center gap-1">
-                        <CheckCircle2 className="h-3 w-3 text-[#006D5B]" /> Core Volunteer
+                      <h4 className="text-slate-900 font-bold text-sm">{org.name}</h4>
+                      <p className="text-xs text-[#1C9290] font-semibold flex items-center gap-1 mt-0.5">
+                        <CheckCircle2 className="h-3.5 w-3.5" /> Active Crew
                       </p>
                     </div>
                   </div>
-                  <div className="text-right hidden sm:block">
-                    <Button variant="outline" size="sm" onClick={() => setSelectedOrg(org)}>View Hub</Button>
-                  </div>
+                  <Button variant="outline" size="sm" onClick={() => setSelectedOrg(org)} className="h-9 font-bold text-xs border-slate-200 text-[#043E52]">View Hub</Button>
                 </div>
               ))}
             </div>
@@ -191,36 +256,41 @@ export function Organizations() {
         </Card>
       )}
 
-      {/* All Organizations */}
+      {/* Organizations Grid */}
       <div>
-        <h2 className="text-gray-900 mb-4 font-bold text-xl">Explore Organizations</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredOrgs.map((org) => {
             const isPending = myPendingCrewOrgIds.includes(org.id);
             const isAccepted = myAcceptedOrgIds.includes(org.id);
+            const tier = org.tier || 'tier1';
 
             return (
-              <Card key={org.id} className="overflow-hidden hover:shadow-lg transition-shadow flex flex-col h-full bg-white relative">
+              <Card key={org.id} className="overflow-hidden hover:shadow-lg transition-all duration-300 flex flex-col h-full bg-white border-slate-200 rounded-2xl relative">
                 
-                {/* Fixed Card Banner with dynamic cover image! */}
-                <div className="h-20 bg-[#006D5B] w-full border-b border-slate-200 relative overflow-hidden">
+                {/* Banner Header with Tier Badge */}
+                <div className={`h-20 w-full border-b border-slate-100 relative overflow-hidden ${
+                  tier === 'tier3' ? 'bg-rose-900' : tier === 'tier2' ? 'bg-indigo-900' : 'bg-[#1C9290]'
+                }`}>
                   {org.coverUrl ? (
                     <img src={org.coverUrl} className="w-full h-full object-cover" alt="Cover" />
                   ) : (
                     <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
                   )}
-                  {org.verified && (
-                    <Badge className="absolute top-3 right-3 bg-white text-[#006D5B] border border-[#006D5B] shadow-sm z-10 flex items-center gap-1 px-2 py-0.5">
-                      <ShieldCheck className="h-3 w-3" /> Verified
+                  
+                  <div className="absolute top-3 right-3 flex items-center gap-1.5 z-10">
+                    <Badge className={`border-none shadow-sm text-[9px] font-black uppercase tracking-wider px-2 py-0.5 ${
+                      tier === 'tier3' ? 'bg-rose-100 text-rose-800' : tier === 'tier2' ? 'bg-indigo-100 text-indigo-800' : 'bg-emerald-100 text-emerald-800'
+                    }`}>
+                      {tier === 'tier3' ? 'Tier 3: Crisis Ops' : tier === 'tier2' ? 'Tier 2: NGO' : 'Tier 1: Initiative'}
                     </Badge>
-                  )}
+                  </div>
                 </div>
                 
-                {/* Pop-out Avatar */}
+                {/* Avatar */}
                 <div className="px-5 relative -mt-10 mb-2 z-10">
-                  <Avatar className="h-16 w-16 border-4 border-white shadow-sm bg-white rounded-xl">
+                  <Avatar className="h-16 w-16 border-4 border-white shadow-md bg-white rounded-xl">
                     <AvatarImage src={org.photoUrl || org.logoUrl || org.avatarUrl} className="object-cover rounded-xl" />
-                    <AvatarFallback className="bg-[#006D5B]/10 text-[#006D5B] text-xl font-black rounded-xl">
+                    <AvatarFallback className="bg-[#1C9290]/10 text-[#1C9290] text-xl font-black rounded-xl">
                       {String(org.name || 'O').charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
@@ -228,44 +298,45 @@ export function Organizations() {
                 
                 <CardHeader className="pb-2 pt-0">
                   <div className="flex items-start justify-between gap-2">
-                    <CardTitle className="text-base line-clamp-1">{org.name}</CardTitle>
-                    <Badge variant="outline" className="shrink-0 bg-white">{org.sector || org.category || 'NGO'}</Badge>
+                    <CardTitle className="text-base font-bold text-slate-900 line-clamp-1">{org.name}</CardTitle>
                   </div>
-                  <p className="text-sm text-slate-500 line-clamp-2 mt-1.5">
-                    {org.tagline || org.mission || org.description || 'Dedicated to creating positive community impact.'}
+                  <p className="text-xs text-slate-500 line-clamp-2 mt-1 font-medium">
+                    {org.tagline || org.mission || org.description || 'Dedicated to building community resilience.'}
                   </p>
                 </CardHeader>
                 
                 <CardContent className="space-y-4 flex flex-col flex-1 pb-5">
-                  <div className="space-y-2 mt-auto">
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <MapPin className="h-4 w-4 text-gray-400" />
-                      <span className="truncate">{org.location || org.city || 'Global'}</span>
+                  <div className="space-y-2 mt-auto text-xs text-slate-500 font-medium">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-3.5 w-3.5 text-slate-400" />
+                      <span className="truncate">{org.location || org.city || 'Türkiye'}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Users className="h-4 w-4 text-gray-400" />
-                      <span>{org.stats?.volunteers || org.volunteers || 0} volunteers • {org.stats?.projects || org.projects || 0} projects</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                      <span>{org.rating || '5.0'} rating</span>
+                    <div className="flex items-center gap-2">
+                      <Users className="h-3.5 w-3.5 text-slate-400" />
+                      <span>{org.stats?.volunteers || org.volunteers || 0} active members</span>
                     </div>
                   </div>
 
-                  <div className="flex gap-2 pt-4 border-t border-gray-100 mt-2">
+                  <div className="flex gap-2 pt-4 border-t border-slate-100 mt-2">
                     {isAccepted ? (
-                      <Button disabled className="flex-1 bg-[#006D5B]/10 text-[#006D5B] font-bold opacity-100 border border-[#006D5B]/20">Joined</Button>
+                      <Button disabled className="flex-1 bg-emerald-50 text-emerald-700 font-bold border border-emerald-200 opacity-100 text-xs">Joined</Button>
                     ) : isPending ? (
-                      <Button disabled className="flex-1 bg-gray-100 text-gray-500 font-bold opacity-100">Pending</Button>
-                    ) : !isVerified ? (
-                      // 🔥 IDENTITY LOCK ON CARD 🔥
+                      <Button disabled className="flex-1 bg-slate-100 text-slate-500 font-bold opacity-100 text-xs">Pending Review</Button>
+                    ) : !isVerified || !isProfileComplete ? (
                       <Button disabled variant="outline" className="flex-1 border-slate-200 bg-slate-100 text-slate-400 font-bold text-[10px] uppercase tracking-wider">
-                        <Lock className="mr-1.5 h-3.5 w-3.5" /> ID Required
+                        <Lock className="mr-1.5 h-3 w-3" /> Locked
                       </Button>
                     ) : (
-                      <Button onClick={() => setShowJoinModal(org)} className="flex-1 bg-[#006D5B] hover:bg-[#005244] font-bold text-white">Join</Button>
+                      <Button 
+                        onClick={() => setShowJoinModal(org)} 
+                        className={`flex-1 font-bold text-white text-xs shadow-sm ${
+                          tier === 'tier3' ? 'bg-rose-600 hover:bg-rose-700' : 'bg-[#1C9290] hover:bg-[#157a78]'
+                        }`}
+                      >
+                        {tier === 'tier3' ? 'Deploy (AVR)' : 'Apply to Join'}
+                      </Button>
                     )}
-                    <Button onClick={() => setSelectedOrg(org)} variant="outline" className="flex-1 font-bold border-gray-200 text-[#006D5B]">View</Button>
+                    <Button onClick={() => setSelectedOrg(org)} variant="outline" className="flex-1 font-bold border-slate-200 text-[#043E52] text-xs">View Profile</Button>
                   </div>
                 </CardContent>
               </Card>
@@ -274,53 +345,139 @@ export function Organizations() {
         </div>
       </div>
 
-      {/* --- JOIN CREW MODAL --- */}
+      {/* --- TIER-BASED JOIN MODAL --- */}
       {showJoinModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in zoom-in-95 duration-200">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
-            {/* 🔥 Modal Header Color Fixed 🔥 */}
-            <div className="bg-[#006D5B] p-5 flex items-center justify-between text-white shrink-0">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+            
+            <div className={`p-5 flex items-center justify-between text-white shrink-0 ${
+              showJoinModal.tier === 'tier3' ? 'bg-rose-900' : showJoinModal.tier === 'tier2' ? 'bg-indigo-900' : 'bg-[#1C9290]'
+            }`}>
               <div>
-                <Badge className="bg-white/20 text-white border-none mb-1 text-[10px] uppercase">Core Crew Application</Badge>
-                <h3 className="font-bold text-lg leading-none">Join {showJoinModal.name}</h3>
+                <Badge className="bg-white/20 text-white border-none mb-1 text-[9px] uppercase font-bold">
+                  {showJoinModal.tier === 'tier3' ? 'Tier 3 Crisis Deployment Form' : showJoinModal.tier === 'tier2' ? 'Tier 2 Professional Application' : 'Tier 1 Community Signup'}
+                </Badge>
+                <h3 className="font-bold text-lg leading-none">{showJoinModal.name}</h3>
               </div>
               <button onClick={() => setShowJoinModal(null)} className="text-white/70 hover:text-white transition-colors p-1 rounded-full"><X size={20} /></button>
             </div>
-            <div className="p-6 flex-1 overflow-y-auto">
-              <label className="block text-sm font-bold text-gray-700 mb-2">Why do you want to join this organization?</label>
-              <p className="text-xs text-gray-500 mb-4">Introduce yourself. Tell them why you care about their mission and what skills you can bring to their dedicated team.</p>
-              {/* 🔥 Focus Ring Color Fixed 🔥 */}
-              <Textarea 
-                placeholder="I deeply align with your mission because..."
-                className="min-h-[140px] resize-none border-gray-200 focus:border-[#006D5B] focus:ring-[#006D5B]/20 rounded-lg text-sm"
-                value={coverLetter}
-                onChange={(e) => setCoverLetter(e.target.value)}
-              />
+
+            <div className="p-6 flex-1 overflow-y-auto space-y-4">
+              
+              {/* TIER 3 CRISIS GATEWAY CHECK */}
+              {showJoinModal.tier === 'tier3' && !isAvrMember ? (
+                <div className="bg-rose-50 border border-rose-200 p-4 rounded-xl space-y-2 text-rose-900">
+                  <div className="flex items-center gap-2 font-bold text-sm">
+                    <AlertTriangle className="h-5 w-5 text-rose-600" /> AVR Membership Mandatory
+                  </div>
+                  <p className="text-xs text-rose-700 leading-relaxed">
+                    This is a Tier 3 Crisis Response entity. Deployments are restricted exclusively to active personnel enrolled in the <strong>Athar Volunteer Reserve (AVR)</strong>. Your profile does not currently reflect AVR clearance.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {/* TIER 2 ADVANCED FIELD */}
+                  {showJoinModal.tier === 'tier2' && (
+                    <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                      <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Professional Verification</h4>
+                      <div className="space-y-1">
+                        <Label className="text-[11px] font-bold text-slate-600">Portfolio / Professional Profile Link (LinkedIn, GitHub, or CV)</Label>
+                        <Input 
+                          placeholder="https://linkedin.com/in/username" 
+                          value={formState.portfolioUrl}
+                          onChange={(e) => setFormState({...formState, portfolioUrl: e.target.value})}
+                          className="h-9 text-xs"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* TIER 3 ADVANCED TACTICAL QUESTIONNAIRE */}
+                  {showJoinModal.tier === 'tier3' && (
+                    <div className="space-y-3 bg-rose-50/50 p-4 rounded-xl border border-rose-100">
+                      <h4 className="text-xs font-bold text-rose-900 uppercase tracking-wider flex items-center gap-1.5">
+                        <Radio className="h-3.5 w-3.5 text-rose-600 animate-pulse" /> Advanced Tactical Parameters
+                      </h4>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <Label className="text-[11px] font-bold text-slate-700">Tactical Radio Callsign (Optional)</Label>
+                          <Input 
+                            placeholder="e.g. Alpha-4" 
+                            value={formState.radioCallsign}
+                            onChange={(e) => setFormState({...formState, radioCallsign: e.target.value})}
+                            className="h-9 text-xs bg-white"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-[11px] font-bold text-slate-700">Hazardous Terrain Clearance</Label>
+                          <select 
+                            value={formState.hazardClearance} 
+                            onChange={(e) => setFormState({...formState, hazardClearance: e.target.value})}
+                            className="w-full h-9 px-3 border border-slate-200 rounded-md text-xs font-semibold bg-white"
+                          >
+                            <option value="No">No Specialized Clearance</option>
+                            <option value="Yes - Level 1">Yes - Level 1 (Urban Collapse)</option>
+                            <option value="Yes - Level 2">Yes - Level 2 (Wilderness / Flood)</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <Label className="text-[11px] font-bold text-slate-700">Special Deployment Notes / Equipment Ready</Label>
+                        <Input 
+                          placeholder="e.g. Equipped with satellite comms, portable generator" 
+                          value={formState.deploymentNotes}
+                          onChange={(e) => setFormState({...formState, deploymentNotes: e.target.value})}
+                          className="h-9 text-xs bg-white"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* STANDARD MOTIVATION LETTER FOR ALL TIERS */}
+                  <div className="space-y-1">
+                    <Label className="block text-xs font-bold text-slate-700">Motivation / Statement of Purpose</Label>
+                    <Textarea 
+                      placeholder="Explain your alignment with our operational goals..."
+                      className="min-h-[110px] resize-none border-slate-200 focus:border-[#1C9290] rounded-xl text-xs"
+                      value={formState.coverLetter}
+                      onChange={(e) => setFormState({...formState, coverLetter: e.target.value})}
+                    />
+                  </div>
+                </>
+              )}
             </div>
-            <div className="p-5 border-t border-gray-100 bg-gray-50 flex gap-3 justify-end shrink-0">
-              <Button variant="ghost" onClick={() => setShowJoinModal(null)} className="text-gray-600 font-bold">Cancel</Button>
-              {/* 🔥 Modal Button Color Fixed 🔥 */}
-              <Button onClick={handleJoinSubmit} disabled={isApplying} className="bg-[#006D5B] hover:bg-[#005244] text-white font-bold px-6 shadow-sm">
-                {isApplying ? "Sending..." : "Submit Application"}
-              </Button>
+
+            <div className="p-4 border-t border-slate-100 bg-slate-50 flex gap-3 justify-end shrink-0">
+              <Button variant="ghost" onClick={() => setShowJoinModal(null)} className="text-slate-600 font-bold text-xs">Cancel</Button>
+              {!(showJoinModal.tier === 'tier3' && !isAvrMember) && (
+                <Button 
+                  onClick={handleJoinSubmit} 
+                  disabled={isApplying} 
+                  className={`font-bold px-6 shadow-sm text-xs ${
+                    showJoinModal.tier === 'tier3' ? 'bg-rose-600 hover:bg-rose-700 text-white' : 'bg-[#1C9290] hover:bg-[#157a78] text-white'
+                  }`}
+                >
+                  {isApplying ? "Transmitting..." : "Submit Formal Application"}
+                </Button>
+              )}
             </div>
           </div>
         </div>
       )}
 
-      {/* --- THE UPGRADED PREMIUM VIEW ORG PROFILE MODAL --- */}
+      {/* --- VIEW PROFILE MODAL --- */}
       {selectedOrg && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in zoom-in-95">
-          <Card className="w-full max-w-6xl shadow-2xl border-none rounded-2xl overflow-hidden flex flex-col max-h-[90vh] bg-slate-50 relative">
-             
+          <Card className="w-full max-w-4xl shadow-2xl border-none rounded-2xl overflow-hidden flex flex-col max-h-[90vh] bg-slate-50 relative">
              <Button variant="ghost" onClick={() => setSelectedOrg(null)} className="absolute top-4 right-4 z-50 bg-black/40 hover:bg-black/60 text-white rounded-full h-8 w-8 p-0">
                <X size={16}/>
              </Button>
 
              <div className="flex-1 overflow-y-auto relative">
-                
                 <div className="bg-white border-b border-slate-200 shadow-sm relative">
-                  <div className="h-32 md:h-48 w-full relative bg-[#006D5B]">
+                  <div className={`h-32 w-full relative ${selectedOrg.tier === 'tier3' ? 'bg-rose-900' : selectedOrg.tier === 'tier2' ? 'bg-indigo-900' : 'bg-[#1C9290]'}`}>
                     {selectedOrg.coverUrl ? (
                       <img src={selectedOrg.coverUrl} alt="Cover" className="w-full h-full object-cover" />
                     ) : (
@@ -328,144 +485,49 @@ export function Organizations() {
                     )}
                   </div>
 
-                  <div className="max-w-5xl mx-auto px-6 pb-6">
-                    <div className="flex flex-col md:flex-row md:items-end gap-5 -mt-10 md:-mt-12 relative z-10">
-                      <Avatar className="w-24 h-24 md:w-28 md:h-28 ring-4 ring-white bg-white shadow-sm rounded-xl shrink-0">
+                  <div className="max-w-4xl mx-auto px-6 pb-6">
+                    <div className="flex flex-col md:flex-row md:items-end gap-4 -mt-10 relative z-10">
+                      <Avatar className="w-20 h-20 ring-4 ring-white bg-white shadow-md rounded-xl shrink-0">
                         <AvatarImage src={selectedOrg.photoUrl || selectedOrg.logoUrl || selectedOrg.avatarUrl} className="object-cover rounded-xl" />
-                        <AvatarFallback className="bg-slate-100 text-[#006D5B] text-3xl font-bold rounded-xl">
+                        <AvatarFallback className="bg-slate-100 text-[#1C9290] text-2xl font-bold rounded-xl">
                           {String(selectedOrg.name || 'O').charAt(0).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
 
-                      <div className="flex-1 pb-1 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                        <div className="space-y-1 w-full md:w-auto">
-                          <div className="flex items-center gap-2">
-                            <h1 className="text-xl md:text-2xl font-bold text-[#006D5B]">{selectedOrg.name || "Unnamed Organization"}</h1>
-                            {selectedOrg.verified && <ShieldCheck className="h-5 w-5 text-[#006D5B]" />}
-                          </div>
-                          <p className="text-slate-500 font-medium text-sm">{selectedOrg.tagline || selectedOrg.category || "Non-Profit Organization"}</p>
+                      <div className="flex-1 pb-1">
+                        <div className="flex items-center gap-2">
+                          <h1 className="text-xl font-bold text-slate-900">{selectedOrg.name}</h1>
+                          {selectedOrg.verified && <ShieldCheck className="h-4 w-4 text-[#1C9290]" />}
                         </div>
+                        <p className="text-slate-500 font-medium text-xs">{selectedOrg.tagline || selectedOrg.category || "Organization Profile"}</p>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="max-w-5xl mx-auto px-6 py-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  
-                  <div className="lg:col-span-2 space-y-6">
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                       {[
-                         { label: 'Hours', val: selectedOrg.stats?.hours || selectedOrg.hours || '0', icon: Timer, color: 'text-[#006D5B]', bg: 'bg-[#006D5B]/10' },
-                         { label: 'Projects', val: selectedOrg.stats?.projects || selectedOrg.projects || '0', icon: Activity, color: 'text-[#006D5B]', bg: 'bg-[#006D5B]/10' },
-                         { label: 'Volunteers', val: selectedOrg.stats?.volunteers || selectedOrg.volunteers || '0', icon: Users2, color: 'text-indigo-600', bg: 'bg-indigo-50' },
-                         { label: 'Rank', val: selectedOrg.rating || 'N/A', icon: Scale, color: 'text-slate-600', bg: 'bg-slate-100' }
-                       ].map((m, i) => (
-                         <Card key={i} className="border border-slate-200 shadow-sm p-3 flex flex-col items-center justify-center text-center bg-white rounded-xl">
-                           <div className={`p-2 rounded-lg ${m.bg} mb-1.5`}><m.icon className={`h-4 w-4 ${m.color}`} /></div>
-                           <div className="text-xl font-bold text-[#006D5B]">{m.val}</div>
-                           <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{m.label}</div>
-                         </Card>
-                       ))}
-                    </div>
+                <div className="max-w-4xl mx-auto px-6 py-6 space-y-6">
+                  <Card className="border border-slate-200 shadow-sm rounded-xl bg-white p-5 space-y-3">
+                     <h3 className="font-bold text-slate-900 text-sm uppercase tracking-wide">About Entity</h3>
+                     <p className="text-slate-600 text-xs leading-relaxed">{selectedOrg.description || "No description provided."}</p>
+                  </Card>
 
-                    <Card className="border border-slate-200 shadow-sm rounded-xl bg-white overflow-hidden">
-                      <CardHeader className="px-5 py-4 border-b border-slate-100 bg-slate-50/50">
-                         <CardTitle className="text-base font-bold text-[#006D5B] flex items-center gap-2">
-                           <FileText className="h-4 w-4 text-[#006D5B]" /> Organizational Charter
-                         </CardTitle>
-                      </CardHeader>
-                      <CardContent className="p-5 space-y-5">
-                         <div className="space-y-1.5">
-                           <Label className="font-bold text-[#006D5B] text-xs uppercase tracking-wider">About the Entity</Label>
-                           <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-wrap">{selectedOrg.description || "No description provided yet."}</p>
-                         </div>
-                         
-                         <Separator className="bg-slate-100" />
-                         
-                         <div className="space-y-1.5">
-                           <Label className="font-bold text-[#006D5B] text-xs uppercase tracking-wider">Legal Mission Statement</Label>
-                           <blockquote className="border-l-2 border-[#006D5B] pl-3 py-1 text-sm font-medium text-slate-700 italic">
-                             {selectedOrg.mission || "Mission statement pending."}
-                           </blockquote>
-                         </div>
-                         
-                         <Separator className="bg-slate-100" />
-                         
-                         <div className="space-y-2">
-                            <Label className="font-bold text-[#006D5B] text-xs uppercase tracking-wider flex items-center gap-1.5"><Target className="h-3.5 w-3.5"/> Focus Areas</Label>
-                            <div className="flex flex-wrap gap-2 pt-1">
-                                {(() => {
-                                    const causesData = selectedOrg.focusAreas || selectedOrg.causes || selectedOrg.category || ['Community Support'];
-                                    const safeCausesArray = Array.isArray(causesData) ? causesData : [causesData];
-                                    
-                                    return safeCausesArray.map((cause: any, i: number) => (
-                                        <Badge key={i} variant="secondary" className="bg-[#006D5B]/10 text-[#006D5B] border border-[#006D5B]/20">
-                                          {String(cause)}
-                                        </Badge>
-                                    ));
-                                })()}
-                            </div>
-                         </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-
-                  <div className="space-y-6">
-                    
-                    <Card className={`border shadow-sm rounded-xl overflow-hidden ${selectedOrg.verified ? 'bg-[#006D5B] text-white border-transparent' : 'bg-white border-slate-200'}`}>
-                      <div className="p-5 space-y-4">
-                        <div className="flex items-center justify-between">
-                          <ShieldCheck className={`h-6 w-6 ${selectedOrg.verified ? 'text-white' : 'text-amber-500'}`} />
-                          <Badge variant="outline" className={`text-[10px] uppercase font-bold tracking-wider ${selectedOrg.verified ? 'text-white border-white/20 bg-white/10' : 'text-amber-700 border-amber-200 bg-amber-50'}`}>
-                            {selectedOrg.verified ? 'VERIFIED' : 'UNVERIFIED'}
-                          </Badge>
-                        </div>
-                        
-                        {selectedOrg.verified ? (
-                          <div className="space-y-1.5">
-                             <h3 className="text-lg font-bold">Identity Confirmed</h3>
-                             <p className="text-white/80 text-xs leading-relaxed">This entity is legally authorized for public operations under Government Framework v4.0.</p>
-                          </div>
-                        ) : (
-                          <div className="space-y-1.5">
-                            <h3 className="text-lg font-bold text-[#006D5B]">Unverified Entity</h3>
-                            <p className="text-xs text-slate-500">This organization has not yet completed the official government audit for verification.</p>
-                          </div>
-                        )}
-                      </div>
-                    </Card>
-
-                    <Card className="border border-slate-200 shadow-sm rounded-xl bg-white p-5 space-y-4">
-                       <h4 className="text-xs font-bold text-[#006D5B] uppercase tracking-wider flex items-center gap-2 mb-1 border-b border-slate-100 pb-2">
-                         <Globe className="h-4 w-4 text-[#006D5B]" /> Contact Directory
-                       </h4>
-                       <div className="space-y-3">
-                         <div className="flex items-center gap-2.5 text-sm text-slate-600"><Globe className="h-3.5 w-3.5 text-slate-400" /> <a href={selectedOrg.website || "#"} target="_blank" rel="noreferrer" className="hover:underline hover:text-[#006D5B] truncate">{selectedOrg.website || "Not provided"}</a></div>
-                         <div className="flex items-center gap-2.5 text-sm text-slate-600"><Mail className="h-3.5 w-3.5 text-slate-400" /> <span className="truncate">{selectedOrg.email || "Not provided"}</span></div>
-                         <div className="flex items-center gap-2.5 text-sm text-slate-600"><Phone className="h-3.5 w-3.5 text-slate-400" /> {selectedOrg.phone || "Not provided"}</div>
-                         <Separator className="bg-slate-100" />
-                         <div className="flex items-start gap-2.5 text-sm text-slate-600 leading-relaxed"><MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0 mt-0.5" /> {selectedOrg.address || selectedOrg.location || selectedOrg.city || "HQ Location Not Logged"}</div>
-                       </div>
-                    </Card>
-                  </div>
+                  <Card className="border border-slate-200 shadow-sm rounded-xl bg-white p-5 space-y-3">
+                     <h3 className="font-bold text-slate-900 text-sm uppercase tracking-wide">Contact Details</h3>
+                     <div className="text-xs text-slate-600 space-y-1.5">
+                       <p className="flex items-center gap-2"><Globe size={13}/> {selectedOrg.website || "N/A"}</p>
+                       <p className="flex items-center gap-2"><Mail size={13}/> {selectedOrg.email || "N/A"}</p>
+                       <p className="flex items-center gap-2"><MapPin size={13}/> {selectedOrg.location || selectedOrg.city || "N/A"}</p>
+                     </div>
+                  </Card>
                 </div>
-
              </div>
              
-             {/* FOOTER: Fixed to bottom */}
              <div className="p-4 bg-white border-t border-slate-200 flex justify-end gap-3 shrink-0">
-                <Button variant="ghost" onClick={() => setSelectedOrg(null)} className="text-slate-600 font-bold px-6">Close</Button>
-                {myAcceptedOrgIds.includes(selectedOrg.id) ? (
-                   <Button disabled className="bg-[#006D5B]/10 text-[#006D5B] border border-[#006D5B]/20 font-bold px-6 shadow-sm">Joined Team</Button>
-                ) : myPendingCrewOrgIds.includes(selectedOrg.id) ? (
-                   <Button disabled className="bg-slate-100 text-slate-500 font-bold px-6 shadow-sm">Request Pending</Button>
-                ) : !isVerified ? (
-                  // 🔥 IDENTITY LOCK ON MODAL 🔥
-                  <Button disabled className="bg-slate-100 text-slate-400 font-bold px-6 shadow-sm uppercase tracking-wider text-[10px]">
-                    <Lock className="mr-1.5 h-3.5 w-3.5" /> ID Required to Apply
-                  </Button>
+                <Button variant="ghost" onClick={() => setSelectedOrg(null)} className="text-slate-600 font-bold text-xs px-6">Close</Button>
+                { !isProfileComplete ? (
+                  <Button disabled className="bg-slate-100 text-slate-400 font-bold text-xs px-6">Locked (Profile Incomplete)</Button>
                 ) : (
-                  <Button onClick={() => { setSelectedOrg(null); setShowJoinModal(selectedOrg); }} className="bg-[#006D5B] hover:bg-[#005244] text-white font-bold px-6 shadow-sm">
+                  <Button onClick={() => { setSelectedOrg(null); setShowJoinModal(selectedOrg); }} className="bg-[#1C9290] hover:bg-[#157a78] text-white font-bold text-xs px-6">
                     Apply to Join
                   </Button>
                 )}

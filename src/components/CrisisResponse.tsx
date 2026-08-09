@@ -54,6 +54,21 @@ export function CrisisResponse() {
   const [coreTrainingComplete, setCoreTrainingComplete] = useState(false);
   const [simulationsMastered, setSimulationsMastered] = useState(0);
 
+  // --- PROFILE COMPLETION VALIDATOR ---
+  const userData = user as any;
+  const isProfileComplete = Boolean(
+    userData?.name?.trim() && 
+    userData?.city?.trim() && 
+    userData?.phone?.trim() && 
+    userData?.bio?.trim() &&
+    userData?.crisisInfo?.bloodType?.trim() &&
+    userData?.crisisInfo?.emergencyName?.trim() &&
+    userData?.crisisInfo?.emergencyPhone?.trim() &&
+    (userData?.availability?.weekdays || userData?.availability?.weekends) &&
+    (userData?.skills && userData?.skills.length > 0) &&
+    (userData?.languages && userData?.languages.length > 0)
+  );
+
   // --- 1. FETCH CRISES & CLEARANCE DATA ---
   useEffect(() => {
     if (!user) return; 
@@ -107,6 +122,11 @@ export function CrisisResponse() {
   const handleResponse = async (crisisId: string, status: 'accepted' | 'declined') => {
     const currentUser = auth.currentUser;
     if (!currentUser) return;
+    
+    if (!isProfileComplete) {
+      alert("Action Blocked: You must fully complete all mandatory profile sections before responding to crisis alerts.");
+      return;
+    }
 
     try {
       await addDoc(collection(db, "crisisResponses"), {
@@ -135,6 +155,11 @@ export function CrisisResponse() {
   // --- 5. ACTION: CONNECT COMMAND (DEPLOY) ---
   const handleConnectCommand = async () => {
     if (!user || !selectedAlert) return;
+    if (!isProfileComplete) {
+      alert("Action Blocked: You must fully complete all mandatory profile sections before deploying to crisis operations.");
+      return;
+    }
+
     setIsDeploying(true);
 
     try {
@@ -337,6 +362,16 @@ export function CrisisResponse() {
         </p>
       </div>
 
+      {!isProfileComplete && (
+        <div className="bg-rose-50 border border-rose-200 p-4 rounded-2xl flex items-center gap-4 shadow-sm">
+          <div className="bg-rose-600 p-2.5 rounded-xl text-white"><Lock size={20} /></div>
+          <div>
+            <h4 className="text-rose-900 font-bold text-sm">Profile Incomplete</h4>
+            <p className="text-rose-700 text-xs font-medium">You must fully complete all mandatory profile sections before responding or deploying to active emergencies.</p>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="border-l-4 border-l-red-500 shadow-sm"><CardContent className="p-5"><div className="flex items-center gap-3"><div className="bg-red-50 p-2.5 rounded-xl"><AlertTriangle className="h-5 w-5 text-red-600" /></div><div><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active Alerts</p><p className="text-2xl font-black text-[#043E52]">{activeAlerts.length}</p></div></div></CardContent></Card>
         <Card className="border-l-4 border-l-[#1C9290] shadow-sm"><CardContent className="p-5"><div className="flex items-center gap-3"><div className="bg-teal-50 p-2.5 rounded-xl"><Zap className="h-5 w-5 text-[#1C9290]" /></div><div><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Deployments</p><p className="text-2xl font-black text-[#043E52]">{acceptedAlerts.length}</p></div></div></CardContent></Card>
@@ -406,6 +441,7 @@ export function CrisisResponse() {
                 onDecline={handleResponse}
                 onViewDetails={setSelectedAlert}
                 statusType="active"
+                isProfileComplete={isProfileComplete}
               />
             ))
           )}
@@ -418,6 +454,7 @@ export function CrisisResponse() {
               alert={alert}
               onViewDetails={setSelectedAlert}
               statusType="accepted"
+              isProfileComplete={isProfileComplete}
             />
           ))}
           {acceptedAlerts.length === 0 && <p className="text-center text-slate-500 py-10 font-medium italic">You are not currently deployed on any missions.</p>}
@@ -430,6 +467,7 @@ export function CrisisResponse() {
               alert={alert}
               onViewDetails={setSelectedAlert}
               statusType="completed"
+              isProfileComplete={isProfileComplete}
             />
           ))}
         </TabsContent>
@@ -499,15 +537,21 @@ export function CrisisResponse() {
                   <Navigation className="mr-2 h-4 w-4" /> Secure Directions
                 </Button>
                 
-                <Button 
-                  onClick={handleConnectCommand}
-                  disabled={isDeploying}
-                  variant="outline" 
-                  className="w-full h-12 bg-white hover:bg-teal-50 border-2 border-[#1C9290] text-[#1C9290] font-bold text-xs uppercase tracking-wider rounded-xl shadow-sm transition-all active:scale-95 disabled:opacity-50"
-                >
-                  <Phone className="mr-2 h-4 w-4" /> 
-                  {isDeploying ? "Deploying..." : "Connect Command"}
-                </Button>
+                {isProfileComplete ? (
+                  <Button 
+                    onClick={handleConnectCommand}
+                    disabled={isDeploying}
+                    variant="outline" 
+                    className="w-full h-12 bg-white hover:bg-teal-50 border-2 border-[#1C9290] text-[#1C9290] font-bold text-xs uppercase tracking-wider rounded-xl shadow-sm transition-all active:scale-95 disabled:opacity-50"
+                  >
+                    <Phone className="mr-2 h-4 w-4" /> 
+                    {isDeploying ? "Deploying..." : "Connect Command"}
+                  </Button>
+                ) : (
+                  <Button disabled variant="outline" className="w-full h-12 bg-slate-100 text-slate-400 font-bold text-xs uppercase tracking-wider rounded-xl">
+                    <Lock className="mr-2 h-4 w-4" /> Profile Incomplete
+                  </Button>
+                )}
               </div>
 
             </div>
@@ -520,7 +564,7 @@ export function CrisisResponse() {
 }
 
 // --- SUB-COMPONENT: Crisis Alert Card ---
-function CrisisAlertCard({ alert, onAccept, onDecline, onViewDetails, statusType }: any) {
+function CrisisAlertCard({ alert, onAccept, onDecline, onViewDetails, statusType, isProfileComplete }: any) {
   const timeString = timeAgo(alert.createdAt);
 
   return (
@@ -530,7 +574,6 @@ function CrisisAlertCard({ alert, onAccept, onDecline, onViewDetails, statusType
       'border-slate-200 bg-white'
     }`}>
       <div className="flex flex-col md:flex-row">
-        {/* Color Strip */}
         <div className={`w-full md:w-2 h-2 md:h-auto ${
           alert.severity === 'Critical' && statusType === 'active' ? 'bg-[#E16A3D]' : 
           statusType === 'accepted' ? 'bg-[#1C9290]' : 'bg-slate-300'
@@ -593,13 +636,16 @@ function CrisisAlertCard({ alert, onAccept, onDecline, onViewDetails, statusType
                   >
                     <Zap className="mr-2 h-4 w-4" /> View Briefing
                   </Button>
-                  <Button 
-                    variant="outline"
-                    className="w-full h-10 border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-red-500 font-bold text-xs uppercase tracking-wider"
-                    onClick={() => onDecline(alert.id, 'declined')}
-                  >
-                    Ignore
-                  </Button>
+                  
+                  {isProfileComplete ? (
+                    <Button 
+                      variant="outline"
+                      className="w-full h-10 border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-red-500 font-bold text-xs uppercase tracking-wider"
+                      onClick={() => onDecline(alert.id, 'declined')}
+                    >
+                      Ignore
+                    </Button>
+                  ) : null}
                 </>
               )}
               

@@ -31,7 +31,7 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 
 // --- INITIALIZE GEMINI AI ---
-const genAI = new GoogleGenerativeAI("AIzaSyDiNP9rAwU2fyxz9E1VgkQGnnV_p8LMjgY");
+const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
 
 interface Scenario {
   id: string;
@@ -170,7 +170,7 @@ export function TrainingSimulator() {
     setIsGeneratingScenario(true);
     
     try {
-      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+      const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
       const prompt = `
         You are an expert crisis management trainer for the official Athar Volunteer Reserve. Generate a completely new, unique, high-stakes roleplay scenario for a field volunteer or first responder. 
         
@@ -223,7 +223,7 @@ export function TrainingSimulator() {
     setScore(50); 
     setFinalAnalysis(null);
     
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
     const session = model.startChat({
       history: [
         {

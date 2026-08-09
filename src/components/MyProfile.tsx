@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { initializeApp } from "firebase/app";
-import { getFirestore, collection, query, where, onSnapshot, getDoc, doc } from "firebase/firestore";
-
+import { collection, query, where, onSnapshot, getDoc, doc } from "firebase/firestore";
+import { db } from '../lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -14,23 +13,11 @@ import {
   User, Mail, Phone, MapPin, Calendar, Briefcase, GraduationCap, 
   Edit, Save, X, Plus, Trash2, CheckCircle, Pencil,
   Heart, AlertTriangle, Droplet, Car, PhoneCall, Clock, CalendarRange, Laptop,
-  Camera, Loader2, Download, Award, ShieldAlert, ShieldCheck, Lock, Building2, Shield
+  Camera, Loader2, Download, Award, ShieldAlert, ShieldCheck, Lock, Building2, Shield,
+  FileText
 } from 'lucide-react';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { updateVolunteerProfile } from '../lib/authService';
-
-// --- FIREBASE CONFIG ---
-const firebaseConfig = {
-  apiKey: "AIzaSyDRSETgWx1F3RX3_KAzgceyYBJKfpheRQk",
-  authDomain: "athar-project-aa74e.firebaseapp.com",
-  projectId: "athar-project-aa74e",
-  storageBucket: "athar-project-aa74e.firebasestorage.app", 
-  messagingSenderId: "715063889584",
-  appId: "1:715063889584:web:3443ae48678c91a7f4b575",
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
 
 // --- CATALOG MAPS ---
 const COURSE_CATALOG: Record<string, any> = {
@@ -80,7 +67,7 @@ export function MyProfile() {
   const [isGeneratingCV, setIsGeneratingCV] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // --- 🔥 HIGH SECURITY VERIFICATION STATE 🔥 ---
+  // --- HIGH SECURITY VERIFICATION STATE ---
   const [showVerifyModal, setShowVerifyModal] = useState(false);
   const [isSubmittingVerify, setIsSubmittingVerify] = useState(false);
   const [verifyData, setVerifyData] = useState({
@@ -95,7 +82,8 @@ export function MyProfile() {
     fullName: '', email: '', phone: '', dateOfBirth: '',
     address: '', city: '', state: '', zipCode: '', country: '',
     bio: '', linkedIn: '', website: '', photoUrl: '', avatarUrl: '',
-    verificationStatus: 'unverified' 
+    verificationStatus: 'unverified',
+    idNumber: '' // Added to display ID captured during signup
   });
 
   // --- 2. LISTS & OBJECT STATES ---
@@ -118,48 +106,91 @@ export function MyProfile() {
   const [activeExp, setActiveExp] = useState<Experience | null>(null);
   const [activeEdu, setActiveEdu] = useState<Education | null>(null);
 
-  // --- 4. FETCH FROM FIREBASE ---
+  // --- COMPREHENSIVE MANDATORY PROFILE COMPLETION VALIDATION ---
+  const isProfileComplete = Boolean(
+    profileData.fullName?.trim() && 
+    profileData.city?.trim() && 
+    profileData.phone?.trim() && 
+    profileData.bio?.trim() &&
+    crisisInfo.bloodType?.trim() &&
+    crisisInfo.emergencyName?.trim() &&
+    crisisInfo.emergencyPhone?.trim() &&
+    (availability.weekdays || availability.weekends) &&
+    skills.length > 0 &&
+    languages.length > 0
+  );
+
+  // --- 4. FETCH FROM FIREBASE & AUTO-TRIGGER EDIT MODE ---
   useEffect(() => {
-    if (user) {
-      const userData = user as any;
-
-      setProfileData({
-        fullName: userData.name || userData.displayName || '', 
-        email: userData.email || '', 
-        phone: userData.phone || '',
-        dateOfBirth: userData.dateOfBirth || '', 
-        address: userData.address || '', 
-        city: userData.city || '',
-        state: userData.state || '', 
-        zipCode: userData.zipCode || '', 
-        country: userData.country || '',
-        bio: userData.bio || '', 
-        linkedIn: userData.linkedIn || '', 
-        website: userData.website || '',
-        photoUrl: userData.photoUrl || userData.avatarUrl || '',
-        verificationStatus: userData.verificationStatus || 'unverified'
-      });
-      setSkills(userData.skills || []);
-      setExperiences(userData.experiences || []);
-      setEducations(userData.educations || []);
-      setLanguages(userData.languages || []);
+    if (user && user.uid) {
       
-      // Read supportedCauses for the Causes section
-      const supportedCausesData = userData.supportedCauses || [];
-      const causeTitles = supportedCausesData.map((c: any) => c.title || c.category || "Supported Cause");
-      setInterests(causeTitles);
-      
-      setAvailability(userData.availability || { weekdays: false, weekends: false, hours: '5-10 hours', format: 'Flexible' });
-      setCrisisInfo({
-        bloodType: userData.crisisInfo?.bloodType || '', 
-        drivingLicense: userData.crisisInfo?.drivingLicense || false,
-        emergencyName: userData.crisisInfo?.emergencyName || userData.crisisInfo?.emergencyContact || '',
-        emergencyRelation: userData.crisisInfo?.emergencyRelation || '', 
-        emergencyPhone: userData.crisisInfo?.emergencyPhone || ''
-      });
+      // FETCH FULL DATA DIRECTLY FROM THE FIRESTORE "USERS" COLLECTION
+      const loadVolunteerData = async () => {
+        let currentData = user as any;
+        
+        try {
+          const userDocRef = doc(db, "users", user.uid);
+          const userSnap = await getDoc(userDocRef);
+          
+          if (userSnap.exists()) {
+            // Merge the freshly fetched DB data over the session data
+            currentData = { ...currentData, ...userSnap.data() };
+          }
+        } catch (error) {
+          console.error("Failed to fetch full volunteer profile:", error);
+        }
 
-      // Fetch Courses & Skills
+        // Extract ID if submitted during signup or via verification
+        const officialId = currentData.legalIdentity?.idNumber || currentData.officialId || currentData.idNumber || '';
+
+       setProfileData({
+  fullName: currentData.name || currentData.displayName || '', 
+  email: currentData.email || '', 
+  phone: currentData.phone || '', 
+  dateOfBirth: currentData.dateOfBirth || '', 
+  address: currentData.address || '', 
+  city: currentData.city || '',
+  state: currentData.state || '', 
+  zipCode: currentData.zipCode || '', 
+  country: currentData.country || '',
+  bio: currentData.bio || '', 
+  linkedIn: currentData.linkedIn || '', 
+  website: currentData.website || '',
+  photoUrl: currentData.photoUrl || currentData.avatarUrl || '',
+  avatarUrl: currentData.avatarUrl || currentData.photoUrl || '', // <-- ADD THIS LINE
+  verificationStatus: currentData.verificationStatus || 'unverified',
+  idNumber: officialId
+});
+        setSkills(currentData.skills || []);
+        setExperiences(currentData.experiences || []);
+        setEducations(currentData.educations || []);
+        setLanguages(currentData.languages || []);
+        
+        const supportedCausesData = currentData.supportedCauses || [];
+        const causeTitles = supportedCausesData.map((c: any) => c.title || c.category || "Supported Cause");
+        setInterests(causeTitles);
+        
+        setAvailability(currentData.availability || { weekdays: false, weekends: false, hours: '5-10 hours', format: 'Flexible' });
+        setCrisisInfo({
+          bloodType: currentData.crisisInfo?.bloodType || '', 
+          drivingLicense: currentData.crisisInfo?.drivingLicense || false,
+          emergencyName: currentData.crisisInfo?.emergencyName || currentData.crisisInfo?.emergencyContact || '',
+          emergencyRelation: currentData.crisisInfo?.emergencyRelation || '', 
+          emergencyPhone: currentData.crisisInfo?.emergencyPhone || ''
+        });
+
+        // 🔥 AUTO-EDIT MAGIC 🔥
+        if (!currentData.bio || !currentData.city || !(currentData.crisisInfo?.bloodType)) {
+            setIsEditing(true);
+        }
+      };
+
+      loadVolunteerData();
+
+      // Listeners for certifications & skills
+      let unsubSkills: () => void;
       const qCourses = query(collection(db, "userCourses"), where("userId", "==", user.uid));
+      
       const unsubCourses = onSnapshot(qCourses, (snapshot) => {
         const coursesList: any[] = [];
         snapshot.forEach((doc) => {
@@ -176,7 +207,10 @@ export function MyProfile() {
         });
 
         const qSkills = query(collection(db, "userSkills"), where("userId", "==", user.uid));
-        const unsubSkills = onSnapshot(qSkills, (skillSnap) => {
+        
+        if (unsubSkills) unsubSkills(); // Clean up previous listener to prevent memory leaks
+        
+        unsubSkills = onSnapshot(qSkills, (skillSnap) => {
           const skillsList: any[] = [];
           skillSnap.forEach((doc) => {
             const data = doc.data();
@@ -194,10 +228,9 @@ export function MyProfile() {
           const combinedCerts = [...coursesList, ...skillsList].sort((a, b) => b.timestamp - a.timestamp);
           setEarnedCerts(combinedCerts);
         });
-        return () => unsubSkills();
       });
 
-      // FETCH CORE CREW AFFILIATIONS & ORG LOGOS
+      // Listeners for Affiliations
       const qAffiliations = query(
           collection(db, "applications"), 
           where("volunteerId", "==", user.uid),
@@ -238,6 +271,7 @@ export function MyProfile() {
 
       return () => {
           unsubCourses();
+          if (unsubSkills) unsubSkills();
           unsubAffiliations();
       };
     }
@@ -268,7 +302,6 @@ export function MyProfile() {
   };
   const handleRemoveEducation = (id: string) => setEducations(educations.filter(edu => edu.id !== id));
 
-  // --- HIGH SECURITY GOV VERIFICATION SUBMISSION ---
   const submitLegalVerification = async () => {
     if (!user) return;
     if (!verifyData.legalName || !verifyData.idNumber || !verifyData.birthYear) {
@@ -291,7 +324,7 @@ export function MyProfile() {
         }
       });
       
-      setProfileData(prev => ({ ...prev, verificationStatus: 'pending' }));
+      setProfileData(prev => ({ ...prev, verificationStatus: 'pending', idNumber: verifyData.idNumber }));
       setShowVerifyModal(false);
     } catch (error) {
       console.error("Verification Submission Failed:", error);
@@ -300,7 +333,6 @@ export function MyProfile() {
     setIsSubmittingVerify(false);
   };
 
-  // --- 6. IMAGE UPLOAD ---
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !user) return;
@@ -337,6 +369,23 @@ export function MyProfile() {
 
   const handleSave = async () => {
     if (!user) return;
+    
+    // Strict Full Completion Enforcement across all mandatory sections
+    if (
+      !profileData.fullName?.trim() || 
+      !profileData.city?.trim() || 
+      !profileData.phone?.trim() || 
+      !profileData.bio?.trim() ||
+      !crisisInfo.bloodType?.trim() ||
+      !crisisInfo.emergencyName?.trim() ||
+      !crisisInfo.emergencyPhone?.trim() ||
+      (!availability.weekdays && !availability.weekends) ||
+      skills.length === 0 ||
+      languages.length === 0
+    ) {
+      return alert("Incomplete Profile: You must fill out all mandatory sections (Main Info, About Me, Emergency Deployment, Availability, Skills, and Languages) before saving.");
+    }
+
     setIsSaving(true);
     const dataToSave = {
       name: profileData.fullName, phone: profileData.phone, dateOfBirth: profileData.dateOfBirth,
@@ -350,8 +399,11 @@ export function MyProfile() {
     setIsSaving(false);
   };
 
-  // --- 7. IMPACT CV GENERATOR ---
   const handleDownloadCV = () => {
+    if (!isProfileComplete) {
+      return alert("Action Blocked: Complete all mandatory profile sections before generating your Impact CV.");
+    }
+
     setIsGeneratingCV(true);
     setTimeout(() => {
       const iframe = document.createElement('iframe');
@@ -405,15 +457,7 @@ export function MyProfile() {
               <title>${profileData.fullName} - Impact CV</title>
               <style>
                 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
-                body {
-                  font-family: 'Inter', sans-serif;
-                  color: #333;
-                  line-height: 1.5;
-                  margin: 0;
-                  padding: 40px;
-                  max-width: 800px;
-                  margin: 0 auto;
-                }
+                body { font-family: 'Inter', sans-serif; color: #333; line-height: 1.5; margin: 0; padding: 40px; max-width: 800px; margin: 0 auto; }
                 .header { border-bottom: 2px solid #016A6D; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-end;}
                 .name { font-size: 32px; font-weight: 800; color: #016A6D; margin: 0 0 10px 0; letter-spacing: -0.5px;}
                 .contact { font-size: 12px; color: #64748b; }
@@ -472,7 +516,20 @@ export function MyProfile() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12 animate-in fade-in duration-300">
       
-      {/* 🔥 THE HIGH-SECURITY VERIFICATION MODAL 🔥 */}
+      {/* COMPREHENSIVE PROFILE COMPLETION WARNING BANNER */}
+      {!isProfileComplete && (
+        <div className="bg-rose-50 border border-rose-200 p-4 rounded-2xl flex items-center gap-4 shadow-sm animate-in slide-in-from-top-2">
+          <div className="bg-rose-600 p-2.5 rounded-xl text-white"><ShieldAlert size={20} /></div>
+          <div>
+            <h4 className="text-rose-900 font-bold text-sm">Profile Setup Required</h4>
+            <p className="text-rose-700 text-xs font-medium">
+              We have loaded the information you provided during signup. You must fully complete the remaining mandatory sections below to activate your account and apply for opportunities.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* THE HIGH-SECURITY VERIFICATION MODAL */}
       {showVerifyModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-200 flex flex-col">
@@ -566,7 +623,7 @@ export function MyProfile() {
           <p className="text-sm font-medium text-slate-500 mt-1">Manage your identity, field experience, and readiness data.</p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={handleDownloadCV} disabled={isGeneratingCV || isEditing} variant="outline" className="border-[#016A6D] text-[#016A6D] hover:bg-[#016A6D]/10 font-bold uppercase tracking-wider text-xs">
+          <Button onClick={handleDownloadCV} disabled={isGeneratingCV || isEditing || !isProfileComplete} variant="outline" className="border-[#016A6D] text-[#016A6D] hover:bg-[#016A6D]/10 font-bold uppercase tracking-wider text-xs">
             {isGeneratingCV ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
             Impact CV
           </Button>
@@ -581,9 +638,11 @@ export function MyProfile() {
                 {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />} 
                 {isSaving ? "Saving..." : "Save Changes"}
               </Button>
-              <Button onClick={() => setIsEditing(false)} variant="outline" className="border-slate-300 text-slate-600 font-bold uppercase tracking-wider text-xs">
-                <X className="mr-2 h-4 w-4" /> Cancel
-              </Button>
+              {isProfileComplete && (
+                <Button onClick={() => setIsEditing(false)} variant="outline" className="border-slate-300 text-slate-600 font-bold uppercase tracking-wider text-xs">
+                  <X className="mr-2 h-4 w-4" /> Cancel
+                </Button>
+              )}
             </div>
           )}
         </div>
@@ -615,9 +674,9 @@ export function MyProfile() {
                 <div className="flex-1 pt-2 w-full">
                   {isEditing ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-1">
-                      <div className="space-y-1"><Label className="text-[10px] uppercase tracking-wider font-bold text-slate-500">Full Name</Label><Input className="h-10 text-sm font-medium focus:border-[#016A6D] focus:ring-[#016A6D]" value={profileData.fullName} onChange={(e) => handleInputChange('fullName', e.target.value)} /></div>
-                      <div className="space-y-1"><Label className="text-[10px] uppercase tracking-wider font-bold text-slate-500">Phone</Label><Input className="h-10 text-sm font-medium focus:border-[#016A6D] focus:ring-[#016A6D]" value={profileData.phone} onChange={(e) => handleInputChange('phone', e.target.value)} /></div>
-                      <div className="space-y-1"><Label className="text-[10px] uppercase tracking-wider font-bold text-slate-500">City</Label><Input className="h-10 text-sm font-medium focus:border-[#016A6D] focus:ring-[#016A6D]" value={profileData.city} onChange={(e) => handleInputChange('city', e.target.value)} placeholder="e.g. Istanbul" /></div>
+                      <div className="space-y-1"><Label className="text-[10px] uppercase tracking-wider font-bold text-slate-500">Full Name *</Label><Input className="h-10 text-sm font-medium focus:border-[#016A6D] focus:ring-[#016A6D]" value={profileData.fullName} onChange={(e) => handleInputChange('fullName', e.target.value)} /></div>
+                      <div className="space-y-1"><Label className="text-[10px] uppercase tracking-wider font-bold text-slate-500">Phone *</Label><Input className="h-10 text-sm font-medium focus:border-[#016A6D] focus:ring-[#016A6D]" value={profileData.phone} onChange={(e) => handleInputChange('phone', e.target.value)} /></div>
+                      <div className="space-y-1"><Label className="text-[10px] uppercase tracking-wider font-bold text-slate-500">City *</Label><Input className="h-10 text-sm font-medium focus:border-[#016A6D] focus:ring-[#016A6D]" value={profileData.city} onChange={(e) => handleInputChange('city', e.target.value)} placeholder="e.g. Istanbul" /></div>
                       <div className="space-y-1"><Label className="text-[10px] uppercase tracking-wider font-bold text-slate-500">Country</Label><Input className="h-10 text-sm font-medium focus:border-[#016A6D] focus:ring-[#016A6D]" value={profileData.country} onChange={(e) => handleInputChange('country', e.target.value)} placeholder="e.g. Turkey" /></div>
                       <div className="space-y-1 md:col-span-2"><Label className="text-[10px] uppercase tracking-wider font-bold text-slate-500">LinkedIn URL</Label><Input className="h-10 text-sm font-medium focus:border-[#016A6D] focus:ring-[#016A6D]" value={profileData.linkedIn} onChange={(e) => handleInputChange('linkedIn', e.target.value)} /></div>
                     </div>
@@ -625,7 +684,7 @@ export function MyProfile() {
                     <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                       <div>
                         <div className="flex items-center gap-3">
-                          <h2 className="text-2xl font-black text-[#016A6D] tracking-tight">{profileData.fullName}</h2>
+                          <h2 className="text-2xl font-black text-[#016A6D] tracking-tight">{profileData.fullName || "Unnamed Volunteer"}</h2>
                           {profileData.verificationStatus === 'verified' && (
                             <Badge className="bg-[#016A6D] hover:bg-[#014d4f] border-none font-bold text-[10px] uppercase tracking-wider px-2 py-0.5 shadow-sm"><ShieldCheck className="h-3 w-3 mr-1" /> Verified</Badge>
                           )}
@@ -638,10 +697,12 @@ export function MyProfile() {
                           <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider"><Mail className="h-4 w-4 text-[#016A6D]" /> {profileData.email}</div>
                           <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider"><Phone className="h-4 w-4 text-[#016A6D]" /> {profileData.phone || "No phone"}</div>
                           <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider"><MapPin className="h-4 w-4 text-[#016A6D]" /> {profileData.city ? `${profileData.city}, ${profileData.country}` : "Location not set"}</div>
+                          {profileData.idNumber && (
+                             <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider"><FileText className="h-4 w-4 text-[#016A6D]" /> ID: {profileData.idNumber.substring(0,3)}*****{profileData.idNumber.substring(8,11)}</div>
+                          )}
                         </div>
                       </div>
                       
-                      {/* 🔥 TRIGGER FOR HIGH SECURITY MODAL 🔥 */}
                       {profileData.verificationStatus === 'unverified' && (
                         <Button 
                           onClick={() => setShowVerifyModal(true)} 
@@ -661,12 +722,12 @@ export function MyProfile() {
           {/* BIO */}
           <Card className="border border-slate-200 shadow-sm">
             <CardHeader className="px-6 pt-6 pb-2">
-              <CardTitle className="flex items-center gap-2 text-lg text-[#016A6D]"><User className="h-5 w-5 text-[#016A6D]" /> About Me</CardTitle>
+              <CardTitle className="flex items-center gap-2 text-lg text-[#016A6D]"><User className="h-5 w-5 text-[#016A6D]" /> About Me *</CardTitle>
             </CardHeader>
             <CardContent className="px-6 pb-6 pt-2">
               {isEditing ? (
                 <div className="space-y-4 pt-2">
-                  <div className="space-y-1.5"><Label className="text-[10px] uppercase tracking-wider font-bold text-slate-500">Professional Bio</Label><Textarea rows={4} className="p-3 text-sm font-medium resize-none focus:border-[#016A6D] focus:ring-[#016A6D]" value={profileData.bio} onChange={(e) => handleInputChange('bio', e.target.value)} placeholder="Summarize your experience and passion for volunteering..." /></div>
+                  <div className="space-y-1.5"><Label className="text-[10px] uppercase tracking-wider font-bold text-slate-500">Professional Bio *</Label><Textarea rows={4} className="p-3 text-sm font-medium resize-none focus:border-[#016A6D] focus:ring-[#016A6D]" value={profileData.bio} onChange={(e) => handleInputChange('bio', e.target.value)} placeholder="Summarize your experience and passion for volunteering..." /></div>
                 </div>
               ) : (
                 <p className="text-sm font-medium text-slate-600 leading-relaxed whitespace-pre-wrap">{profileData.bio || "No bio added yet. Tell organizations why you volunteer!"}</p>
@@ -674,7 +735,7 @@ export function MyProfile() {
             </CardContent>
           </Card>
 
-          {/* 🔥 NEW: CORE CREW AFFILIATIONS 🔥 */}
+          {/* CORE CREW AFFILIATIONS */}
           <Card className="border border-slate-200 shadow-sm bg-slate-50/50">
             <CardHeader className="px-6 pt-6 pb-2">
               <CardTitle className="flex items-center gap-2 text-lg text-[#016A6D]"><Building2 className="h-5 w-5 text-[#016A6D]" /> Official Affiliations</CardTitle>
@@ -703,7 +764,7 @@ export function MyProfile() {
             </CardContent>
           </Card>
 
-          {/* VERIFIED CREDENTIALS (PULLED FROM COURSES & SKILLS) */}
+          {/* VERIFIED CREDENTIALS */}
           <Card className="border-[#016A6D]/20 shadow-sm bg-[#016A6D]/5">
             <CardHeader className="px-6 pt-6 pb-2">
               <CardTitle className="flex items-center gap-2 text-lg text-[#016A6D]"><Award className="h-5 w-5 text-[#016A6D]" /> Verified Credentials</CardTitle>
@@ -872,7 +933,7 @@ export function MyProfile() {
           {/* EMERGENCY DEPLOYMENT */}
           <Card className="border-rose-200 shadow-sm overflow-hidden">
             <div className="bg-rose-600 text-white p-4 flex items-center gap-2 font-bold text-sm uppercase tracking-wider">
-              <AlertTriangle className="h-4 w-4" /> Emergency Deployment
+              <AlertTriangle className="h-4 w-4" /> Emergency Deployment *
             </div>
             <CardContent className="p-5 space-y-5 bg-rose-50/30">
               {isEditing ? (
@@ -882,16 +943,16 @@ export function MyProfile() {
                     <input type="checkbox" id="drive" checked={crisisInfo.drivingLicense} onChange={(e) => handleCrisisChange('drivingLicense', e.target.checked)} className="rounded text-rose-600 w-4 h-4 border-slate-300" />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Blood Type</Label>
+                    <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Blood Type *</Label>
                     <select className="w-full h-10 text-sm font-medium border-slate-300 rounded-md px-3 border bg-white focus:border-rose-500" value={crisisInfo.bloodType} onChange={(e) => handleCrisisChange('bloodType', e.target.value)}>
                       <option value="">Select...</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
                     </select>
                   </div>
                   <div className="bg-white p-4 rounded-lg border border-slate-200 space-y-3 shadow-sm">
-                     <Label className="text-[10px] uppercase tracking-widest text-rose-600 font-bold border-b border-slate-100 pb-2 flex w-full">Emergency Contact</Label>
-                     <div className="space-y-1"><Label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Name</Label><Input className="h-9 text-sm font-medium focus:border-rose-500" value={crisisInfo.emergencyName} onChange={(e) => handleCrisisChange('emergencyName', e.target.value)} placeholder="e.g. Ahmed" /></div>
+                     <Label className="text-[10px] uppercase tracking-widest text-rose-600 font-bold border-b border-slate-100 pb-2 flex w-full">Emergency Contact *</Label>
+                     <div className="space-y-1"><Label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Name *</Label><Input className="h-9 text-sm font-medium focus:border-rose-500" value={crisisInfo.emergencyName} onChange={(e) => handleCrisisChange('emergencyName', e.target.value)} placeholder="e.g. Ahmed" /></div>
                      <div className="space-y-1"><Label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Relationship</Label><Input className="h-9 text-sm font-medium focus:border-rose-500" value={crisisInfo.emergencyRelation} onChange={(e) => handleCrisisChange('emergencyRelation', e.target.value)} placeholder="e.g. Brother" /></div>
-                     <div className="space-y-1"><Label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Phone</Label><Input className="h-9 text-sm font-medium focus:border-rose-500" value={crisisInfo.emergencyPhone} onChange={(e) => handleCrisisChange('emergencyPhone', e.target.value)} placeholder="Phone Number" /></div>
+                     <div className="space-y-1"><Label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Phone *</Label><Input className="h-9 text-sm font-medium focus:border-rose-500" value={crisisInfo.emergencyPhone} onChange={(e) => handleCrisisChange('emergencyPhone', e.target.value)} placeholder="Phone Number" /></div>
                   </div>
                 </div>
               ) : (
@@ -916,7 +977,7 @@ export function MyProfile() {
 
           {/* AVAILABILITY */}
           <Card className="border border-slate-200 shadow-sm">
-            <CardHeader className="px-5 pt-5 pb-2"><CardTitle className="text-base flex items-center gap-2 text-[#016A6D]"><CalendarRange className="h-4 w-4 text-[#016A6D]" /> Availability</CardTitle></CardHeader>
+            <CardHeader className="px-5 pt-5 pb-2"><CardTitle className="text-base flex items-center gap-2 text-[#016A6D]"><CalendarRange className="h-4 w-4 text-[#016A6D]" /> Availability *</CardTitle></CardHeader>
             <CardContent className="px-5 pb-5 pt-2">
               {isEditing ? (
                 <div className="space-y-4 pt-2">
@@ -951,7 +1012,7 @@ export function MyProfile() {
             </CardContent>
           </Card>
 
-          {/* CAUSES - NOW READ ONLY */}
+          {/* CAUSES */}
           <Card className="border border-slate-200 shadow-sm">
             <CardHeader className="px-5 pt-5 pb-2"><CardTitle className="text-base flex items-center gap-2 text-[#016A6D]"><Heart className="h-4 w-4 text-[#016A6D]" /> Supported Causes</CardTitle></CardHeader>
             <CardContent className="px-5 pb-5 pt-2">
@@ -969,7 +1030,7 @@ export function MyProfile() {
 
           {/* SKILLS */}
           <Card className="border border-slate-200 shadow-sm">
-            <CardHeader className="px-5 pt-5 pb-2"><CardTitle className="text-base flex items-center gap-2 text-[#016A6D]"><CheckCircle className="h-4 w-4 text-[#016A6D]" /> Professional Skills</CardTitle></CardHeader>
+            <CardHeader className="px-5 pt-5 pb-2"><CardTitle className="text-base flex items-center gap-2 text-[#016A6D]"><CheckCircle className="h-4 w-4 text-[#016A6D]" /> Professional Skills *</CardTitle></CardHeader>
             <CardContent className="px-5 pb-5 pt-2">
               {isEditing && (
                 <div className="flex gap-2 mb-4 pt-2">
@@ -990,7 +1051,7 @@ export function MyProfile() {
 
           {/* LANGUAGES */}
           <Card className="border border-slate-200 shadow-sm">
-            <CardHeader className="px-5 pt-5 pb-2"><CardTitle className="text-base flex items-center gap-2 text-[#016A6D]">Languages</CardTitle></CardHeader>
+            <CardHeader className="px-5 pt-5 pb-2"><CardTitle className="text-base flex items-center gap-2 text-[#016A6D]">Languages *</CardTitle></CardHeader>
             <CardContent className="px-5 pb-5 pt-2">
               {isEditing && (
                 <div className="flex gap-2 mb-4 pt-2">

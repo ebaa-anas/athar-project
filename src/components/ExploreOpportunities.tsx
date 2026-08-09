@@ -17,7 +17,7 @@ import {
   Building2, ShieldCheck, Zap, CheckCircle2, Calendar, X, ShieldAlert, Lock, Loader2, Target, Clock
 } from 'lucide-react';
 import { useUserProfile } from '../hooks/useUserProfile';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'; // Added for org logos
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 
 // --- FIREBASE CONFIG ---
 const firebaseConfig = {
@@ -39,6 +39,21 @@ export function ExploreOpportunities() {
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("all");
+
+  // --- PROFILE COMPLETION VALIDATOR ---
+  const userData = user as any;
+  const isProfileComplete = Boolean(
+    userData?.name?.trim() && 
+    userData?.city?.trim() && 
+    userData?.phone?.trim() && 
+    userData?.bio?.trim() &&
+    userData?.crisisInfo?.bloodType?.trim() &&
+    userData?.crisisInfo?.emergencyName?.trim() &&
+    userData?.crisisInfo?.emergencyPhone?.trim() &&
+    (userData?.availability?.weekdays || userData?.availability?.weekends) &&
+    (userData?.skills && userData?.skills.length > 0) &&
+    (userData?.languages && userData?.languages.length > 0)
+  );
 
   // 1. FETCH LIVE DATA FROM FIREBASE (ORDERED BY HISTORY)
   useEffect(() => {
@@ -75,9 +90,25 @@ export function ExploreOpportunities() {
     return Math.round(score);
   };
 
-  // 3. FILTERING & SORTING ENGINE
+  // 3. FILTERING & SORTING ENGINE (WITH VISIBILITY MATRIX ENFORCEMENT)
   const processedOpportunities = useMemo(() => {
-    let results = opportunities.map(opp => ({
+    const visibleOpps = opportunities.filter(opp => {
+      const target = opp.targetAudience || 'public';
+      
+      // AVR Exclusive missions should not show on standard volunteer feed
+      if (target === 'avr_only') return false; 
+
+      // Internal Roster missions should only show if the user belongs to that organization
+      if (target === 'org_internal') {
+        const userOrgs = user?.affiliatedOrgs || user?.organizations || [];
+        const isMember = userOrgs.includes(opp.orgId);
+        return isMember; 
+      }
+
+      return true;
+    });
+
+    let results = visibleOpps.map(opp => ({
       ...opp,
       matchScore: calculateMatchScore(opp, user)
     }));
@@ -103,7 +134,7 @@ export function ExploreOpportunities() {
     return results;
   }, [opportunities, user, searchTerm, activeTab]);
 
-  const isVerified = user?.verificationStatus === 'verified';
+  const isVerified = user?.verificationStatus === 'verified' || user?.verified === true;
 
   if (loading || userLoading) {
     return (
@@ -150,6 +181,18 @@ export function ExploreOpportunities() {
         </div>
       )}
 
+      {!isProfileComplete && (
+        <div className="bg-rose-50 border border-rose-200 p-4 rounded-2xl flex items-center gap-4 shadow-sm">
+          <div className="bg-rose-600 p-2.5 rounded-xl text-white"><Lock size={20} /></div>
+          <div>
+            <h4 className="text-rose-900 font-bold text-sm">Profile Incomplete</h4>
+            <p className="text-rose-700 text-xs font-medium">
+              You must fully complete all mandatory profile sections (Main Info, About Me, Emergency Deployment, Availability, Skills, and Languages) before applying to any mission.
+            </p>
+          </div>
+        </div>
+      )}
+
       <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
           <TabsList className="bg-slate-100 p-1.5 rounded-2xl h-auto flex flex-wrap justify-start shadow-inner border border-slate-200">
@@ -170,7 +213,7 @@ export function ExploreOpportunities() {
         <div className="flex flex-col gap-4">
           {processedOpportunities.length > 0 ? (
             processedOpportunities.map((opp) => (
-              <MissionRow key={opp.id} opp={opp} isVerified={isVerified} showMatch={activeTab === 'matched'} />
+              <MissionRow key={opp.id} opp={opp} isVerified={isVerified} isProfileComplete={isProfileComplete} showMatch={activeTab === 'matched'} />
             ))
           ) : (
             <div className="py-20 text-center bg-white rounded-3xl border-2 border-dashed border-slate-200">
@@ -186,7 +229,7 @@ export function ExploreOpportunities() {
 }
 
 // --- SUB-COMPONENT: MISSION ROW ---
-function MissionRow({ opp, isVerified, showMatch }: { opp: any, isVerified: boolean, showMatch: boolean }) {
+function MissionRow({ opp, isVerified, isProfileComplete, showMatch }: { opp: any, isVerified: boolean, isProfileComplete: boolean, showMatch: boolean }) {
   const [isApplying, setIsApplying] = useState(false);
   const [hasApplied, setHasApplied] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -216,6 +259,7 @@ function MissionRow({ opp, isVerified, showMatch }: { opp: any, isVerified: bool
   const submitApplication = async () => {
     const user = auth.currentUser;
     if (!user) return alert("Session expired.");
+    if (!isProfileComplete) return alert("Action Blocked: Complete your profile information before applying.");
     if (!coverLetter.trim()) return alert("Please provide a short motivation letter.");
 
     setIsApplying(true);
@@ -308,9 +352,9 @@ function MissionRow({ opp, isVerified, showMatch }: { opp: any, isVerified: bool
                 <Button disabled className="h-10 px-6 bg-[#1C9290]/10 text-[#1C9290] font-black text-[10px] uppercase rounded-xl border border-[#1C9290]/20 opacity-100">
                   <CheckCircle2 className="mr-1.5 h-4 w-4" /> Applied
                 </Button>
-              ) : !isVerified ? (
+              ) : !isVerified || !isProfileComplete ? (
                 <Button disabled className="h-10 px-6 bg-slate-100 text-slate-400 font-black text-[10px] uppercase rounded-xl">
-                  <Lock className="mr-1.5 h-3.5 w-3.5" /> ID Required
+                  <Lock className="mr-1.5 h-3.5 w-3.5" /> Locked
                 </Button>
               ) : (
                 <Button onClick={() => setShowModal(true)} className="h-10 px-6 bg-[#1C9290] hover:bg-orange-500 text-white font-black text-[10px] uppercase rounded-xl shadow-md transition-all active:scale-95">

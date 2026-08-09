@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { initializeApp } from "firebase/app";
-import { getFirestore, collection, onSnapshot, query, where, doc, getDoc, getDocs, addDoc, serverTimestamp, writeBatch, updateDoc } from "firebase/firestore";
+import { collection, onSnapshot, query, where, doc, getDoc, getDocs, addDoc, serverTimestamp, writeBatch, updateDoc } from "firebase/firestore";
 
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
@@ -14,24 +13,38 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { 
   AlertTriangle, MapPin, Users, Clock, Send, XCircle, 
   Activity, Zap, Plus, ShieldAlert, Megaphone, ShieldX, Phone, Droplet, CheckCircle, Radio, Download,
-  CheckCircle2, Lock, Loader2 // 🔥 Added new icons for the resolve feature
+  CheckCircle2, Lock, Loader2, Sparkles, Wand2
 } from 'lucide-react';
 
 import { useUserProfile } from '../../hooks/useUserProfile';
-import { auth } from '../../lib/firebase'; 
+import { auth, db } from '../../lib/firebase'; 
 
-// --- FIREBASE CONFIG ---
-const firebaseConfig = {
-  apiKey: "AIzaSyDRSETgWx1F3RX3_KAzgceyYBJKfpheRQk",
-  authDomain: "athar-project-aa74e.firebaseapp.com",
-  projectId: "athar-project-aa74e",
-  storageBucket: "athar-project-aa74e.firebasestorage.app",
-  messagingSenderId: "715063889584",
-  appId: "1:715063889584:web:3443ae48678c91a7f4b575",
-};
+// 🔥 FIX: single shared definition of "is this volunteer AVR-certified" —
+// previously this exact OR-chain was copy-pasted in handleActivate AND in the
+// roster badge render. One helper now, used everywhere, so the dispatch logic
+// and the badge you see on screen can never disagree with each other.
+function isAVRCertified(vData: any): boolean {
+  return (
+    vData?.isAVRMember === true ||
+    vData?.isAVRMember === "true" ||
+    vData?.avrCertified === true ||
+    vData?.avrCertified === "true" ||
+    vData?.isAVR === true ||
+    vData?.isAVR === "true" ||
+    vData?.crisisInfo?.avrCertified === true ||
+    vData?.crisisInfo?.avrCertified === "true" ||
+    (vData?.skills && vData.skills.includes("AVR"))
+  );
+}
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+// 🔥 NEW: counts how many of the crisis's required skills this volunteer has.
+// Used both to filter (must match at least one, if skills were specified)
+// and to rank (best-matched volunteers get notified first).
+function countSkillMatches(volunteerSkills: string[] | undefined, requiredSkills: string[]): number {
+  if (!requiredSkills.length) return 1; // no specific skills requested — everyone AVR-certified qualifies equally
+  const vSkills = (volunteerSkills || []).map(s => s.toLowerCase());
+  return requiredSkills.filter(rs => vSkills.includes(rs.toLowerCase())).length;
+}
 
 export function CrisisManagement() {
   const { user, loading } = useUserProfile();
@@ -40,7 +53,6 @@ export function CrisisManagement() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // 🔥 NEW STATE: Tracks which crisis is being resolved
   const [closingId, setClosingId] = useState<string | null>(null);
   
   const [selectedCrisisForTeam, setSelectedCrisisForTeam] = useState<any | null>(null);
@@ -49,6 +61,9 @@ export function CrisisManagement() {
   const [broadcastMessage, setBroadcastMessage] = useState("");
   const [isBroadcasting, setIsBroadcasting] = useState(false);
   
+  // 🔥 AI Tasking State
+  const [isGeneratingTasks, setIsGeneratingTasks] = useState(false);
+
   const [newCrisis, setNewCrisis] = useState({
     title: '', description: '', severity: 'Critical', location: '', volunteersNeeded: 10, skillsNeeded: '', commsLink: '' 
   });
@@ -73,7 +88,6 @@ export function CrisisManagement() {
         return { id: docSnap.id, ...data, createdAtText: safeDate, sortTime };
       });
       
-      // Sort: Active first, then by date
       events.sort((a, b) => {
         if (a.status === 'Resolved' && b.status !== 'Resolved') return 1;
         if (a.status !== 'Resolved' && b.status === 'Resolved') return -1;
@@ -99,10 +113,14 @@ export function CrisisManagement() {
       const members = await Promise.all(snapshot.docs.map(async (responseDoc) => {
         const volId = responseDoc.data().volunteerId;
         const volSnap = await getDoc(doc(db, "users", volId));
+        // 🔥 FIX: if the volunteer's account was deleted after they accepted,
+        // volSnap.data() is undefined and this used to spread garbage into the
+        // roster (blank name, crash on .charAt in the avatar fallback). Skip it.
+        if (!volSnap.exists()) return null;
         return { id: volId, ...volSnap.data(), respondedAt: responseDoc.data().respondedAt };
       }));
 
-      setTeamMembers(members);
+      setTeamMembers(members.filter(Boolean));
     } catch (error) {
       console.error("Error fetching team:", error);
     }
@@ -111,6 +129,7 @@ export function CrisisManagement() {
 
   // --- 3. MASS BROADCAST TO ALL RESPONDERS ---
   const handleMassBroadcast = async () => {
+    if (!selectedCrisisForTeam) return; // 🔥 guard: modal state can close mid-request
     if (!broadcastMessage.trim()) return alert("Please type a message to broadcast.");
     if (teamMembers.length === 0) return alert("No volunteers have responded yet.");
 
@@ -148,33 +167,27 @@ export function CrisisManagement() {
 
     setIsSubmitting(true);
     try {
+      const requiredSkills = newCrisis.skillsNeeded.split(',').map(s => s.trim()).filter(s => s !== '');
+
       const qUsers = query(collection(db, "users"), where("role", "==", "volunteer"));
       const usersSnapshot = await getDocs(qUsers);
-      
-      const allVolunteers: string[] = [];
-      usersSnapshot.forEach(docSnap => {
+
+      // 🔥 FIX: this used to be "every AVR volunteer on the platform, notify all of
+      // them" — skillsNeeded was collected in the form but never actually used.
+      // Now: must be AVR-certified AND (no specific skills requested, or match at
+      // least one), ranked by how many required skills they have, and capped so a
+      // request for 10 people doesn't page hundreds.
+      const ranked = usersSnapshot.docs
+        .map(docSnap => {
           const vData = docSnap.data();
-          const isAVR = 
-            vData.isAVRMember === true || 
-            vData.isAVRMember === "true" || 
-            vData.avrCertified === true || 
-            vData.avrCertified === "true" || 
-            vData.isAVR === true || 
-            vData.isAVR === "true" ||
-            vData.crisisInfo?.avrCertified === true ||
-            vData.crisisInfo?.avrCertified === "true" ||
-            (vData.skills && vData.skills.includes("AVR"));
+          const matchCount = countSkillMatches(vData.skills, requiredSkills);
+          return { id: docSnap.id, matchCount, avr: isAVRCertified(vData) };
+        })
+        .filter(v => v.avr && v.matchCount > 0)
+        .sort((a, b) => b.matchCount - a.matchCount);
 
-          if (isAVR) {
-              allVolunteers.push(docSnap.id);
-          }
-      });
-
-      let finalDeployList = allVolunteers;
-      if (allVolunteers.length === 0) {
-          console.warn("No AVR members found. Using fallback to notify ALL volunteers for testing purposes.");
-          usersSnapshot.forEach(docSnap => finalDeployList.push(docSnap.id));
-      }
+      const dispatchCap = Math.max(Number(newCrisis.volunteersNeeded) * 3, 15);
+      const finalDeployList = ranked.slice(0, dispatchCap).map(v => v.id);
 
       const crisisDocRef = await addDoc(collection(db, "crises"), {
         orgId: user.uid, 
@@ -184,7 +197,7 @@ export function CrisisManagement() {
         description: newCrisis.description,
         severity: newCrisis.severity,
         location: newCrisis.location,
-        skillsNeeded: newCrisis.skillsNeeded.split(',').map(s => s.trim()).filter(s => s !== ''), 
+        skillsNeeded: requiredSkills, 
         commsLink: newCrisis.commsLink, 
         volunteersNeeded: Number(newCrisis.volunteersNeeded),
         volunteersActivated: finalDeployList.length,
@@ -215,10 +228,10 @@ export function CrisisManagement() {
       setShowCreateForm(false);
       setNewCrisis({ title: '', description: '', severity: 'Critical', location: '', volunteersNeeded: 10, skillsNeeded: '', commsLink: '' });
       
-      if (allVolunteers.length === 0) {
-          alert(`Emergency declared! (WARNING: Database had 0 AVR. Fallback used: Notified all ${finalDeployList.length} standard volunteers).`);
+      if (finalDeployList.length === 0) {
+          alert(`Emergency declared, but NO AVR-certified volunteers matched the requested skills. No one has been notified yet — you'll need to reach responders manually or broaden the skill requirements.`);
       } else {
-          alert(`Emergency declared! SOS Alarm broadcasted to ${finalDeployList.length} Elite AVR members.`);
+          alert(`Emergency declared! SOS Alarm broadcasted to ${finalDeployList.length} matched AVR members.`);
       }
       
     } catch (error) {
@@ -228,7 +241,7 @@ export function CrisisManagement() {
     setIsSubmitting(false);
   };
 
-  // 🔥 5. NEW FUNCTION: STAND DOWN (RESOLVE) CRISIS 🔥
+  // --- 5. STAND DOWN (RESOLVE) CRISIS ---
   const handleResolveCrisis = async (crisisId: string) => {
     if (!window.confirm("Are you sure you want to stand down? This will close the emergency and volunteers will be notified that the crisis is resolved.")) {
       return;
@@ -241,7 +254,6 @@ export function CrisisManagement() {
         status: "Resolved",
         resolvedAt: serverTimestamp()
       });
-      // Optionally blast a final message to the team that they can stand down
     } catch (error) {
       console.error("Error resolving crisis:", error);
       alert("Failed to resolve crisis.");
@@ -250,6 +262,82 @@ export function CrisisManagement() {
     }
   };
 
+  // 🔥 NEW: real CSV export — the button used to just alert() a fake message.
+  const handleExportCSV = () => {
+    if (teamMembers.length === 0) return;
+    const headers = ['Name', 'Phone', 'Blood Type', 'AVR Certified', 'Skills'];
+    const rows = teamMembers.map(vol => [
+      vol.name || '',
+      vol.phone || '',
+      vol.crisisInfo?.bloodType || 'Unknown',
+      isAVRCertified(vol) ? 'Yes' : 'No',
+      (vol.skills || []).join('; ')
+    ]);
+    const csv = [headers, ...rows]
+      .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${(selectedCrisisForTeam?.title || 'crisis').replace(/[^a-z0-9]/gi, '_')}-roster.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  // 🔥 NEW: Generative AI Tasking Engine (Llama-3 Integration)
+  const handleGenerateAITasks = async () => {
+    if (!newCrisis.title || !newCrisis.location) {
+      alert("Please provide at least an Incident Title and Location for the AI to analyze.");
+      return;
+    }
+    
+    setIsGeneratingTasks(true);
+    try {
+      // Connects to OpenRouter using your existing Llama-3 preference
+      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${import.meta.env.VITE_OPENROUTER_API_KEY}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: "meta-llama/llama-3-8b-instruct",
+          messages: [
+            {
+              role: "system",
+              content: "You are an expert crisis management AI for Project Athar. Based on the crisis title, location, and severity, quickly generate a professional situation report (description) and a comma-separated list of the 5 most critical skills needed (skillsNeeded). Return ONLY valid JSON with keys: 'description' and 'skillsNeeded'."
+            },
+            {
+              role: "user",
+              content: `Title: ${newCrisis.title}, Location: ${newCrisis.location}, Severity: ${newCrisis.severity}`
+            }
+          ]
+        })
+      });
+
+      const data = await response.json();
+      const aiContent = data.choices[0].message.content;
+      
+      // Clean potential markdown from Llama-3 response
+      const cleanedJson = aiContent.replace(/```json/g, '').replace(/```/g, '').trim();
+      const parsed = JSON.parse(cleanedJson);
+
+      setNewCrisis(prev => ({
+        ...prev,
+        description: parsed.description || prev.description,
+        skillsNeeded: parsed.skillsNeeded || prev.skillsNeeded
+      }));
+      
+    } catch (error) {
+      console.error("AI Generation Error:", error);
+      alert("Failed to generate AI tasks. Please check your API connection.");
+    }
+    setIsGeneratingTasks(false);
+  };
 
   // --- SECURITY LOCK ---
   if (loading) return <div className="p-10 font-bold text-[#043E52]">Verifying Organization Status...</div>;
@@ -271,7 +359,6 @@ export function CrisisManagement() {
     );
   }
 
-  // Use activeEvents for the metric cards at the top
   const activeEvents = crisisEvents.filter(e => e.status === 'Active');
   const totalActivated = activeEvents.reduce((acc, e) => acc + (e.volunteersActivated || 0), 0);
   const totalResponded = activeEvents.reduce((acc, e) => acc + (e.volunteersResponded || 0), 0);
@@ -279,7 +366,6 @@ export function CrisisManagement() {
   return (
     <div className="space-y-6 pb-10">
       
-      {/* Header Area */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-[#043E52] flex items-center gap-2">
@@ -311,7 +397,6 @@ export function CrisisManagement() {
         
         {crisisEvents.length === 0 && <p className="text-slate-500 italic p-4">No emergencies declared yet.</p>}
 
-        {/* 🔥 Mapping over ALL events, applying soft-close UI to resolved ones 🔥 */}
         {crisisEvents.map((event) => {
           const isResolved = event.status === 'Resolved';
           const progress = Math.round((event.volunteersResponded / event.volunteersNeeded) * 100) || 0;
@@ -327,7 +412,6 @@ export function CrisisManagement() {
                             <div className="flex items-start justify-between mb-2">
                                 <div className="space-y-1">
                                     <div className="flex items-center gap-3">
-                                        {/* Lock icon for resolved */}
                                         {isResolved && (
                                           <div className="h-8 w-8 rounded-lg bg-slate-200 flex items-center justify-center text-slate-500">
                                             <Lock size={16} />
@@ -391,7 +475,6 @@ export function CrisisManagement() {
                                 )}
                             </div>
 
-                            {/* 🔥 ACTION BUTTONS 🔥 */}
                             <div className="flex gap-2 mt-4">
                                 <Button 
                                   onClick={() => handleViewTeam(event)}
@@ -464,7 +547,7 @@ export function CrisisManagement() {
                     <div>
                       <div className="p-4 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
                         <span className="text-sm font-bold text-slate-500 uppercase tracking-widest">Deployed Personnel</span>
-                        <Button variant="outline" size="sm" className="text-slate-600 border-slate-300 hover:bg-slate-200" onClick={() => alert("CSV Exporting...")}>
+                        <Button variant="outline" size="sm" className="text-slate-600 border-slate-300 hover:bg-slate-200" onClick={handleExportCSV}>
                           <Download className="h-4 w-4 mr-2" /> Export CSV List
                         </Button>
                       </div>
@@ -472,6 +555,7 @@ export function CrisisManagement() {
                         {teamMembers.map((vol) => {
                            const bloodType = vol.crisisInfo?.bloodType || 'Unknown';
                            const hasCar = vol.crisisInfo?.drivingLicense ? 'Driver' : '';
+                           const certified = isAVRCertified(vol);
                            
                            return (
                             <div key={vol.id} className="p-6 bg-white flex flex-col md:flex-row gap-4 items-start md:items-center hover:bg-slate-50 transition-colors">
@@ -483,7 +567,11 @@ export function CrisisManagement() {
                               <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-1">
                                   <h4 className="font-bold text-[#043E52] text-lg">{vol.name}</h4>
-                                  <Badge variant="outline" className="text-[10px] bg-green-50 text-green-700 border-green-200 uppercase"><CheckCircle className="h-3 w-3 mr-1" /> AVR Certified</Badge>
+                                  {certified ? (
+                                    <Badge variant="outline" className="text-[10px] bg-green-50 text-green-700 border-green-200 uppercase"><CheckCircle className="h-3 w-3 mr-1" /> AVR Certified</Badge>
+                                  ) : (
+                                    <Badge variant="outline" className="text-[10px] bg-slate-50 text-slate-500 border-slate-200 uppercase">Standard Volunteer</Badge>
+                                  )}
                                 </div>
                                 
                                 <div className="flex flex-wrap items-center gap-4 text-sm text-slate-600 font-medium mb-2">
@@ -566,6 +654,22 @@ export function CrisisManagement() {
                 </CardHeader>
                 <div className="p-6 overflow-y-auto bg-slate-50 space-y-5">
                     
+                    {/* 🔥 AI Task Generator Banner */}
+                    <div className="bg-gradient-to-r from-[#043E52] to-[#1C9290] p-4 rounded-xl flex items-center justify-between shadow-sm">
+                       <div>
+                         <h4 className="text-white font-bold flex items-center gap-2"><Sparkles className="h-4 w-4 text-yellow-300"/> Generative AI Tasking</h4>
+                         <p className="text-white/80 text-xs mt-1">Enter Title & Location, then let AI write the report and find required skills.</p>
+                       </div>
+                       <Button
+                         onClick={handleGenerateAITasks}
+                         disabled={isGeneratingTasks || !newCrisis.title || !newCrisis.location}
+                         className="bg-white text-[#043E52] hover:bg-slate-100 font-bold text-xs h-9 ml-4"
+                       >
+                         {isGeneratingTasks ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Wand2 className="h-4 w-4 mr-2" />}
+                         Auto-Generate
+                       </Button>
+                    </div>
+
                     <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
                       <div className="space-y-1.5"><Label className="font-bold text-[#043E52] text-xs uppercase tracking-widest">Incident Title</Label><Input placeholder="e.g. Structural Collapse" value={newCrisis.title} onChange={(e) => setNewCrisis({...newCrisis, title: e.target.value})} className="border-slate-200 h-11 focus:border-[#E16A3D] focus:ring-[#E16A3D]" /></div>
                       
