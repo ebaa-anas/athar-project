@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from 'react';
 import { initializeApp } from "firebase/app";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { getFirestore, collection, query, where, onSnapshot, doc, setDoc } from "firebase/firestore";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
@@ -29,9 +28,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
-
-// --- INITIALIZE GEMINI AI ---
-const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
 
 interface Scenario {
   id: string;
@@ -91,6 +87,25 @@ const INITIAL_SCENARIOS: Scenario[] = [
   }
 ];
 
+async function callGemini(
+  model: string,
+  history: Array<{ role: "user" | "model"; parts: Array<{ text: string }> }>,
+  message: string
+): Promise<string> {
+  const response = await fetch("/api/gemini", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ model, history, message }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Gemini proxy request failed");
+  }
+
+  const data = await response.json();
+  return data.text;
+}
+
 export function TrainingSimulator() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
@@ -109,7 +124,9 @@ export function TrainingSimulator() {
   const [isGeneratingScenario, setIsGeneratingScenario] = useState(false);
   const [finalAnalysis, setFinalAnalysis] = useState<string | null>(null);
   
-  const [chatSession, setChatSession] = useState<any>(null);
+  const [chatHistory, setChatHistory] = useState<
+    Array<{ role: "user" | "model"; parts: Array<{ text: string }> }>
+  >([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // --- 1. REAL-TIME DB SYNC ---
@@ -170,7 +187,6 @@ export function TrainingSimulator() {
     setIsGeneratingScenario(true);
     
     try {
-      const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
       const prompt = `
         You are an expert crisis management trainer for the official Athar Volunteer Reserve. Generate a completely new, unique, high-stakes roleplay scenario for a field volunteer or first responder. 
         
@@ -189,8 +205,7 @@ export function TrainingSimulator() {
         }
       `;
 
-      const result = await model.generateContent(prompt);
-      let rawJson = result.response.text();
+      let rawJson = await callGemini("gemini-3.5-flash", [], prompt);
       rawJson = rawJson.replace(/```json/gi, '').replace(/```/gi, '').trim();
       
       const newScenarioData = JSON.parse(rawJson);
@@ -223,27 +238,22 @@ export function TrainingSimulator() {
     setScore(50); 
     setFinalAnalysis(null);
     
-    const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
-    const session = model.startChat({
-      history: [
-        {
-          role: "user",
-          parts: [{ text: scenario.systemPrompt }],
-        },
-        {
-          role: "model",
-          parts: [{ text: "Understood. I am ready to begin the simulation in character." }],
-        },
-      ],
-    });
-    
-    setChatSession(session);
+    setChatHistory([
+      {
+        role: "user",
+        parts: [{ text: scenario.systemPrompt }],
+      },
+      {
+        role: "model",
+        parts: [{ text: "Understood. I am ready to begin the simulation in character." }],
+      },
+    ]);
     setMessages([{ sender: 'ai', text: scenario.initialMessage }]);
     setCurrentInput('');
   };
 
   const sendMessage = async () => {
-    if (!currentInput.trim() || !activeSimulation || !chatSession) return;
+    if (!currentInput.trim() || !activeSimulation) return;
 
     const userText = currentInput;
     setMessages(prev => [...prev, { sender: 'user', text: userText }]);
@@ -260,8 +270,7 @@ export function TrainingSimulator() {
         POINTS: [A number between -15 and +15 depending on how good their response was]
       `;
 
-      const result = await chatSession.sendMessage(evaluationPrompt);
-      const text = result.response.text();
+      const text = await callGemini("gemini-3.5-flash", chatHistory, evaluationPrompt);
 
       const replyMatch = text.match(/REPLY:\s*(.*)/i);
       const feedbackMatch = text.match(/FEEDBACK:\s*(.*)/i);
@@ -281,6 +290,12 @@ export function TrainingSimulator() {
 
       setScore(prev => Math.min(100, Math.max(0, prev + points)));
 
+      setChatHistory(prev => [
+        ...prev,
+        { role: "user", parts: [{ text: evaluationPrompt }] },
+        { role: "model", parts: [{ text }] },
+      ]);
+
     } catch (error) {
       console.error("Gemini AI Error:", error);
       setMessages(prev => [
@@ -294,7 +309,7 @@ export function TrainingSimulator() {
 
   // --- 3. CONCLUDE & SAVE RESULTS ---
   const concludeSimulation = async () => {
-    if (!chatSession || !currentUser || !activeSimulation) return;
+    if (!currentUser || !activeSimulation) return;
     setIsConcluding(true);
 
     const passed = score >= 90; // 90% REQUIREMENT
@@ -309,8 +324,7 @@ export function TrainingSimulator() {
         DO NOT use the REPLY/FEEDBACK/POINTS format. Just write the plain paragraph.
       `;
 
-      const result = await chatSession.sendMessage(concludingPrompt);
-      let rawText = result.response.text();
+      let rawText = await callGemini("gemini-3.5-flash", chatHistory, concludingPrompt);
       rawText = rawText.replace(/REPLY:/gi, '').replace(/FEEDBACK:/gi, '').replace(/POINTS:.*\d+/gi, '').trim();
       setFinalAnalysis(rawText);
 
@@ -348,7 +362,7 @@ export function TrainingSimulator() {
     setMessages([]);
     setSimulationPhase('intro');
     setScore(0);
-    setChatSession(null);
+    setChatHistory([]);
     setFinalAnalysis(null);
   };
 
