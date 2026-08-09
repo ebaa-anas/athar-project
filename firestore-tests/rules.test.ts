@@ -219,6 +219,18 @@ describe("organizations/{uid}", () => {
     );
   });
 
+  it("blocks a tier2 org from self-creating with verified:false but verificationStatus:'verified'", async () => {
+    const org = testEnv.authenticatedContext("org1").firestore();
+    await assertFails(
+      setDoc(doc(org, "organizations/org1"), {
+        uid: "org1",
+        tier: "tier2",
+        verified: false,
+        verificationStatus: "verified",
+      })
+    );
+  });
+
   it("lets an admin verify an organization", async () => {
     await testEnv.withSecurityRulesDisabled(async (context) => {
       await setDoc(doc(context.firestore(), "admins/root"), {

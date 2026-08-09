@@ -41,8 +41,11 @@ service cloud.firestore {
       allow create: if request.auth != null
         && request.auth.uid == uid
         && (
-          request.resource.data.get('verified', false) == false
-          || request.resource.data.tier == 'tier1'
+          request.resource.data.tier == 'tier1'
+          || (
+            request.resource.data.get('verified', false) == false
+            && request.resource.data.get('verificationStatus', '') != 'verified'
+          )
         );
 
       allow update: if request.auth != null
@@ -70,7 +73,8 @@ service cloud.firestore {
         || (request.auth != null && request.auth.uid == resource.data.orgId);
 
       allow create: if request.auth != null
-        && request.auth.uid == request.resource.data.orgId;
+        && request.auth.uid == request.resource.data.orgId
+        && request.resource.data.get('status', 'pending') == 'pending';
 
       allow update: if isAdmin();
       allow delete: if false;
