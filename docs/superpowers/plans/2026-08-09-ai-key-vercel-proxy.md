@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Stop shipping the Gemini and OpenRouter API keys to the browser. Move both providers behind Vercel serverless functions that hold the real keys server-side, and update the three frontend call sites to use them instead of calling the providers directly.
+**Goal:** Stop shipping the Gemini and OpenRouter API keys to the browser. Move both providers behind Vercel serverless functions that hold the real keys server-side, and update all five frontend call sites to use them instead of calling the providers directly. (Originally scoped to three call sites — Tasks 6 and 7 were added mid-plan after a repo-wide grep during Task 2 surfaced two more: `CrisisManagement.tsx` and `AdminOverview.tsx`.)
 
 **Architecture:** Two new serverless functions, `api/gemini.ts` and `api/openrouter.ts`, deployed alongside the existing Vite frontend as one Vercel project. Each function receives the same shape of request the frontend used to send straight to the provider, attaches the real (server-only, non-`VITE_`-prefixed) API key, calls the provider, and returns a small JSON response. Both functions are unit-tested directly (mocking the provider SDK/`fetch`) so they don't require a live Vercel deployment or real API keys to verify.
 
@@ -926,6 +926,370 @@ Expected: no output (Tasks 2-4 already removed every reference).
 ```bash
 git add .env.example
 git commit -m "Add .env.example documenting server-only AI key vars"
+```
+
+---
+
+---
+
+### Task 6: `api/crisis-tasking.ts` proxy + point `CrisisManagement.tsx` at it
+
+**Files:**
+- Create: `api/crisis-tasking.ts`
+- Create: `api/crisis-tasking.test.ts`
+- Modify: `src/components/organization/CrisisManagement.tsx:291-339` (`handleGenerateAITasks`)
+
+**Interfaces:**
+- Produces: `POST /api/crisis-tasking` accepting `{ title: string, location: string, severity: string }`, returning `{ description: string, skillsNeeded: string }` on success or `{ error: string }` on failure.
+
+Added mid-plan: a repo-wide grep during Task 2's implementation surfaced a second, previously-undiscovered OpenRouter call site outside this plan's original scope — `CrisisManagement.tsx`'s "AI Tasking Engine" (`handleGenerateAITasks`), which calls OpenRouter directly with `VITE_OPENROUTER_API_KEY`. Its prompt shape (a fixed crisis-tasking system prompt, single-shot, expects `{description, skillsNeeded}` JSON back) is different enough from the chatbot's `getAtharResponse` contract that it needs its own endpoint rather than overloading `api/openrouter.ts` (which is already implemented and reviewed — reusing it here would mean branching two unrelated prompt shapes through one function).
+
+- [ ] **Step 1: Write the failing tests**
+
+Create `api/crisis-tasking.test.ts`:
+
+```typescript
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import handler from "./crisis-tasking";
+
+function mockRes() {
+  const res: any = {};
+  res.status = vi.fn((code: number) => {
+    res.statusCode = code;
+    return res;
+  });
+  res.json = vi.fn((body: unknown) => {
+    res.body = body;
+    return res;
+  });
+  return res;
+}
+
+describe("POST /api/crisis-tasking", () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    process.env.OPENROUTER_API_KEY = "test-key";
+  });
+
+  it("rejects non-POST methods", async () => {
+    const res = mockRes();
+    await handler({ method: "GET" } as any, res);
+    expect(res.status).toHaveBeenCalledWith(405);
+  });
+
+  it("returns 500 when OPENROUTER_API_KEY is not set", async () => {
+    delete process.env.OPENROUTER_API_KEY;
+    const res = mockRes();
+    await handler(
+      { method: "POST", body: { title: "Flood", location: "Riverside", severity: "Critical" } } as any,
+      res
+    );
+    expect(res.status).toHaveBeenCalledWith(500);
+  });
+
+  it("returns 400 when title, location, or severity is missing", async () => {
+    const res = mockRes();
+    await handler({ method: "POST", body: { title: "Flood" } } as any, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+
+  it("calls OpenRouter and returns the parsed description/skillsNeeded", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        json: async () => ({
+          choices: [
+            {
+              message: {
+                content:
+                  '```json\n{"description":"Flooding in Riverside","skillsNeeded":"Boating, First Aid, Logistics, Communications, Search and Rescue"}\n```',
+              },
+            },
+          ],
+        }),
+      })
+    );
+
+    const res = mockRes();
+    await handler(
+      { method: "POST", body: { title: "Flood", location: "Riverside", severity: "Critical" } } as any,
+      res
+    );
+
+    expect(fetch).toHaveBeenCalledWith(
+      "https://openrouter.ai/api/v1/chat/completions",
+      expect.objectContaining({
+        method: "POST",
+        headers: expect.objectContaining({ Authorization: "Bearer test-key" }),
+      })
+    );
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({
+      description: "Flooding in Riverside",
+      skillsNeeded: "Boating, First Aid, Logistics, Communications, Search and Rescue",
+    });
+  });
+
+  it("returns 502 when the upstream response has no content", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ json: async () => ({ error: "boom" }) }));
+    const res = mockRes();
+    await handler(
+      { method: "POST", body: { title: "Flood", location: "Riverside", severity: "Critical" } } as any,
+      res
+    );
+    expect(res.status).toHaveBeenCalledWith(502);
+  });
+
+  it("returns 502 when the upstream content isn't valid JSON", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        json: async () => ({ choices: [{ message: { content: "not json" } }] }),
+      })
+    );
+    const res = mockRes();
+    await handler(
+      { method: "POST", body: { title: "Flood", location: "Riverside", severity: "Critical" } } as any,
+      res
+    );
+    expect(res.status).toHaveBeenCalledWith(502);
+  });
+
+  it("returns 502 when fetch throws", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("network down")));
+    const res = mockRes();
+    await handler(
+      { method: "POST", body: { title: "Flood", location: "Riverside", severity: "Critical" } } as any,
+      res
+    );
+    expect(res.status).toHaveBeenCalledWith(502);
+  });
+});
+```
+
+- [ ] **Step 2: Run the tests to confirm they fail**
+
+Run: `npm run test:api`
+Expected: FAIL with an error resolving `./crisis-tasking` (the module doesn't exist yet); other already-passing tests (`api/gemini.test.ts`, `api/openrouter.test.ts`) continue to pass.
+
+- [ ] **Step 3: Implement `api/crisis-tasking.ts`**
+
+```typescript
+import type { VercelRequest, VercelResponse } from "@vercel/node";
+
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  if (req.method !== "POST") {
+    res.status(405).json({ error: "Method not allowed" });
+    return;
+  }
+
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  if (!apiKey) {
+    res.status(500).json({ error: "Server misconfigured" });
+    return;
+  }
+
+  const { title, location, severity } = req.body ?? {};
+  if (typeof title !== "string" || typeof location !== "string" || typeof severity !== "string") {
+    res.status(400).json({ error: "title, location, and severity are required" });
+    return;
+  }
+
+  try {
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "meta-llama/llama-3-8b-instruct",
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are an expert crisis management AI for Project Athar. Based on the crisis title, location, and severity, quickly generate a professional situation report (description) and a comma-separated list of the 5 most critical skills needed (skillsNeeded). Return ONLY valid JSON with keys: 'description' and 'skillsNeeded'.",
+          },
+          {
+            role: "user",
+            content: `Title: ${title}, Location: ${location}, Severity: ${severity}`,
+          },
+        ],
+      }),
+    });
+
+    const data = await response.json();
+    const aiContent = data?.choices?.[0]?.message?.content;
+
+    if (!aiContent) {
+      res.status(502).json({ error: "Upstream AI request failed" });
+      return;
+    }
+
+    const cleanedJson = aiContent.replace(/```json/g, "").replace(/```/g, "").trim();
+    const parsed = JSON.parse(cleanedJson);
+
+    res.status(200).json({
+      description: parsed.description ?? "",
+      skillsNeeded: parsed.skillsNeeded ?? "",
+    });
+  } catch (error) {
+    console.error("Crisis tasking proxy error:", error);
+    res.status(502).json({ error: "Upstream AI request failed" });
+  }
+}
+```
+
+- [ ] **Step 4: Run the tests to confirm they pass**
+
+Run: `npm run test:api`
+Expected: PASS (all cases in `POST /api/crisis-tasking`, plus `api/gemini.test.ts` and `api/openrouter.test.ts` still passing).
+
+- [ ] **Step 5: Point `CrisisManagement.tsx` at the new endpoint**
+
+Replace the body of `handleGenerateAITasks` (currently the direct OpenRouter `fetch` with inline JSON parsing) with:
+
+```typescript
+  const handleGenerateAITasks = async () => {
+    if (!newCrisis.title || !newCrisis.location) {
+      alert("Please provide at least an Incident Title and Location for the AI to analyze.");
+      return;
+    }
+    
+    setIsGeneratingTasks(true);
+    try {
+      const response = await fetch("/api/crisis-tasking", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: newCrisis.title,
+          location: newCrisis.location,
+          severity: newCrisis.severity,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Crisis tasking proxy request failed");
+      }
+
+      const { description, skillsNeeded } = await response.json();
+
+      setNewCrisis(prev => ({
+        ...prev,
+        description: description || prev.description,
+        skillsNeeded: skillsNeeded || prev.skillsNeeded
+      }));
+      
+    } catch (error) {
+      console.error("AI Generation Error:", error);
+      alert("Failed to generate AI tasks. Please check your API connection.");
+    }
+    setIsGeneratingTasks(false);
+  };
+```
+
+This preserves the exact same fallback behavior (alert on failure) as the original — the JSON parsing/cleaning that used to happen client-side now happens server-side in `api/crisis-tasking.ts`, so a malformed AI response surfaces as a 502 (caught by `!response.ok`) instead of a client-side `JSON.parse` throw, landing in the same catch block either way.
+
+- [ ] **Step 6: Type-check and verify**
+
+Run: `npm run build 2>&1 | grep CrisisManagement.tsx`
+Expected: no output (this file has no pre-existing errors, same as `OrganizationMessages.tsx` in Task 4).
+
+Run: `grep -n "VITE_OPENROUTER_API_KEY" src/components/organization/CrisisManagement.tsx` — expect no output.
+
+- [ ] **Step 7: Manually verify in the browser**
+
+No existing test harness for this component. Run `npm run dev`, open Crisis Management as an organization, fill in an incident title/location, and click the AI tasking generator — confirm it still fills in a description and skills-needed list. Same caveat as other manual-verification steps: requires `/api/crisis-tasking` actually running (via `vercel dev` once linked) with a real `OPENROUTER_API_KEY`.
+
+- [ ] **Step 8: Commit**
+
+```bash
+git add api/crisis-tasking.ts api/crisis-tasking.test.ts src/components/organization/CrisisManagement.tsx
+git commit -m "Add Vercel proxy for crisis-tasking AI; point CrisisManagement at it"
+```
+
+---
+
+### Task 7: Point `AdminOverview.tsx` at `/api/gemini`
+
+**Files:**
+- Modify: `src/components/admin/AdminOverview.tsx:4` (import), `:29` (genAI init), `:148-174` (`handleGenerateReport`)
+
+**Interfaces:**
+- Consumes: `POST /api/gemini` from Task 1, via a local `callGemini` helper (same pattern as Tasks 3 and 4).
+
+Also added mid-plan, alongside Task 6: the same repo-wide grep found a fourth Gemini call site, `AdminOverview.tsx`'s `handleGenerateReport` ("AI Report Generator"), using `VITE_GEMINI_API_KEY` directly. Unlike `CrisisManagement.tsx`, this one is a simple single-shot `generateContent(prompt)` call — the same shape Task 4 already proxies — so it reuses the existing `/api/gemini` endpoint, no new backend function needed.
+
+- [ ] **Step 1: Remove the client-side SDK import and key usage**
+
+In `src/components/admin/AdminOverview.tsx`, remove line 4 (`import { GoogleGenerativeAI } from "@google/generative-ai";`) and line 29 (`const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);`).
+
+- [ ] **Step 2: Add the proxy helper**
+
+Add near the top of the file, after the existing imports:
+
+```typescript
+async function callGemini(model: string, message: string): Promise<string> {
+  const response = await fetch("/api/gemini", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ model, history: [], message }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Gemini proxy request failed");
+  }
+
+  const data = await response.json();
+  return data.text;
+}
+```
+
+- [ ] **Step 3: Update `handleGenerateReport` to call the proxy**
+
+Replace:
+
+```typescript
+      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+      const dataSummary = `
+```
+
+with:
+
+```typescript
+      const dataSummary = `
+```
+
+(dropping the `model` variable declaration — it's no longer needed here) and replace:
+
+```typescript
+      const result = await model.generateContent(prompt);
+      const reportHTML = result.response.text();
+```
+
+with:
+
+```typescript
+      const reportHTML = await callGemini("gemini-2.5-flash", prompt);
+```
+
+- [ ] **Step 4: Type-check and verify**
+
+Run: `npm run build 2>&1 | grep AdminOverview.tsx`
+Expected: no output.
+
+Run: `grep -n "genAI\|GoogleGenerativeAI\|VITE_GEMINI_API_KEY" src/components/admin/AdminOverview.tsx` — expect no output.
+
+- [ ] **Step 5: Manually verify in the browser**
+
+Run `npm run dev`, open the Admin Overview dashboard, and click the AI report generator — confirm it still produces the formatted HTML report (exercises `handleGenerateReport` → `/api/gemini`). Same caveat as other manual-verification steps: requires `/api/gemini` actually running with a real `GEMINI_API_KEY`.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add src/components/admin/AdminOverview.tsx
+git commit -m "Point AdminOverview report generator at the Gemini Vercel proxy"
 ```
 
 ---
