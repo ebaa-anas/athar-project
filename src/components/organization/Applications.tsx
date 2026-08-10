@@ -267,25 +267,25 @@ export function Applications() {
     return (
       <div className="space-y-6 max-w-6xl mx-auto pb-10 animate-in fade-in duration-300">
         <div className="flex items-center justify-between">
-          <Button variant="ghost" onClick={() => setSelectedApp(null)} className="text-slate-500 hover:text-[#043E52] hover:bg-slate-100">
+          <Button variant="ghost" onClick={() => setSelectedApp(null)} className="text-slate-500 hover:text-role-org hover:bg-slate-100">
             <ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard
           </Button>
           <div className="flex items-center gap-3">
             {isCoreCrewApp ? (
-              <Badge variant="outline" className="bg-orange-50 text-[#E16A3D] border-orange-200 text-sm py-1 px-3">
+              <Badge variant="outline" className="bg-brand-cta/10 text-brand-cta border-brand-cta/30 text-sm py-1 px-3">
                 <Shield className="mr-1.5 h-3.5 w-3.5" /> CORE CREW MEMBERSHIP
               </Badge>
             ) : (
-              <Badge variant="outline" className="bg-[#043E52]/5 text-[#043E52] border-[#043E52]/20 text-sm py-1 px-3">
+              <Badge variant="outline" className="bg-role-org/5 text-role-org border-role-org/20 text-sm py-1 px-3">
                 Mission: <strong className="ml-1">{selectedApp.opportunity}</strong>
               </Badge>
             )}
             
             <Badge className={`text-sm px-4 py-1.5 ${
-                selectedApp.status === 'accepted' ? 'bg-[#043E52]/10 text-[#043E52] border-none shadow-none' :
+                selectedApp.status === 'accepted' ? 'bg-role-org/10 text-role-org border-none shadow-none' :
                 selectedApp.status === 'rejected' ? 'bg-red-50 text-red-600 border-none shadow-none' :
                 selectedApp.status === 'pending_verification' ? 'bg-amber-100 text-amber-700 border-none shadow-none' :
-                'bg-[#E16A3D]/10 text-[#E16A3D] border-none shadow-none'
+                'bg-brand-cta/10 text-brand-cta border-none shadow-none'
               }`}
             >
               {String(selectedApp.status).toUpperCase().replace('_', ' ')}
@@ -294,11 +294,11 @@ export function Applications() {
         </div>
 
         <Card className="border-none shadow-sm overflow-hidden bg-white rounded-2xl border border-slate-100">
-          <div className="h-32 bg-[#043E52]"></div>
+          <div className="h-32 bg-role-org"></div>
           <CardContent className="px-8 pb-6 flex flex-col md:flex-row gap-6 relative -mt-12 items-end">
             <Avatar className="w-32 h-32 border-4 border-white shadow-md bg-white">
               <AvatarImage src={vol.avatar} />
-              <AvatarFallback className="bg-slate-100 text-[#043E52] text-4xl font-black">{firstLetter}</AvatarFallback>
+              <AvatarFallback className="bg-slate-100 text-role-org text-4xl font-black">{firstLetter}</AvatarFallback>
             </Avatar>
             <div className="flex-1 pb-2">
               <h1 className="text-3xl font-bold text-slate-900">{vol.name}</h1>
@@ -307,7 +307,7 @@ export function Applications() {
                 <span className="flex items-center gap-1.5"><Phone size={16} /> {vol.phone}</span>
                 <span className="flex items-center gap-1.5"><MapPin size={16} /> {vol.location}</span>
                 {vol.linkedIn && (
-                  <a href={vol.linkedIn} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 text-[#043E52] hover:underline">
+                  <a href={vol.linkedIn} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 text-role-org hover:underline">
                     <Globe size={16} /> LinkedIn
                   </a>
                 )}
@@ -349,44 +349,44 @@ export function Applications() {
               </Card>
             )}
 
-            <Card className={`shadow-md rounded-2xl ${isCoreCrewApp ? 'border-orange-200 bg-orange-50/30' : 'border-[#043E52]/20 bg-[#043E52]/5'}`}>
-              <CardHeader className={`pb-2 border-b ${isCoreCrewApp ? 'border-orange-100/50' : 'border-[#043E52]/10'}`}>
-                <CardTitle className="text-lg text-[#043E52] flex items-center gap-2">
-                  <Mail className={`h-5 w-5 ${isCoreCrewApp ? 'text-[#E16A3D]' : 'text-[#043E52]'}`} /> 
+            <Card className={`shadow-md rounded-2xl ${isCoreCrewApp ? 'border-brand-cta/30 bg-brand-cta/5' : 'border-role-org/20 bg-role-org/5'}`}>
+              <CardHeader className={`pb-2 border-b ${isCoreCrewApp ? 'border-brand-cta/20' : 'border-role-org/10'}`}>
+                <CardTitle className="text-lg text-slate-900 flex items-center gap-2">
+                  <Mail className={`h-5 w-5 ${isCoreCrewApp ? 'text-brand-cta' : 'text-role-org'}`} /> 
                   {isCoreCrewApp ? 'Membership Application Letter' : 'Original Cover Letter'}
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-4 space-y-6">
-                <div className={`bg-white p-5 rounded-xl border shadow-sm ${isCoreCrewApp ? 'border-orange-100' : 'border-[#043E52]/20'}`}>
+                <div className={`bg-white p-5 rounded-xl border shadow-sm ${isCoreCrewApp ? 'border-brand-cta/20' : 'border-role-org/20'}`}>
                   <p className="text-slate-700 italic text-sm leading-relaxed">"{selectedApp.coverLetter}"</p>
                 </div>
                 <div className="flex gap-4 pt-2">
                   {selectedApp.status === 'pending' ? (
                     <>
-                      <Button onClick={() => handleUpdateStatus(selectedApp, 'accepted')} className="flex-1 h-12 bg-[#043E52] hover:bg-[#033040] text-white text-base font-bold shadow-md"><CheckCircle className="mr-2 h-5 w-5" /> Accept Application</Button>
+                      <Button onClick={() => handleUpdateStatus(selectedApp, 'accepted')} className="flex-1 h-12 bg-role-org hover:bg-role-org-dark text-white text-base font-bold shadow-md"><CheckCircle className="mr-2 h-5 w-5" /> Accept Application</Button>
                       <Button onClick={() => handleUpdateStatus(selectedApp, 'rejected')} variant="outline" className="flex-1 h-12 border-red-200 text-red-600 hover:bg-red-50 text-base font-bold"><X className="mr-2 h-5 w-5" /> Decline</Button>
                     </>
                   ) : (
-                    <div className="w-full text-center text-slate-500 font-medium py-3 border border-slate-200 rounded-xl bg-white">This application's status is currently: <strong className="uppercase text-[#043E52]">{selectedApp.status.replace('_', ' ')}</strong>.</div>
+                    <div className="w-full text-center text-slate-500 font-medium py-3 border border-slate-200 rounded-xl bg-white">This application's status is currently: <strong className="uppercase text-role-org">{selectedApp.status.replace('_', ' ')}</strong>.</div>
                   )}
                 </div>
               </CardContent>
             </Card>
 
             <Card className="border-slate-200 shadow-sm rounded-2xl">
-              <CardHeader className="pb-2"><CardTitle className="text-lg text-[#043E52] flex items-center gap-2"><User className="h-5 w-5 text-[#043E52]" /> About Volunteer</CardTitle></CardHeader>
+              <CardHeader className="pb-2"><CardTitle className="text-lg text-slate-900 flex items-center gap-2"><User className="h-5 w-5 text-role-org" /> About Volunteer</CardTitle></CardHeader>
               <CardContent><p className="text-slate-600 text-sm leading-relaxed">{vol.bio}</p></CardContent>
             </Card>
 
             <Card className="border-slate-200 shadow-sm rounded-2xl">
-              <CardHeader className="pb-4"><CardTitle className="text-lg text-[#043E52] flex items-center gap-2"><Briefcase className="h-5 w-5 text-[#043E52]" /> Volunteer Experience</CardTitle></CardHeader>
+              <CardHeader className="pb-4"><CardTitle className="text-lg text-slate-900 flex items-center gap-2"><Briefcase className="h-5 w-5 text-role-org" /> Volunteer Experience</CardTitle></CardHeader>
               <CardContent className="space-y-6">
                 {vol.experiences?.length > 0 ? vol.experiences.map((exp: any, i: number) => (
                   <div key={i} className="flex gap-4">
                     <div className="h-10 w-10 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center shrink-0 border border-slate-200"><Briefcase size={20} /></div>
                     <div className="flex-1">
                       <h4 className="text-sm font-bold text-slate-900 uppercase tracking-wide">{String(exp?.title || '')}</h4>
-                      <p className="text-xs font-bold text-[#043E52] mb-1">{String(exp?.organization || '')}</p>
+                      <p className="text-xs font-bold text-role-org mb-1">{String(exp?.organization || '')}</p>
                       <div className="flex items-center gap-4 text-xs text-slate-400 font-medium mb-2">
                         <span className="flex items-center gap-1"><Calendar size={12} /> {String(exp?.startDate || '')} - {String(exp?.endDate || 'Present')}</span>
                         <span className="flex items-center gap-1"><MapPin size={12} /> {String(exp?.location || '')}</span>
@@ -401,7 +401,7 @@ export function Applications() {
 
           <div className="space-y-6">
             <Card className="border-red-100 shadow-sm rounded-2xl overflow-hidden">
-              <div className="bg-[#e63946] text-white px-5 py-3 flex items-center gap-2 font-bold text-sm"><AlertCircle size={18} /> Emergency Details</div>
+              <div className="bg-danger text-white px-5 py-3 flex items-center gap-2 font-bold text-sm"><AlertCircle size={18} /> Emergency Details</div>
               <CardContent className="p-0">
                 <div className="divide-y divide-slate-100">
                   <div className="flex items-center justify-between p-4">
@@ -417,11 +417,11 @@ export function Applications() {
             </Card>
 
             <Card className="border-slate-200 shadow-sm rounded-2xl">
-              <CardHeader className="pb-3 border-b border-slate-50"><CardTitle className="text-base text-[#043E52] flex items-center gap-2"><CheckCircle className="h-5 w-5 text-[#043E52]" /> Verified Skills</CardTitle></CardHeader>
+              <CardHeader className="pb-3 border-b border-slate-50"><CardTitle className="text-base text-slate-900 flex items-center gap-2"><CheckCircle className="h-5 w-5 text-role-org" /> Verified Skills</CardTitle></CardHeader>
               <CardContent className="pt-4">
                 <div className="flex flex-wrap gap-2">
                   {vol.skills?.length > 0 ? vol.skills.map((skill: string, i: number) => (
-                    <Badge key={i} variant="outline" className="border-[#043E52]/20 text-[#043E52] bg-white text-xs px-2 py-1">{String(skill)}</Badge>
+                    <Badge key={i} variant="outline" className="border-role-org/20 text-role-org bg-white text-xs px-2 py-1">{String(skill)}</Badge>
                   )) : <span className="text-xs text-slate-400">No skills listed</span>}
                 </div>
               </CardContent>
@@ -437,20 +437,20 @@ export function Applications() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-[#043E52] text-2xl font-bold">Applications & Verifications</h1>
+          <h1 className="text-slate-900 text-2xl font-bold">Applications & Verifications</h1>
           <p className="text-slate-500 mt-1">Review volunteer applications and verify completed work to award points.</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="border-slate-200 text-slate-600 hover:text-[#043E52] hover:bg-slate-50"><Download className="mr-2 h-4 w-4" /> Export</Button>
+          <Button variant="outline" className="border-slate-200 text-slate-600 hover:text-role-org hover:bg-slate-50"><Download className="mr-2 h-4 w-4" /> Export</Button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card className="border-t-4 border-t-[#E16A3D] shadow-sm"><CardContent className="p-6"><div className="flex items-start justify-between"><div><p className="text-sm font-bold text-slate-500 uppercase tracking-widest">New Applicants</p><p className="text-[#E16A3D] text-3xl font-black mt-2">{pendingCount}</p></div><div className="bg-[#E16A3D]/10 p-3 rounded-xl"><Clock className="h-6 w-6 text-[#E16A3D]" /></div></div></CardContent></Card>
+        <Card className="border-t-4 border-t-brand-cta shadow-sm"><CardContent className="p-6"><div className="flex items-start justify-between"><div><p className="text-sm font-bold text-slate-500 uppercase tracking-widest">New Applicants</p><p className="text-brand-cta text-3xl font-black mt-2">{pendingCount}</p></div><div className="bg-brand-cta/10 p-3 rounded-xl"><Clock className="h-6 w-6 text-brand-cta" /></div></div></CardContent></Card>
         
         <Card className="border-t-4 border-t-amber-500 shadow-md bg-amber-50/30"><CardContent className="p-6"><div className="flex items-start justify-between"><div><p className="text-sm font-bold text-amber-700 uppercase tracking-widest">Verify Work</p><p className="text-amber-600 text-3xl font-black mt-2">{verificationsCount}</p></div><div className="bg-amber-100 p-3 rounded-xl"><Activity className="h-6 w-6 text-amber-600 animate-pulse" /></div></div></CardContent></Card>
         
-        <Card className="border-t-4 border-t-[#043E52] shadow-sm"><CardContent className="p-6"><div className="flex items-start justify-between"><div><p className="text-sm font-bold text-slate-500 uppercase tracking-widest">Active Roster</p><p className="text-[#043E52] text-3xl font-black mt-2">{acceptedCount}</p></div><div className="bg-[#043E52]/10 p-3 rounded-xl"><CheckCircle className="h-6 w-6 text-[#043E52]" /></div></div></CardContent></Card>
+        <Card className="border-t-4 border-t-role-org shadow-sm"><CardContent className="p-6"><div className="flex items-start justify-between"><div><p className="text-sm font-bold text-slate-500 uppercase tracking-widest">Active Roster</p><p className="text-role-org text-3xl font-black mt-2">{acceptedCount}</p></div><div className="bg-role-org/10 p-3 rounded-xl"><CheckCircle className="h-6 w-6 text-role-org" /></div></div></CardContent></Card>
         <Card className="border-t-4 border-t-slate-800 shadow-sm"><CardContent className="p-6"><div className="flex items-start justify-between"><div><p className="text-sm font-bold text-slate-500 uppercase tracking-widest">Rejected</p><p className="text-slate-800 text-3xl font-black mt-2">{rejectedCount}</p></div><div className="bg-slate-100 p-3 rounded-xl"><X className="h-6 w-6 text-slate-600" /></div></div></CardContent></Card>
       </div>
 
@@ -459,9 +459,9 @@ export function Applications() {
           <div className="flex flex-col md:flex-row gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <Input placeholder="Search by volunteer name or mission..." className="pl-10 border-slate-200 focus:border-[#043E52] focus:ring-[#043E52]" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+              <Input placeholder="Search by volunteer name or mission..." className="pl-10 border-slate-200 focus:border-role-org focus:ring-role-org" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
             </div>
-            <Button variant="outline" className="border-slate-200 text-slate-600 hover:text-[#043E52] hover:bg-slate-50"><Filter className="mr-2 h-4 w-4" /> Filter</Button>
+            <Button variant="outline" className="border-slate-200 text-slate-600 hover:text-role-org hover:bg-slate-50"><Filter className="mr-2 h-4 w-4" /> Filter</Button>
           </div>
         </CardContent>
       </Card>
@@ -474,14 +474,14 @@ export function Applications() {
             {verificationsCount > 0 && <span className="bg-amber-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">{verificationsCount}</span>}
           </TabsTrigger>
 
-          <TabsTrigger value="pending" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#E16A3D] data-[state=active]:shadow-sm font-bold flex gap-2">
+          <TabsTrigger value="pending" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-brand-cta data-[state=active]:shadow-sm font-bold flex gap-2">
             New Apps
-            {pendingCount > 0 && <span className="bg-[#E16A3D] text-white text-[10px] px-1.5 py-0.5 rounded-full">{pendingCount}</span>}
+            {pendingCount > 0 && <span className="bg-brand-cta text-white text-[10px] px-1.5 py-0.5 rounded-full">{pendingCount}</span>}
           </TabsTrigger>
           
-          <TabsTrigger value="accepted" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#043E52] data-[state=active]:shadow-sm font-bold">Active Roster</TabsTrigger>
+          <TabsTrigger value="accepted" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-role-org data-[state=active]:shadow-sm font-bold">Active Roster</TabsTrigger>
           <TabsTrigger value="rejected" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-slate-600 data-[state=active]:shadow-sm font-bold">Rejected</TabsTrigger>
-          <TabsTrigger value="all" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#043E52] data-[state=active]:shadow-sm font-bold">All History</TabsTrigger>
+          <TabsTrigger value="all" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-role-org data-[state=active]:shadow-sm font-bold">All History</TabsTrigger>
         </TabsList>
 
         {['verifications', 'pending', 'accepted', 'rejected', 'all'].map((tab) => (
@@ -500,14 +500,14 @@ export function Applications() {
                     <div className="flex flex-col md:flex-row gap-6">
                       <Avatar className="w-16 h-16 border-2 border-slate-100">
                         <AvatarImage src={app.volunteer?.avatar} />
-                        <AvatarFallback className="bg-[#043E52] text-white font-bold text-xl">{String(app.volunteer?.name || 'U').charAt(0).toUpperCase()}</AvatarFallback>
+                        <AvatarFallback className="bg-role-org text-white font-bold text-xl">{String(app.volunteer?.name || 'U').charAt(0).toUpperCase()}</AvatarFallback>
                       </Avatar>
 
                       <div className="flex-1 space-y-4">
                         <div className="flex items-start justify-between">
                           <div>
-                            <h3 className="text-lg font-bold text-[#043E52]">{app.volunteer?.name}</h3>
-                            <p className="text-sm font-medium text-slate-500 mt-1">Mission: <span className="text-[#043E52]">{app.opportunity}</span></p>
+                            <h3 className="text-lg font-bold text-slate-900">{app.volunteer?.name}</h3>
+                            <p className="text-sm font-medium text-slate-500 mt-1">Mission: <span className="text-role-org">{app.opportunity}</span></p>
                           </div>
                           <Badge className="bg-amber-100 text-amber-700 border-none px-3 py-1">NEEDS VERIFICATION</Badge>
                         </div>
@@ -540,31 +540,31 @@ export function Applications() {
               {/* Standard applications layout (pending/accepted/rejected/all) */}
               {tab !== 'verifications' && filteredApps.filter(a => tab === 'all' ? true : a.status === tab).length === 0 && <p className="text-center text-slate-500 italic p-10 bg-white rounded-xl border border-slate-200">No applications in this category.</p>}
               {tab !== 'verifications' && filteredApps.filter(a => tab === 'all' ? true : a.status === tab).map((app) => (
-                <Card key={app.id} className="border-slate-200 shadow-sm hover:shadow-md transition-all hover:border-[#E16A3D]/30">
+                <Card key={app.id} className="border-slate-200 shadow-sm hover:shadow-md transition-all hover:border-brand-cta/30">
                   <CardContent className="p-6">
                     <div className="flex gap-6 flex-col md:flex-row">
                       <Avatar className="w-16 h-16 border-2 border-slate-100 shrink-0">
                         <AvatarImage src={app.volunteer?.avatar} />
-                        <AvatarFallback className="bg-[#043E52] text-white font-bold text-xl">{String(app.volunteer?.name || 'U').charAt(0).toUpperCase()}</AvatarFallback>
+                        <AvatarFallback className="bg-role-org text-white font-bold text-xl">{String(app.volunteer?.name || 'U').charAt(0).toUpperCase()}</AvatarFallback>
                       </Avatar>
 
                       <div className="flex-1 space-y-4">
                         <div className="flex items-start justify-between">
                           <div>
-                            <h3 className="text-lg font-bold text-[#043E52]">{app.volunteer?.name}</h3>
+                            <h3 className="text-lg font-bold text-slate-900">{app.volunteer?.name}</h3>
                             {app.oppId === 'core_crew' ? (
-                              <p className="text-sm text-[#E16A3D] font-bold flex items-center gap-1.5 mt-1"><Shield className="h-4 w-4" /> Core Crew Membership</p>
+                              <p className="text-sm text-brand-cta font-bold flex items-center gap-1.5 mt-1"><Shield className="h-4 w-4" /> Core Crew Membership</p>
                             ) : (
-                              <p className="text-sm text-[#043E52] font-medium mt-1">Applied for: {app.opportunity}</p>
+                              <p className="text-sm text-role-org font-medium mt-1">Applied for: {app.opportunity}</p>
                             )}
                             <p className="text-xs text-slate-500 mt-1">{app.appliedDate}</p>
                           </div>
                           <Badge 
                             variant="outline" 
                             className={
-                              app.status === 'accepted' ? 'bg-[#043E52]/10 text-[#043E52] border-[#043E52]/20' :
+                              app.status === 'accepted' ? 'bg-role-org/10 text-role-org border-role-org/20' :
                               app.status === 'rejected' ? 'bg-red-50 text-red-600 border-red-200' :
-                              'bg-[#E16A3D]/10 text-[#E16A3D] border-[#E16A3D]/20'
+                              'bg-brand-cta/10 text-brand-cta border-brand-cta/20'
                             }
                           >
                             {String(app.status || 'pending').toUpperCase()}
@@ -572,17 +572,17 @@ export function Applications() {
                         </div>
 
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                          <div className="flex items-center gap-2 text-slate-500"><Mail className="h-4 w-4 text-[#043E52]" /><span className="truncate">{app.volunteer?.email}</span></div>
-                          <div className="flex items-center gap-2 text-slate-500"><Phone className="h-4 w-4 text-[#043E52]" /><span>{app.volunteer?.phone}</span></div>
-                          <div className="flex items-center gap-2 text-slate-500"><MapPin className="h-4 w-4 text-[#043E52]" /><span>{app.volunteer?.location}</span></div>
-                          <div className="flex items-center gap-2 text-slate-500"><Star className="h-4 w-4 fill-[#E16A3D] text-[#E16A3D]" /><span>{app.volunteer?.rating} rating</span></div>
+                          <div className="flex items-center gap-2 text-slate-500"><Mail className="h-4 w-4 text-role-org" /><span className="truncate">{app.volunteer?.email}</span></div>
+                          <div className="flex items-center gap-2 text-slate-500"><Phone className="h-4 w-4 text-role-org" /><span>{app.volunteer?.phone}</span></div>
+                          <div className="flex items-center gap-2 text-slate-500"><MapPin className="h-4 w-4 text-role-org" /><span>{app.volunteer?.location}</span></div>
+                          <div className="flex items-center gap-2 text-slate-500"><Star className="h-4 w-4 fill-brand-cta text-brand-cta" /><span>{app.volunteer?.rating} rating</span></div>
                         </div>
 
                         <div>
                           <p className="text-xs text-slate-500 mb-2 font-medium">Skills</p>
                           <div className="flex flex-wrap gap-2">
                             {(app.volunteer?.skills || []).map((skill: string, index: number) => (
-                              <Badge key={index} variant="secondary" className="bg-slate-100 text-[#043E52] border border-slate-200">{String(skill)}</Badge>
+                              <Badge key={index} variant="secondary" className="bg-slate-100 text-role-org border border-slate-200">{String(skill)}</Badge>
                             ))}
                           </div>
                         </div>
@@ -595,11 +595,11 @@ export function Applications() {
                         <div className="flex gap-2 pt-2 border-t border-slate-100 mt-4">
                           {app.status === 'pending' && (
                             <>
-                              <Button onClick={() => handleUpdateStatus(app, 'accepted')} className="bg-[#043E52] hover:bg-[#033040] text-white shadow-sm"><CheckCircle className="mr-2 h-4 w-4" /> Accept</Button>
-                              <Button onClick={() => handleUpdateStatus(app, 'rejected')} variant="outline" className="border-slate-200 text-[#E16A3D] hover:text-[#c2562d] hover:bg-[#E16A3D]/5 hover:border-[#E16A3D]/20"><X className="mr-2 h-4 w-4" /> Decline</Button>
+                              <Button onClick={() => handleUpdateStatus(app, 'accepted')} className="bg-role-org hover:bg-role-org-dark text-white shadow-sm"><CheckCircle className="mr-2 h-4 w-4" /> Accept</Button>
+                              <Button onClick={() => handleUpdateStatus(app, 'rejected')} variant="outline" className="border-red-200 text-red-600 hover:bg-red-50"><X className="mr-2 h-4 w-4" /> Decline</Button>
                             </>
                           )}
-                          <Button onClick={() => setSelectedApp(app)} variant="outline" className="border-slate-200 text-slate-600 hover:text-[#043E52] hover:bg-slate-50"><Eye className="mr-2 h-4 w-4" /> View Profile</Button>
+                          <Button onClick={() => setSelectedApp(app)} variant="outline" className="border-slate-200 text-slate-600 hover:text-role-org hover:bg-slate-50"><Eye className="mr-2 h-4 w-4" /> View Profile</Button>
                         </div>
                       </div>
                     </div>
