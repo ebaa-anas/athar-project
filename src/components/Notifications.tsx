@@ -68,8 +68,8 @@ export function Notifications() {
               mappedType = 'achievement'; 
             } else if (data.type === 'info') {
               icon = AlertCircle;
-              iconBg = 'bg-orange-100';
-              iconColor = 'text-orange-600';
+              iconBg = 'bg-blue-100';
+              iconColor = 'text-blue-600';
               mappedType = 'event';
             }
 
@@ -132,7 +132,7 @@ export function Notifications() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-gray-900 text-2xl font-bold">Notifications</h1>
           <p className="text-gray-500 mt-1">Stay updated with your volunteer activities</p>
@@ -151,8 +151,8 @@ export function Notifications() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card><CardContent className="p-6"><div className="flex items-start justify-between"><div><p className="text-sm text-gray-500 font-medium">All</p><p className="text-gray-900 mt-2 text-2xl font-bold">{notifications.length}</p></div><div className="bg-gray-100 p-3 rounded-lg"><Bell className="h-5 w-5 text-gray-600" /></div></div></CardContent></Card>
         <Card><CardContent className="p-6"><div className="flex items-start justify-between"><div><p className="text-sm text-gray-500 font-medium">Events</p><p className="text-gray-900 mt-2 text-2xl font-bold">{notifications.filter(n => n.type === 'event').length}</p></div><div className="bg-blue-100 p-3 rounded-lg"><Calendar className="h-5 w-5 text-blue-600" /></div></div></CardContent></Card>
-        <Card><CardContent className="p-6"><div className="flex items-start justify-between"><div><p className="text-sm text-gray-500 font-medium">Achievements</p><p className="text-gray-900 mt-2 text-2xl font-bold">{notifications.filter(n => n.type === 'achievement').length}</p></div><div className="bg-yellow-100 p-3 rounded-lg"><Award className="h-5 w-5 text-yellow-600" /></div></div></CardContent></Card>
-        <Card><CardContent className="p-6"><div className="flex items-start justify-between"><div><p className="text-sm text-gray-500 font-medium">Opportunities</p><p className="text-gray-900 mt-2 text-2xl font-bold">{notifications.filter(n => n.type === 'opportunity').length}</p></div><div className="bg-pink-100 p-3 rounded-lg"><Heart className="h-5 w-5 text-pink-600" /></div></div></CardContent></Card>
+        <Card><CardContent className="p-6"><div className="flex items-start justify-between"><div><p className="text-sm text-gray-500 font-medium">Achievements</p><p className="text-gray-900 mt-2 text-2xl font-bold">{notifications.filter(n => n.type === 'achievement').length}</p></div><div className="bg-amber-100 p-3 rounded-lg"><Award className="h-5 w-5 text-amber-600" /></div></div></CardContent></Card>
+        <Card><CardContent className="p-6"><div className="flex items-start justify-between"><div><p className="text-sm text-gray-500 font-medium">Opportunities</p><p className="text-gray-900 mt-2 text-2xl font-bold">{notifications.filter(n => n.type === 'opportunity').length}</p></div><div className="bg-brand-cta/10 p-3 rounded-lg"><Heart className="h-5 w-5 text-brand-cta" /></div></div></CardContent></Card>
       </div>
 
       {/* Notifications List */}
@@ -195,7 +195,7 @@ export function Notifications() {
                         </div>
                         <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
                         <div className="flex items-center gap-3 mt-2 text-sm text-gray-500 font-medium">
-                          <span className="text-[#043E52]">{notification.organization}</span>
+                          <span className="text-role-accent-teal">{notification.organization}</span>
                           <span>•</span>
                           <span>{notification.time}</span>
                         </div>
@@ -233,7 +233,7 @@ export function Notifications() {
                         </div>
                         <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
                         <div className="flex items-center gap-3 mt-2 text-sm text-gray-500 font-medium">
-                          <span className="text-[#043E52]">{notification.organization}</span>
+                          <span className="text-role-accent-teal">{notification.organization}</span>
                           <span>•</span>
                           <span>{notification.time}</span>
                         </div>
