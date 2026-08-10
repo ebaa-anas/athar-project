@@ -205,7 +205,7 @@ export function TrainingSimulator() {
         }
       `;
 
-      let rawJson = await callGemini("gemini-2.5-flash", [], prompt);
+      let rawJson = await callGemini("gemini-flash-latest", [], prompt);
       rawJson = rawJson.replace(/```json/gi, '').replace(/```/gi, '').trim();
       
       const newScenarioData = JSON.parse(rawJson);
@@ -270,7 +270,7 @@ export function TrainingSimulator() {
         POINTS: [A number between -15 and +15 depending on how good their response was]
       `;
 
-      const text = await callGemini("gemini-2.5-flash", chatHistory, evaluationPrompt);
+      const text = await callGemini("gemini-flash-latest", chatHistory, evaluationPrompt);
 
       const replyMatch = text.match(/REPLY:\s*(.*)/i);
       const feedbackMatch = text.match(/FEEDBACK:\s*(.*)/i);
@@ -324,7 +324,7 @@ export function TrainingSimulator() {
         DO NOT use the REPLY/FEEDBACK/POINTS format. Just write the plain paragraph.
       `;
 
-      let rawText = await callGemini("gemini-2.5-flash", chatHistory, concludingPrompt);
+      let rawText = await callGemini("gemini-flash-latest", chatHistory, concludingPrompt);
       rawText = rawText.replace(/REPLY:/gi, '').replace(/FEEDBACK:/gi, '').replace(/POINTS:.*\d+/gi, '').trim();
       setFinalAnalysis(rawText);
 

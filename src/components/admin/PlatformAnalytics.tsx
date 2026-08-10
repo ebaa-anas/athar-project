@@ -178,7 +178,7 @@ export function PlatformAnalytics() {
       DATA TO ANALYZE:
       ${dataSummary}`;
 
-      const reportHTML = await callGemini("gemini-2.5-flash", prompt);
+      const reportHTML = await callGemini("gemini-flash-latest", prompt);
 
       // Create a hidden iframe
       const iframe = document.createElement('iframe');

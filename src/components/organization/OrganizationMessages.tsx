@@ -270,7 +270,7 @@ export function OrganizationMessages() {
       ${chatLog}
       `;
 
-      const responseText = await callGemini("gemini-2.5-flash", prompt);
+      const responseText = await callGemini("gemini-flash-latest", prompt);
       
       setAiReport(responseText);
 
