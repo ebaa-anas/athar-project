@@ -8,6 +8,11 @@ service cloud.firestore {
         exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
 
+    function isOrganization() {
+      return request.auth != null &&
+        exists(/databases/$(database)/documents/organizations/$(request.auth.uid));
+    }
+
     match /users/{uid} {
       allow read: if request.auth != null;
 
@@ -21,10 +26,21 @@ service cloud.firestore {
             request.auth.uid == uid
             && request.resource.data.role == resource.data.role
             && request.resource.data.get('verified', null) == resource.data.get('verified', null)
-            && request.resource.data.get('verificationStatus', null) == resource.data.get('verificationStatus', null)
             && request.resource.data.get('tier', null) == resource.data.get('tier', null)
+            && (
+              request.resource.data.get('verificationStatus', null) == resource.data.get('verificationStatus', null)
+              || (
+                resource.data.get('verificationStatus', null) in [null, 'unverified']
+                && request.resource.data.verificationStatus == 'pending'
+              )
+            )
           )
           || isAdmin()
+          || (
+            isOrganization()
+            && request.resource.data.diff(resource.data).affectedKeys()
+                 .hasOnly(['totalHours', 'completedProjects', 'impactScore'])
+          )
         );
 
       allow delete: if false;
@@ -68,6 +84,10 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    match /organizations/{orgId}/team/{memberId} {
+      allow read, write: if request.auth != null;
+    }
+
     match /verificationRequests/{id} {
       allow read: if isAdmin()
         || (request.auth != null && request.auth.uid == resource.data.orgId);
@@ -78,6 +98,59 @@ service cloud.firestore {
 
       allow update: if isAdmin();
       allow delete: if false;
+    }
+
+    // Collections outside this plan's scope (privilege-escalation hardening only
+    // covers users/admins/organizations/verificationRequests). These fall back to
+    // "any signed-in user" to preserve current app behavior rather than silently
+    // breaking it -- a full per-collection security audit is follow-up work, not
+    // part of this plan.
+    match /applications/{id} {
+      allow read, write: if request.auth != null;
+    }
+
+    match /crises/{id} {
+      allow read, write: if request.auth != null;
+    }
+
+    match /crisisResponses/{id} {
+      allow read, write: if request.auth != null;
+    }
+
+    match /messages/{id} {
+      allow read, write: if request.auth != null;
+    }
+
+    match /notifications/{id} {
+      allow read, write: if request.auth != null;
+    }
+
+    match /opportunities/{id} {
+      allow read, write: if request.auth != null;
+    }
+
+    match /reports/{id} {
+      allow read, write: if request.auth != null;
+    }
+
+    match /systemSettings/{id} {
+      allow read, write: if request.auth != null;
+    }
+
+    match /userCertificates/{id} {
+      allow read, write: if request.auth != null;
+    }
+
+    match /userCourses/{id} {
+      allow read, write: if request.auth != null;
+    }
+
+    match /userSimulations/{id} {
+      allow read, write: if request.auth != null;
+    }
+
+    match /userSkills/{id} {
+      allow read, write: if request.auth != null;
     }
 
     match /{document=**} {

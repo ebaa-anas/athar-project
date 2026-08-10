@@ -5,7 +5,7 @@ import {
   assertSucceeds,
   type RulesTestEnvironment,
 } from "@firebase/rules-unit-testing";
-import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, increment, setDoc, updateDoc } from "firebase/firestore";
 import { afterAll, beforeAll, beforeEach, describe, it } from "vitest";
 
 let testEnv: RulesTestEnvironment;
@@ -307,6 +307,118 @@ describe("verificationRequests/{id}", () => {
       updateDoc(doc(root, "verificationRequests/req1"), {
         status: "verified",
       })
+    );
+  });
+});
+
+describe("users/{uid} — verification self-transition and org award writes", () => {
+  it("lets a volunteer submit verification (no prior status -> pending)", async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), "users/alice"), {
+        uid: "alice",
+        role: "volunteer",
+        name: "Alice",
+      });
+    });
+
+    const alice = testEnv.authenticatedContext("alice").firestore();
+    await assertSucceeds(
+      updateDoc(doc(alice, "users/alice"), { verificationStatus: "pending" })
+    );
+  });
+
+  it("lets an org move its own users-mirror verificationStatus from unverified to pending", async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), "users/org1"), {
+        uid: "org1",
+        role: "organization",
+        verificationStatus: "unverified",
+      });
+    });
+
+    const org = testEnv.authenticatedContext("org1").firestore();
+    await assertSucceeds(
+      updateDoc(doc(org, "users/org1"), { verificationStatus: "pending" })
+    );
+  });
+
+  it("lets an organization increment totalHours/completedProjects/impactScore on a volunteer's doc", async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), "organizations/org1"), {
+        uid: "org1",
+        tier: "tier2",
+        verified: false,
+        verificationStatus: "unverified",
+      });
+      await setDoc(doc(context.firestore(), "users/alice"), {
+        uid: "alice",
+        role: "volunteer",
+        totalHours: 0,
+        completedProjects: 0,
+        impactScore: 0,
+      });
+    });
+
+    const org = testEnv.authenticatedContext("org1").firestore();
+    await assertSucceeds(
+      updateDoc(doc(org, "users/alice"), {
+        totalHours: increment(4),
+        completedProjects: increment(1),
+        impactScore: increment(50),
+      })
+    );
+  });
+
+  it("blocks an organization from sneaking a role change through the award-fields path", async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), "organizations/org1"), {
+        uid: "org1",
+        tier: "tier2",
+        verified: false,
+        verificationStatus: "unverified",
+      });
+      await setDoc(doc(context.firestore(), "users/alice"), {
+        uid: "alice",
+        role: "volunteer",
+      });
+    });
+
+    const org = testEnv.authenticatedContext("org1").firestore();
+    await assertFails(
+      updateDoc(doc(org, "users/alice"), {
+        role: "admin",
+        totalHours: increment(4),
+      })
+    );
+  });
+});
+
+describe("out-of-scope collections (preserve current app behavior)", () => {
+  it("lets an authenticated user read/write a collection outside this plan's scope", async () => {
+    const alice = testEnv.authenticatedContext("alice").firestore();
+    await assertSucceeds(
+      setDoc(doc(alice, "opportunities/opp1"), { title: "Beach Cleanup" })
+    );
+  });
+
+  it("still blocks unauthenticated access to those collections", async () => {
+    const anon = testEnv.unauthenticatedContext().firestore();
+    await assertFails(
+      setDoc(doc(anon, "opportunities/opp1"), { title: "Beach Cleanup" })
+    );
+  });
+
+  it("lets an authenticated user read/write the organizations team subcollection", async () => {
+    const org = testEnv.authenticatedContext("org1").firestore();
+    await assertSucceeds(
+      setDoc(doc(org, "organizations/org1/team/member1"), { name: "Bob" })
+    );
+  });
+
+  it("still denies access to a genuinely undefined collection", async () => {
+    const alice = testEnv.authenticatedContext("alice").firestore();
+    await assertFails(
+      setDoc(doc(alice, "totallyUndefinedCollection/x"), { a: 1 })
     );
   });
 });
