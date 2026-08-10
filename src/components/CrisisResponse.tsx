@@ -31,7 +31,6 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// Helper for formatting time
 const timeAgo = (timestamp: any) => {
   if (!timestamp) return 'Just now';
   const date = timestamp?.toDate ? timestamp.toDate() : new Date(timestamp);
@@ -50,7 +49,7 @@ export function CrisisResponse() {
   const [selectedAlert, setSelectedAlert] = useState<any | null>(null);
   const [isDeploying, setIsDeploying] = useState(false);
 
-  // --- 🔥 AVR CLEARANCE TRACKERS 🔥 ---
+  // AVR clearance trackers
   const [coreTrainingComplete, setCoreTrainingComplete] = useState(false);
   const [simulationsMastered, setSimulationsMastered] = useState(0);
 
@@ -69,17 +68,14 @@ export function CrisisResponse() {
     (userData?.languages && userData?.languages.length > 0)
   );
 
-  // --- 1. FETCH CRISES & CLEARANCE DATA ---
   useEffect(() => {
-    if (!user) return; 
+    if (!user) return;
 
-    // Fetch Crises
     const unsubscribeCrises = onSnapshot(collection(db, "crises"), (snapshot) => {
       const allCrises = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
       setCrises(allCrises);
     });
 
-    // Fetch My Responses
     const qResponses = query(collection(db, "crisisResponses"), where("volunteerId", "==", user.uid));
     const unsubscribeResponses = onSnapshot(qResponses, (snapshot) => {
       setMyResponses(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
@@ -105,8 +101,7 @@ export function CrisisResponse() {
     };
   }, [user]);
 
-  // --- 2. CATEGORIZE ALERTS ---
-  const activeAlerts = crises.filter(c => 
+  const activeAlerts = crises.filter(c =>
     c.status === 'Active' && !myResponses.find(r => r.crisisId === c.id)
   );
 
@@ -118,7 +113,6 @@ export function CrisisResponse() {
     c.status === 'Completed' && myResponses.find(r => r.crisisId === c.id && r.status === 'accepted')
   );
 
-  // --- 3. HANDLE ACCEPT / DECLINE ---
   const handleResponse = async (crisisId: string, status: 'accepted' | 'declined') => {
     const currentUser = auth.currentUser;
     if (!currentUser) return;
@@ -146,13 +140,11 @@ export function CrisisResponse() {
     }
   };
 
-  // --- 4. ACTION: SECURE DIRECTIONS ---
   const handleSecureDirections = (location: string) => {
     const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`;
     window.open(mapsUrl, '_blank');
   };
 
-  // --- 5. ACTION: CONNECT COMMAND (DEPLOY) ---
   const handleConnectCommand = async () => {
     if (!user || !selectedAlert) return;
     if (!isProfileComplete) {
@@ -207,7 +199,7 @@ export function CrisisResponse() {
 
 
   // ============================================================================
-  // 🔥 THE ELITE AVR CLEARANCE DASHBOARD (NON-MEMBERS) 🔥
+  // AVR CLEARANCE DASHBOARD (NON-MEMBERS)
   // ============================================================================
   if (loading) return <div className="p-12 flex justify-center"><Loader2 className="h-8 w-8 text-[#016A6D] animate-spin" /></div>;
   

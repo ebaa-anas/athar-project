@@ -18,7 +18,7 @@ import {
   Activity, AlertCircle, Shield
 } from 'lucide-react';
 
-// --- FIREBASE CONFIG ---
+// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyDRSETgWx1F3RX3_KAzgceyYBJKfpheRQk",
   authDomain: "athar-project-aa74e.firebaseapp.com",
@@ -32,7 +32,6 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// --- SAFETY HELPERS ---
 const safeArray = (data: any) => Array.isArray(data) ? data : [];
 const safeObject = (data: any) => (data && typeof data === 'object' && !Array.isArray(data)) ? data : {};
 
@@ -43,7 +42,6 @@ export function Applications() {
   const [selectedApp, setSelectedApp] = useState<any | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
 
-  // --- 1. FETCH ALL DATA SAFELY ---
   useEffect(() => {
     let unsubscribeApps = () => {};
     let unsubscribeCrises = () => {};
@@ -51,8 +49,7 @@ export function Applications() {
 
     const unsubscribeAuth = auth.onAuthStateChanged((user) => {
       if (user) {
-        
-        // A. FETCH NORMAL APPLICATIONS
+
         const qApps = query(collection(db, "applications"), where("orgId", "==", user.uid));
         unsubscribeApps = onSnapshot(qApps, async (snapshot) => {
           const basicApps = snapshot.docs.map(docSnap => ({ id: docSnap.id, type: 'normal', ...docSnap.data() }));
@@ -105,7 +102,6 @@ export function Applications() {
           setApplications(enrichedApps);
         });
 
-        // B. FETCH CRISIS VERIFICATIONS
         const qCrises = query(collection(db, "crises"), where("orgId", "==", user.uid));
         unsubscribeCrises = onSnapshot(qCrises, (crisisSnap) => {
             const orgCrisisIds = crisisSnap.docs.map(d => d.id);
@@ -164,8 +160,6 @@ export function Applications() {
     };
   }, []);
 
-  
-  // --- 2. UPDATE STATUS (ACCEPT/REJECT) ---
   const handleUpdateStatus = async (appObj: any, newStatus: string) => {
     try {
       const user = auth.currentUser;
@@ -203,7 +197,7 @@ export function Applications() {
     }
   };
 
-  // --- 3. VERIFY TASK & AWARD POINTS ---
+  // Crisis responses earn more hours/points than a standard mission
   const handleVerifyTask = async (appObj: any) => {
     try {
       setIsVerifying(true);
@@ -264,9 +258,7 @@ export function Applications() {
   const verificationsList = [...applications.filter(a => a.status === 'pending_verification'), ...crisisVerifications];
   const verificationsCount = verificationsList.length;
 
-  // ==========================================
-  // VIEW 1: THE FULL SOCIAL IMPACT PORTFOLIO
-  // ==========================================
+  // Volunteer profile view
   if (selectedApp) {
     const vol = selectedApp.volunteer;
     const firstLetter = String(vol?.name || 'U').charAt(0).toUpperCase();
@@ -440,9 +432,7 @@ export function Applications() {
     );
   }
 
-  // ==========================================
-  // VIEW 2: THE MAIN APPLICATIONS LIST
-  // ==========================================
+  // Applications list view
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -498,7 +488,7 @@ export function Applications() {
           <TabsContent key={tab} value={tab} className="mt-6">
             <div className="space-y-4">
               
-              {/* --- VERIFICATIONS TAB SPECIFIC LAYOUT --- */}
+              {/* Verifications tab */}
               {tab === 'verifications' && verificationsList.length === 0 && <p className="text-center text-slate-500 italic p-10 bg-white rounded-xl border border-slate-200">No verifications pending at this time.</p>}
               {tab === 'verifications' && verificationsList.map((app) => (
                 <Card key={app.id} className="border-2 border-amber-200 bg-amber-50/10 shadow-sm hover:border-amber-400 transition-all">
@@ -547,7 +537,7 @@ export function Applications() {
                 </Card>
               ))}
 
-              {/* --- STANDARD APPLICATIONS LAYOUT (Pending, Accepted, Rejected, All) --- */}
+              {/* Standard applications layout (pending/accepted/rejected/all) */}
               {tab !== 'verifications' && filteredApps.filter(a => tab === 'all' ? true : a.status === tab).length === 0 && <p className="text-center text-slate-500 italic p-10 bg-white rounded-xl border border-slate-200">No applications in this category.</p>}
               {tab !== 'verifications' && filteredApps.filter(a => tab === 'all' ? true : a.status === tab).map((app) => (
                 <Card key={app.id} className="border-slate-200 shadow-sm hover:shadow-md transition-all hover:border-[#E16A3D]/30">
@@ -562,7 +552,6 @@ export function Applications() {
                         <div className="flex items-start justify-between">
                           <div>
                             <h3 className="text-lg font-bold text-[#043E52]">{app.volunteer?.name}</h3>
-                            {/* 🔥 HIGHLIGHT CORE CREW APPS 🔥 */}
                             {app.oppId === 'core_crew' ? (
                               <p className="text-sm text-[#E16A3D] font-bold flex items-center gap-1.5 mt-1"><Shield className="h-4 w-4" /> Core Crew Membership</p>
                             ) : (

@@ -129,7 +129,6 @@ export function TrainingSimulator() {
   >([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // --- 1. REAL-TIME DB SYNC ---
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       if (user) {
@@ -181,7 +180,6 @@ export function TrainingSimulator() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping, isConcluding]);
 
-  // --- 2. GENERATE AND SAVE NEW SCENARIO (CRISIS STRICT) ---
   const generateNewScenario = async () => {
     if (!currentUser) return alert("Please log in to save custom scenarios.");
     setIsGeneratingScenario(true);
@@ -307,12 +305,11 @@ export function TrainingSimulator() {
     setIsTyping(false);
   };
 
-  // --- 3. CONCLUDE & SAVE RESULTS ---
   const concludeSimulation = async () => {
     if (!currentUser || !activeSimulation) return;
     setIsConcluding(true);
 
-    const passed = score >= 90; // 90% REQUIREMENT
+    const passed = score >= 90;
 
     try {
       const concludingPrompt = `
@@ -337,7 +334,6 @@ export function TrainingSimulator() {
       }
     }
 
-    // Save Results to Firestore
     try {
       const docRef = doc(db, "userSimulations", `${currentUser.uid}_${activeSimulation.id}`);
       const highestScore = Math.max(score, activeSimulation.score || 0);
@@ -669,8 +665,7 @@ export function TrainingSimulator() {
               <TabsTrigger value="completed" className="rounded-md data-[state=active]:bg-white data-[state=active]:text-[#016A6D] data-[state=active]:shadow-sm px-4 py-2 font-bold text-xs uppercase tracking-wider">Completed ({completedScenarios.length})</TabsTrigger>
             </TabsList>
             
-            {/* 🔥 SUNSET ORANGE GENERATE BUTTON 🔥 */}
-            <Button 
+            <Button
               onClick={generateNewScenario} 
               disabled={isGeneratingScenario}
               className="bg-[#E16A3D] hover:bg-[#c2562d] text-white font-bold text-xs uppercase tracking-wider h-10 shadow-md shrink-0 transition-colors"

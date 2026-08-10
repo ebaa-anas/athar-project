@@ -36,8 +36,7 @@ import { PlatformAnalytics } from './components/admin/PlatformAnalytics';
 import { AdminSettings } from './components/admin/AdminSettings';
 import { OrganizationMessages } from './components/organization/OrganizationMessages';
 
-// 🔥 IMPORT YOUR CHATBOT HERE 🔥
-import ChatbotWidget from './chatbot/ChatbotWidget'; 
+import ChatbotWidget from './chatbot/ChatbotWidget';
 
 type UserType = 'volunteer' | 'organization' | 'admin' | null;
 
@@ -109,7 +108,6 @@ export default function App() {
     }
   };
 
-  // 🔥 Fix 1: Added Chatbot to Landing Page
   if (!userType) {
     return (
       <>
@@ -119,7 +117,6 @@ export default function App() {
     );
   }
 
-  // 🔥 Fix 2: Added Chatbot to Login Page
   if (!isLoggedIn) {
     return (
       <>
@@ -129,7 +126,6 @@ export default function App() {
     );
   }
 
-  // 🔥 Fix 3: Passed userType={userType} to the Main Dashboard Chatbot
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
 
@@ -156,7 +152,7 @@ export default function App() {
         />
       )}
       
-      {/* Main Content - FIXED MARGIN */}
+      {/* Main content */}
       <main className="flex-1 overflow-y-auto ml-64">
         <div className="min-h-full max-w-7xl mx-auto p-8">
           {userType === 'volunteer' && renderVolunteerContent()}
@@ -165,9 +161,8 @@ export default function App() {
         </div>
       </main>
 
-      {/* RENDER CHATBOT HERE */}
       <ChatbotWidget userType={userType} />
-      
+
     </div>
   );
 }

@@ -11,14 +11,12 @@ import { Hash, Send, MessageSquare, ShieldCheck, Users, Search, ShieldAlert, Loc
 import { useUserProfile } from '../hooks/useUserProfile'; 
 import { Badge } from './ui/badge';
 
-// 🔥 FIX: db now comes from the single shared Firebase connection instead of
-// calling initializeApp() again in this file. Calling initializeApp() a
-// second time throws "Firebase App named '[DEFAULT]' already exists" —
-// an uncaught error with no boundary around it, which renders as a blank
-// white screen. This was almost certainly your white-screen bug.
+// db comes from the shared Firebase connection in lib/firebase rather than
+// calling initializeApp() again here. A second initializeApp() call throws
+// "Firebase App named '[DEFAULT]' already exists", an uncaught error with no
+// boundary around it, which renders as a blank white screen.
 import { db } from '../lib/firebase';
 
-// Helper for formatting time
 const timeAgo = (timestamp: number) => {
   if (!timestamp) return '';
   const seconds = Math.floor((Date.now() - timestamp) / 1000);
@@ -43,9 +41,9 @@ export function Messages() {
   const [searchTerm, setSearchTerm] = useState("");
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  // 🔥 keep a live ref to the currently-selected channel so the message
-  // listener effect (below) can always read the latest value without
-  // needing activeChannel in its dependency array causing extra re-subscribes
+  // Mirrors activeChannel so the channel-fetching effect below can read the
+  // latest selection without listing it as a dependency, which would tear
+  // down and re-subscribe all the Firestore listeners on every switch.
   const activeChannelRef = useRef<any | null>(null);
   useEffect(() => { activeChannelRef.current = activeChannel; }, [activeChannel]);
 
@@ -57,7 +55,8 @@ export function Messages() {
     scrollToBottom();
   }, [messages]);
 
-  // --- 1. CHANNEL FETCHING & SORTING ---
+  // Merges accepted applications, crisis responses, all crises, and incoming
+  // DMs into a single channel list keyed by channel id.
   useEffect(() => {
     if (!user) return;
 
@@ -66,12 +65,10 @@ export function Messages() {
     const qAllCrises = query(collection(db, "crises"));
     const qDMs = query(collection(db, "messages"), where("targetUserId", "==", user.uid));
 
-    // 🔥 FIX: these three used to be recreated (without ever unsubscribing
-    // the previous copy) every single time the outer listener fired. That
-    // meant every new "applications" write left a stray, still-active
-    // listener behind — over a session, the number of live Firestore
-    // listeners only ever grew. Now each inner listener is explicitly torn
-    // down before its replacement is created.
+    // Each inner listener is explicitly torn down before its replacement is
+    // created. Without this, a new listener was created every time the outer
+    // one fired without ever unsubscribing the previous copy, so the number
+    // of live Firestore listeners only grew for the life of the session.
     let unsubCrisisResp = () => {};
     let unsubAllCrises = () => {};
     let unsubDMs = () => {};
@@ -126,9 +123,8 @@ export function Messages() {
                     const dmId = `dm_${data.orgId}_${user.uid}`;
                     if (!channelMap.has(dmId)) {
                         channelMap.set(dmId, {
-                            // 🔥 FIX: orgId now stored on the DM channel object.
-                            // Without this, sending a reply had nowhere correct
-                            // to point targetUserId at (see handleSendMessage).
+                            // orgId is stored on the channel so handleSendMessage has
+                            // a valid target for targetUserId when replying.
                             id: dmId, title: `Private: ${data.orgName}`, orgName: data.orgName, orgId: data.orgId,
                             isCrisis: false, isGroup: false, isDM: true, type: 'dm',
                             lastActivity: lastAct
@@ -168,8 +164,8 @@ export function Messages() {
                 if (dmData.missionId) {
                     if (!channelMap.has(dmData.missionId)) {
                         channelMap.set(dmData.missionId, {
-                            // 🔥 FIX: capture the org's uid from the incoming message's
-                            // senderId, so a reply from this screen has a valid target.
+                            // orgId is captured from the incoming message's senderId so a
+                            // reply from this screen has a valid target.
                             id: dmData.missionId, title: dmData.channelTitle || 'Direct Message', orgName: dmData.senderName || 'Organization', orgId: dmData.senderId,
                             isCrisis: false, isGroup: false, isDM: true, type: 'dm',
                             lastActivity: lastAct 
@@ -202,7 +198,6 @@ export function Messages() {
     };
   }, [user]);
 
-  // --- 2. FETCH MESSAGES FOR ACTIVE CHANNEL ---
   useEffect(() => {
     if (!activeChannel) return;
 
@@ -225,7 +220,6 @@ export function Messages() {
     return () => unsubMsgs();
   }, [activeChannel]);
 
-  // --- 3. SEND MESSAGE ---
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim() || !activeChannel || !user) return;
@@ -247,10 +241,9 @@ export function Messages() {
     };
 
     if (activeChannel.isDM) {
-        // 🔥 FIX: this used to be set to the volunteer's OWN uid
-        // (targetUserId = user.uid), which means a DM "to the org" was
-        // actually addressed to the sender. It now points at the org's
-        // uid, captured on the channel object above.
+        // Must target the org's uid (captured on the channel object above),
+        // not the volunteer's own uid, or a DM "to the org" ends up addressed
+        // back to the sender.
         if (activeChannel.orgId) {
           messagePayload.targetUserId = activeChannel.orgId;
         }

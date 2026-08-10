@@ -43,7 +43,7 @@ const timeAgo = (timestamp: any) => {
 export function Notifications() {
   const [notifications, setNotifications] = useState<any[]>([]);
 
-  // --- 1. FETCH REAL-TIME NOTIFICATIONS ---
+  // --- Fetch real-time notifications ---
   useEffect(() => {
     const unsubscribeAuth = auth.onAuthStateChanged((user) => {
       if (user) {
@@ -77,8 +77,7 @@ export function Notifications() {
               id: docSnap.id,
               title: data.title || 'Platform Update',
               message: data.message || '',
-              // 👇 THE MAGIC FIX IS HERE: It reads the real name now!
-              organization: data.organizationName || 'Athar Platform', 
+              organization: data.organizationName || 'Athar Platform',
               time: timeAgo(data.createdAt),
               read: data.read || false,
               type: mappedType,
@@ -104,7 +103,7 @@ export function Notifications() {
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  // --- 2. INTERACTIVE FEATURES ---
+  // --- Read/unread handlers ---
   const handleMarkAsRead = async (id: string, currentlyRead: boolean) => {
     if (currentlyRead) return; 
     try {

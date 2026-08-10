@@ -43,7 +43,7 @@ export default function VerificationRequests() {
   const [selectedFiles, setSelectedFiles] = useState<any | null>(null);
   const [viewingProfileId, setViewingProfileId] = useState<string | null>(null);
 
-  // --- 1. FETCH LIVE DATA ---
+  // Fetch live data
   useEffect(() => {
     const allRecords = new Map();
 
@@ -96,7 +96,7 @@ export default function VerificationRequests() {
     };
   }, []);
 
-  // --- 2. DYNAMIC PIPELINE FILTERING ---
+  // Filter by pipeline (organizations vs. users)
   const displayPending = pendingReqs.filter(r => r.collectionName === viewMode);
   const displayVerified = verifiedReqs.filter(r => r.collectionName === viewMode);
   const displayRejected = rejectedReqs.filter(r => r.collectionName === viewMode);
@@ -104,7 +104,7 @@ export default function VerificationRequests() {
   const totalApplications = displayPending.length + displayVerified.length + displayRejected.length;
   const approvalRate = totalApplications > 0 ? Math.round((displayVerified.length / totalApplications) * 100) : 0;
 
-  // --- 3. APPROVE / REJECT HANDLERS ---
+  // Approve / reject handlers
   const handleApprove = async (docId: string, entityName: string, collectionName: string) => {
     if (!window.confirm(`Are you sure you want to verify ${entityName || 'this user'}? This grants them full trusted access.`)) return;
     
@@ -186,17 +186,15 @@ export default function VerificationRequests() {
 
   if (loading) return <div className="p-12 text-center text-[#043E52] font-bold flex flex-col items-center justify-center"><Loader2 className="h-8 w-8 animate-spin mb-4" /> Fetching Compliance Queue...</div>;
 
-  // ============================================================================
-  // 🔥 DYNAMIC INLINE PROFILE VIEW (HANDLES BOTH ORGS & USERS) 🔥
-  // ============================================================================
+  // Inline profile view, shared between organizations and users
   if (viewingProfileId) {
     const profile = [...pendingReqs, ...verifiedReqs, ...rejectedReqs].find(o => o.id === viewingProfileId);
     if (!profile) return setViewingProfileId(null);
 
     const isUser = profile.collectionName === 'users';
     
-    // SAFE NAME EXTRACTION TO PREVENT CRASHES
-    const safeName = isUser 
+    // Falls back through the possible name fields so we don't render "undefined" for incomplete profiles
+    const safeName = isUser
       ? (profile.legalIdentity?.legalName || profile.name || 'Unknown User')
       : (profile.auditData?.legalName || profile.name || 'Unknown Organization');
 
@@ -450,9 +448,8 @@ export default function VerificationRequests() {
               <p className="text-slate-500 mt-1 text-sm">All submissions in this pipeline have been processed.</p>
             </div>
           ) : displayPending.map((request) => {
-            
-            // SAFE NAME HANDLING
-            const safeName = viewMode === 'users' 
+
+            const safeName = viewMode === 'users'
               ? (request.legalIdentity?.legalName || request.name || "Unknown User")
               : (request.auditData?.legalName || request.name || "Unnamed Org");
 
@@ -475,7 +472,7 @@ export default function VerificationRequests() {
                       </div>
                     </div>
 
-                    {/* DYNAMIC DATA DISPLAY BASED ON PIPELINE */}
+                    {/* Fields differ between the organization and volunteer pipelines */}
                     {viewMode === 'users' ? (
                       <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4 border-l border-slate-100 pl-0 xl:pl-6">
                         <div>
@@ -631,7 +628,7 @@ export default function VerificationRequests() {
         </TabsContent>
       </Tabs>
 
-      {/* THE FILES VAULT MODAL (ORGS ONLY) */}
+      {/* Files vault modal (organizations only) */}
       {selectedFiles && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#043E52]/80 backdrop-blur-sm p-4">
           <Card className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200 border-none">

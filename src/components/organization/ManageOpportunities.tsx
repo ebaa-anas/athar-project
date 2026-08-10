@@ -6,7 +6,7 @@ import {
   query, where, serverTimestamp, deleteDoc, doc, updateDoc, getDoc 
 } from "firebase/firestore";
 
-// --- FIREBASE CONFIG ---
+// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyDRSETgWx1F3RX3_KAzgceyYBJKfpheRQk",
   authDomain: "athar-project-aa74e.firebaseapp.com",
@@ -20,7 +20,6 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app); 
 
-// --- UI COMPONENTS ---
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -44,10 +43,8 @@ export function ManageOpportunities() {
   const [skillInput, setSkillInput] = useState('');
   const [skills, setSkills] = useState<string[]>([]);
 
-  // --- ORG PROFILE STATE ---
   const [orgProfile, setOrgProfile] = useState<any>(null);
 
-  // --- APPLICANT MANAGEMENT STATES ---
   const [selectedOpp, setSelectedOpp] = useState<any | null>(null);
   const [applicants, setApplicants] = useState<any[]>([]);
   const [broadcastMessage, setBroadcastMessage] = useState("");
@@ -61,18 +58,17 @@ export function ManageOpportunities() {
     type: 'One-time', goal: '', contactEmail: '', deadline: '', visibility: 'public'
   });
 
-  // 1. THE FETCH LOCK & PROFILE HYDRATION
   useEffect(() => {
     const unsubscribeAuth = auth.onAuthStateChanged(async (user) => {
       if (user) {
-        // 🔥 BUG FIX: Read from the correct 'organizations' collection where data is saved
+        // Org data normally lives in "organizations", but some older accounts
+        // were only ever written to "users" — fall back there if needed.
         let fetchedData = null;
         const orgRef = await getDoc(doc(db, "organizations", user.uid));
-        
+
         if (orgRef.exists()) {
           fetchedData = orgRef.data();
         } else {
-          // Fallback just in case some orgs are stored in users
           const userRef = await getDoc(doc(db, "users", user.uid));
           if (userRef.exists()) fetchedData = userRef.data();
         }
@@ -108,7 +104,6 @@ export function ManageOpportunities() {
     return () => unsubscribeAuth();
   }, [selectedOpp]);
 
-  // 2. FETCH APPLICANTS
   useEffect(() => {
     if (!selectedOpp) return;
     const qApps = query(collection(db, "applications"), where("oppId", "==", selectedOpp.id));
@@ -119,7 +114,7 @@ export function ManageOpportunities() {
     return () => unsubApps();
   }, [selectedOpp]);
 
-  // 🔥 3. AUTO-CLOSE EXPIRED DEADLINES 🔥
+  // Auto-close missions whose deadline has passed
   useEffect(() => {
     const closeExpiredMissions = async () => {
       const today = new Date().toISOString().split('T')[0]; 
@@ -146,7 +141,8 @@ export function ManageOpportunities() {
     }
   }, [opportunities]);
 
-  // --- 🛡️ STRICT PROFILE COMPLETION & VERIFICATION LOCKS 🛡️ ---
+  // Posting requires both identity verification and a complete profile;
+  // tier1 orgs are auto-verified and exempt from the extra board/safeguarding fields.
   const currentTier = orgProfile?.tier || 'tier1';
   
   const isVerified = currentTier === 'tier1' ? true : (
@@ -195,7 +191,6 @@ export function ManageOpportunities() {
   };
 
   const handleOpenCreate = () => {
-    // Hard lock on opening the creation form
     if (!canPost) return alert("Action Locked: Please complete your profile and verify your identity first.");
     
     setEditingId(null);
@@ -205,7 +200,6 @@ export function ManageOpportunities() {
   };
 
   const handleSubmit = async () => {
-    // Hard lock on saving the form
     if (!canPost) return alert("Security Block: Incomplete profile or unverified identity.");
 
     setLoading(true);
@@ -558,7 +552,7 @@ export function ManageOpportunities() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2"><Label>Location</Label><Input value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} /></div>
                 
-                {/* 🔥 PAST DATE BLOCKER APPLIED HERE 🔥 */}
+                {/* Prevent selecting a deadline in the past */}
                 <div className="space-y-2">
                   <Label>Deadline</Label>
                   <Input 

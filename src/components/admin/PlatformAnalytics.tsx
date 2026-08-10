@@ -42,7 +42,7 @@ async function callGemini(model: string, message: string): Promise<string> {
   return data.text;
 }
 
-// FULL VIBRANT PALETTE
+// Chart color palette
 const COLORS = {
   nile: '#043E52',
   pine: '#016A6D',
@@ -59,9 +59,9 @@ export function PlatformAnalytics() {
   const [loading, setLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
 
-  // --- 1. FETCH REAL DATABASE METRICS ---
+  // Fetch real database metrics
   useEffect(() => {
-    // Listen to Users (Volunteers & Organizations & Regions)
+    // The users collection also gives us the volunteer/org split and city breakdown
     const unsubUsers = onSnapshot(collection(db, "users"), (snapshot) => {
       let vols = 0;
       let orgs = 0;
@@ -101,7 +101,6 @@ export function PlatformAnalytics() {
       }
     });
 
-    // Listen to Opportunities
     const unsubOpps = onSnapshot(collection(db, "opportunities"), (snapshot) => {
       setStats(prev => ({ ...prev, opportunities: snapshot.size }));
       
@@ -131,7 +130,8 @@ export function PlatformAnalytics() {
     return () => { unsubUsers(); unsubOpps(); };
   }, []);
 
-  // --- 2. DYNAMIC CHART DATA GENERATION ---
+  // Estimated historical points derived from current totals — we don't store month-by-month
+  // history yet, so these curves are extrapolated rather than actual past snapshots.
   const userGrowthData = [
     { month: 'Sep', volunteers: Math.max(Math.floor(stats.volunteers * 0.4), 0), organizations: Math.max(Math.floor(stats.organizations * 0.5), 0) },
     { month: 'Oct', volunteers: Math.max(Math.floor(stats.volunteers * 0.6), 0), organizations: Math.max(Math.floor(stats.organizations * 0.7), 0) },
@@ -157,7 +157,7 @@ export function PlatformAnalytics() {
     { skill: 'Emergency Resp', demandedTimes: 52, trainedVolunteers: Math.min(stats.volunteers, 48) },
   ];
 
-  // --- 3. AI PDF GENERATOR 🔥 ---
+  // AI PDF report generator
   const handleGenerateReport = async () => {
     setIsGenerating(true);
     try {
@@ -180,7 +180,7 @@ export function PlatformAnalytics() {
 
       const reportHTML = await callGemini("gemini-flash-latest", prompt);
 
-      // Create a hidden iframe
+      // Render the report in a hidden iframe so we can trigger the browser's print-to-PDF dialog
       const iframe = document.createElement('iframe');
       iframe.style.display = 'none';
       document.body.appendChild(iframe);
@@ -241,13 +241,13 @@ export function PlatformAnalytics() {
           </html>
         `);
         iframeDoc.close();
-        
-        // Wait a fraction of a second to ensure DOM is ready, then print the iframe
+
+        // Give the iframe a moment to finish rendering before printing
         setTimeout(() => {
           iframe.contentWindow?.focus();
           iframe.contentWindow?.print();
-          
-          // Cleanup iframe after print
+
+          // Remove the iframe once the print dialog has had a chance to open
           setTimeout(() => {
             document.body.removeChild(iframe);
           }, 1000);
@@ -278,8 +278,7 @@ export function PlatformAnalytics() {
           <p className="text-slate-500">Comprehensive insights into platform performance and usage</p>
         </div>
         <div className="flex gap-2">
-            {/* 🔥 THE PDF GENERATOR BUTTON 🔥 */}
-            <Button 
+            <Button
               onClick={handleGenerateReport} 
               disabled={isGenerating}
               className="bg-gradient-to-r from-[#043E52] to-[#1C9290] hover:from-[#033040] hover:to-[#157a78] text-white font-bold shadow-md h-11 px-6"

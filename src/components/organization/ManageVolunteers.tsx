@@ -20,7 +20,7 @@ import {
   ArrowLeft, Shield
 } from 'lucide-react';
 
-// --- FIREBASE CONFIG ---
+// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyDRSETgWx1F3RX3_KAzgceyYBJKfpheRQk",
   authDomain: "athar-project-aa74e.firebaseapp.com",
@@ -40,7 +40,7 @@ export function ManageVolunteers() {
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
 
-  // --- MODAL & VIEW STATES ---
+  // Modal & view states
   const [viewProfileData, setViewProfileData] = useState<any | null>(null);
   
   const [messageModalOpen, setMessageModalOpen] = useState(false);
@@ -53,14 +53,14 @@ export function ManageVolunteers() {
   
   const [isSending, setIsSending] = useState(false);
 
-  // --- 1. FETCH DATA (STRICTLY CORE CREW) ---
+  // Fetch the core crew roster
   useEffect(() => {
     const unsubscribeAuth = auth.onAuthStateChanged(async (user) => {
       if (user) {
         const qApps = query(collection(db, "applications"), where("orgId", "==", user.uid), where("status", "==", "accepted"));
         const unsubscribeApps = onSnapshot(qApps, async (snapshot) => {
-          
-          // 🔥 STRICT FILTER: ONLY Add to roster if they are CORE CREW 🔥
+
+          // Only accepted applications tied to the "core_crew" opportunity count toward the roster
           const coreCrewIds = new Set<string>();
           
           snapshot.docs.forEach(docSnap => {
@@ -82,7 +82,7 @@ export function ManageVolunteers() {
                 phone: uData.phone || 'No phone provided',
                 avatar: uData.photoUrl || uData.avatarUrl || '',
                 status: 'active',
-                isCoreCrew: true, // Everyone here is Core Crew now
+                isCoreCrew: true,
                 rating: Number(uData.rating || 5.0),
                 totalHours: Number(uData.totalHours || 0),
                 completedProjects: Number(uData.completedProjects || 0),
@@ -117,7 +117,7 @@ export function ManageVolunteers() {
     return () => unsubscribeAuth();
   }, []);
 
-  // --- 2. HANDLERS: SENDING TO MESSAGE COMMS ---
+  // Message handlers
   const handleSendMessage = async () => {
     if (!messageText.trim()) return alert("Message cannot be empty.");
     setIsSending(true);
@@ -132,7 +132,6 @@ export function ManageVolunteers() {
       const finalAvatar = orgData.photoUrl || orgData.logoUrl || fallbackLogo;
 
       if (messageTarget) {
-        // DIRECT MESSAGE
         await addDoc(collection(db, "messages"), {
           missionId: `dm_${currentUser!.uid}_${messageTarget.id}`,
           text: messageText,
@@ -143,7 +142,6 @@ export function ManageVolunteers() {
           timestamp: serverTimestamp()
         });
       } else {
-        // MESSAGE ALL
         await addDoc(collection(db, "messages"), {
           missionId: `group_${currentUser!.uid}`, 
           text: messageText,
@@ -199,7 +197,7 @@ export function ManageVolunteers() {
     setIsSending(false);
   };
 
-  // --- 3. FILTERING ---
+  // Filtering
   const filteredVolunteers = volunteers.filter(v => {
     const search = searchTerm.toLowerCase();
     return (v.name.toLowerCase().includes(search) || v.email.toLowerCase().includes(search) || v.skills.some((s: string) => s.toLowerCase().includes(search)));
@@ -211,9 +209,7 @@ export function ManageVolunteers() {
   const totalNetworkHours = volunteers.reduce((sum, v) => sum + v.totalHours, 0);
 
 
-  // ============================================================================
-  // 🔥 FULL-PAGE PROFILE VIEW RENDER 🔥
-  // ============================================================================
+  // Full-page profile view
   if (viewProfileData) {
     return (
       <div className="max-w-6xl mx-auto space-y-6 pb-12 animate-in fade-in slide-in-from-right-4 duration-300">
@@ -355,9 +351,7 @@ export function ManageVolunteers() {
     );
   }
 
-  // ============================================================================
-  // MAIN ROSTER LIST VIEW
-  // ============================================================================
+  // Main roster list view
   return (
     <div className="space-y-6 pb-12">
       {/* Header */}
@@ -451,7 +445,6 @@ export function ManageVolunteers() {
                     </div>
                   </div>
 
-                  {/* 🔥 THE ACTION BUTTONS 🔥 */}
                   <div className="flex flex-wrap gap-2 pt-1">
                     <Button onClick={() => setViewProfileData(volunteer)} size="sm" variant="outline" className="border-slate-200 text-slate-700 hover:text-[#043E52] hover:bg-slate-50 font-bold px-4 h-8 text-[10px] uppercase tracking-wider">
                       View Profile
@@ -471,9 +464,7 @@ export function ManageVolunteers() {
         ))}
       </div>
 
-      {/* =========================================
-          MODAL 1: MESSAGE COMPOSER
-      ========================================= */}
+      {/* Message composer modal */}
       {messageModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in zoom-in-95">
           <Card className="w-full max-w-lg shadow-2xl border-none rounded-2xl overflow-hidden">
@@ -512,9 +503,7 @@ export function ManageVolunteers() {
         </div>
       )}
 
-      {/* =========================================
-          MODAL 2: INVITE TO MISSION
-      ========================================= */}
+      {/* Invite to mission modal */}
       {inviteModalOpen && inviteTarget && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in zoom-in-95">
           <Card className="w-full max-w-lg shadow-2xl border-none rounded-2xl overflow-hidden">

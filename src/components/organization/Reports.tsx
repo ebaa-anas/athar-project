@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { useUserProfile } from '../../hooks/useUserProfile';
 
-// --- FIREBASE CONFIG ---
+// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyDRSETgWx1F3RX3_KAzgceyYBJKfpheRQk",
   authDomain: "athar-project-aa74e.firebaseapp.com",
@@ -56,10 +56,8 @@ export function Reports() {
   const { user } = useUserProfile();
   const [loading, setLoading] = useState(true);
   
-  // --- LOADING STATE FOR AI PDF GENERATION ---
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
-  // --- DYNAMIC DATA STATES ---
   const [stats, setStats] = useState<any[]>([]);
   const [monthlyData, setMonthlyData] = useState<any[]>([]);
   const [topVolunteers, setTopVolunteers] = useState<any[]>([]);
@@ -71,7 +69,8 @@ export function Reports() {
     const qOpps = query(collection(db, "opportunities"), where("orgId", "==", user.uid));
     const qApps = query(collection(db, "applications"), where("orgId", "==", user.uid));
 
-    // We use Promise.all-style logic by nesting listeners to ensure both sets of data are ready
+    // Listeners are nested rather than combined with Promise.all so opportunities
+    // and applications stay in sync as either one updates in real time.
     const unsubOpps = onSnapshot(qOpps, (oppSnap) => {
       const opps = oppSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
 
@@ -80,7 +79,7 @@ export function Reports() {
         
         const acceptedApps = apps.filter(a => a.status === 'accepted');
         
-        // 1. CALCULATE TOP-LEVEL STATS
+        // Top-level stats
         const uniqueVolunteers = new Set(acceptedApps.map(a => a.volunteerId));
         const totalActiveVols = uniqueVolunteers.size;
         const totalHours = acceptedApps.length * 4; // Assuming avg 4 hours per mission
@@ -99,7 +98,7 @@ export function Reports() {
           { label: 'Retention Rate', value: `${retentionRate}%`, change: retentionRate > 50 ? '+5%' : '-2%', trend: retentionRate > 50 ? 'up' : 'down', icon: Target, color: 'text-slate-600', borderColor: 'border-slate-600', bgGradient: 'from-slate-50 to-slate-100' }
         ]);
 
-        // 2. CALCULATE TOP VOLUNTEERS
+        // Top volunteers
         const volProfiles: Record<string, any> = {};
         acceptedApps.forEach(a => {
             if (!volProfiles[a.volunteerId]) {
@@ -107,7 +106,7 @@ export function Reports() {
                     name: a.volunteerName || 'Unknown', 
                     projects: 0, 
                     hours: 0, 
-                    rating: (4.5 + Math.random() * 0.5).toFixed(1) // Mocking rating for now
+                    rating: (4.5 + Math.random() * 0.5).toFixed(1) // Per-volunteer ratings aren't tracked yet
                 };
             }
             volProfiles[a.volunteerId].projects += 1;
@@ -116,7 +115,7 @@ export function Reports() {
         const sortedVols = Object.values(volProfiles).sort((a, b) => b.hours - a.hours).slice(0, 5);
         setTopVolunteers(sortedVols);
 
-        // 3. CALCULATE OPPORTUNITY PERFORMANCE
+        // Opportunity performance
         const performance = opps.map(opp => {
             const relatedApps = apps.filter(a => a.oppId === opp.id);
             const filled = relatedApps.filter(a => a.status === 'accepted').length;
@@ -126,7 +125,7 @@ export function Reports() {
         }).sort((a, b) => b.applications - a.applications).slice(0, 5);
         setOppPerformance(performance);
 
-        // 4. CALCULATE MONTHLY TRENDS (Last 6 Months)
+        // Monthly trends (last 6 months)
         const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         const currentMonthIndex = new Date().getMonth();
         const generatedMonthlyData = [];
@@ -144,6 +143,7 @@ export function Reports() {
             const realHours = monthApps.length * 4;
             const realVols = new Set(monthApps.map(a => a.volunteerId)).size;
             
+            // Fall back to a plausible random value so the chart isn't empty for months with no real data yet
             generatedMonthlyData.push({
                 month: monthNames[targetMonth],
                 hours: realHours > 0 ? realHours : Math.floor(Math.random() * 200 + 200),
@@ -160,7 +160,8 @@ export function Reports() {
   }, [user]);
 
 
-  // 🔥 UPDATED: USE HIDDEN IFRAME INSTEAD OF POPUP 🔥
+  // Printed via a hidden iframe rather than a popup window, since popup blockers
+  // would otherwise prevent the report from opening.
   const handleDownloadPDF = async () => {
     setIsGeneratingPDF(true);
     try {
@@ -185,7 +186,6 @@ export function Reports() {
 
       const reportHTML = await callGemini("gemini-flash-latest", prompt);
 
-      // Create a hidden iframe
       const iframe = document.createElement('iframe');
       iframe.style.display = 'none';
       document.body.appendChild(iframe);
@@ -251,8 +251,7 @@ export function Reports() {
         setTimeout(() => {
           iframe.contentWindow?.focus();
           iframe.contentWindow?.print();
-          
-          // Cleanup iframe after print
+
           setTimeout(() => {
             document.body.removeChild(iframe);
           }, 1000);
@@ -270,7 +269,7 @@ export function Reports() {
   return (
     <div className="space-y-8 pb-12">
       
-      {/* 1. HEADER */}
+      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-5">
         <div>
           <h1 className="text-2xl font-bold text-[#043E52] uppercase tracking-tight">Reports & Analytics</h1>
@@ -279,8 +278,7 @@ export function Reports() {
             Real-time performance metrics and impact tracking
           </p>
         </div>
-        <div className="flex gap-3">          
-          {/* 🔥 AI GENERATE PDF BUTTON 🔥 */}
+        <div className="flex gap-3">
           <Button onClick={handleDownloadPDF} disabled={isGeneratingPDF} className="bg-[#043E52] hover:bg-[#033040] text-white shadow-md h-10 px-5 font-bold uppercase tracking-wider text-xs">
             {isGeneratingPDF ? (
               <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating Report...</>
@@ -291,7 +289,7 @@ export function Reports() {
         </div>
       </div>
 
-      {/* 2. KEY METRICS CARDS */}
+      {/* Key metrics cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat, index) => {
           const Icon = stat.icon;
@@ -321,7 +319,7 @@ export function Reports() {
         })}
       </div>
 
-      {/* 3. MAIN CONTENT TABS */}
+      {/* Main content tabs */}
       <Tabs defaultValue="overview" className="w-full">
         <TabsList className="bg-slate-100 p-1 rounded-xl w-full md:w-auto flex justify-start mb-6">
           <TabsTrigger value="overview" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#043E52] data-[state=active]:shadow-sm px-5 font-bold text-xs uppercase tracking-wider">Overview</TabsTrigger>
@@ -330,7 +328,7 @@ export function Reports() {
           <TabsTrigger value="impact" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#043E52] data-[state=active]:shadow-sm px-5 font-bold text-xs uppercase tracking-wider">Impact</TabsTrigger>
         </TabsList>
 
-        {/* OVERVIEW TAB */}
+        {/* Overview tab */}
         <TabsContent value="overview" className="space-y-6 animate-in fade-in-50 duration-500">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
@@ -403,7 +401,7 @@ export function Reports() {
           </div>
         </TabsContent>
 
-        {/* VOLUNTEERS TAB */}
+        {/* Volunteers tab */}
         <TabsContent value="volunteers" className="mt-6 space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card className="border-slate-200 shadow-sm">
@@ -455,7 +453,7 @@ export function Reports() {
           </div>
         </TabsContent>
 
-        {/* OPPORTUNITIES TAB */}
+        {/* Opportunities tab */}
         <TabsContent value="opportunities" className="mt-6 space-y-6">
           <Card className="border-slate-200 shadow-sm">
             <CardHeader className="pb-4 border-b border-slate-50">
@@ -509,7 +507,7 @@ export function Reports() {
           </Card>
         </TabsContent>
 
-        {/* IMPACT TAB */}
+        {/* Impact tab */}
         <TabsContent value="impact" className="mt-6 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card className="bg-[#043E52] text-white border-none shadow-md">

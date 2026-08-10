@@ -19,7 +19,6 @@ import { useUserProfile } from '../../hooks/useUserProfile';
 import { updateOrganizationProfile } from '../../lib/authService';
 
 import { db } from '../../lib/firebase';
-// ADDED: doc and getDoc for fetching the specific organization record
 import { collection, query, where, onSnapshot, doc, getDoc } from 'firebase/firestore';
 
 const PREDEFINED_CAUSES = [
@@ -61,11 +60,10 @@ export function OrganizationProfile() {
     foundingDate: '', signatoryName: '', signatoryRole: ''
   });
 
-  // UPDATED: Async useEffect to fetch the full organization document
   useEffect(() => {
     const loadOrganizationData = async () => {
       if (user) {
-        // 1. Fill basic known details from the user "nametag" document
+        // Start with the basic details already on the user "nametag" document
         let currentData = {
           name: user.name || user.legalName || '', 
           tagline: user.tagline || '', 
@@ -88,7 +86,7 @@ export function OrganizationProfile() {
           causes: user.causes || '' 
         };
 
-        // 2. Fetch the rich profile straight from the "organizations" collection
+        // Then overlay the richer profile from the "organizations" collection
         if (user.uid) {
           try {
             const orgRef = doc(db, "organizations", user.uid);
@@ -113,7 +111,7 @@ export function OrganizationProfile() {
 
         setProfileData(currentData);
 
-        // 🔥 AUTO-EDIT MAGIC 🔥
+        // Drop straight into edit mode if any required field is still missing
         if (!currentData.description || !currentData.mission || !currentData.address || !currentData.phone || !currentData.causes) {
            setIsEditing(true);
         }
@@ -140,12 +138,11 @@ export function OrganizationProfile() {
     return () => { unsubMissions(); unsubApps(); };
   }, [user]);
 
-  // --- TIER LOGIC ---
   const currentTier = user?.tier || 'tier1';
   const isVerified = user?.verified || user?.verificationStatus === 'verified' || currentTier === 'tier1';
   const vStatus = user?.verificationStatus || "unverified";
 
-  // --- 🛡️ STRICT ENTERPRISE VALIDATION ENGINE 🛡️ ---
+  // Tier2/3 orgs have additional required fields beyond the base profile
   const getProfileErrors = () => {
     const errs = [];
     if (!profileData.name || profileData.name.trim().length < 3) errs.push("Legal Entity Name");
@@ -301,7 +298,7 @@ export function OrganizationProfile() {
   return (
     <div className="bg-slate-50 min-h-screen pb-12 font-sans space-y-6">
 
-      {/* COMPREHENSIVE PROFILE COMPLETION WARNING BANNER */}
+      {/* Profile completion warning banner */}
       {!isProfileComplete && (
         <div className="bg-rose-50 border border-rose-200 p-4 rounded-b-2xl shadow-sm mb-6 flex items-start sm:items-center gap-4 max-w-6xl mx-auto border-t-0">
           <div className="bg-rose-600 p-2.5 rounded-xl text-white shrink-0"><ShieldAlert size={20} /></div>
@@ -314,7 +311,7 @@ export function OrganizationProfile() {
         </div>
       )}
       
-      {/* --- 1. COMPACT PROFILE HEADER --- */}
+      {/* Profile header */}
       <div className="bg-white border-b border-orange-500/10 shadow-sm">
         <div className="h-32 md:h-48 w-full relative group/hero bg-[#043E52]">
           {profileData.coverUrl ? (
@@ -417,7 +414,7 @@ export function OrganizationProfile() {
         </div>
       </div>
 
-      {/* --- 2. MAIN LAYOUT GRID --- */}
+      {/* Main layout grid */}
       <div className="max-w-6xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* LEFT COLUMN: Stats & Charter */}
@@ -454,7 +451,6 @@ export function OrganizationProfile() {
                  )}
                </div>
 
-               {/* FULLY RESTORED IMPACT SUMMARY */}
                <div className="space-y-2 pt-2">
                  <Label className="font-bold text-[#043E52] text-[10px] uppercase tracking-widest flex items-center gap-1.5"><Activity className="h-3.5 w-3.5" /> Impact Summary</Label>
                  {isEditing ? (
@@ -517,7 +513,7 @@ export function OrganizationProfile() {
                  )}
                </div>
 
-               {/* FULLY RESTORED: Removed Tier visual lock so anyone can edit, but required for tier2/3 validation */}
+               {/* Board & safeguarding fields are editable at any tier, but only required for tier2/3 */}
                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
                    <div className="space-y-2">
                        <Label className="font-bold text-[#043E52] text-[10px] uppercase tracking-widest flex items-center gap-1.5"><Users2 className="h-3.5 w-3.5" /> Board of Directors {currentTier !== 'tier1' && '*'}</Label>
@@ -593,7 +589,6 @@ export function OrganizationProfile() {
                         : 'To officially post public volunteer opportunities on the platform, you must submit foundational verification documents.'}
                   </p>
                   
-                  {/* 🔥 STRICT VALIDATION GATEWAY 🔥 */}
                   {!isProfileComplete ? (
                     <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mt-2 space-y-2">
                       <p className="text-[10px] font-bold text-amber-800 uppercase tracking-wider flex items-center gap-1.5">
@@ -642,7 +637,6 @@ export function OrganizationProfile() {
                  <div className="space-y-1"><Label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Public Email</Label><Input value={profileData.email} onChange={(e)=>setProfileData({...profileData, email: e.target.value})} placeholder="contact@org.com" className="h-9 text-xs rounded-md border-slate-200 focus:ring-orange-500" /></div>
                  <div className="space-y-1"><Label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Phone *</Label><Input value={profileData.phone} onChange={(e)=>setProfileData({...profileData, phone: e.target.value})} placeholder="+90..." className="h-9 text-xs rounded-md border-slate-200 focus:ring-orange-500" /></div>
                  
-                 {/* FULLY RESTORED CITY & COUNTRY ALONGSIDE ADDRESS */}
                  <div className="grid grid-cols-2 gap-3">
                    <div className="space-y-1"><Label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">City</Label><Input value={profileData.city} onChange={(e)=>setProfileData({...profileData, city: e.target.value})} placeholder="City" className="h-9 text-xs rounded-md border-slate-200 focus:ring-orange-500" /></div>
                    <div className="space-y-1"><Label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Country</Label><Input value={profileData.country} onChange={(e)=>setProfileData({...profileData, country: e.target.value})} placeholder="Country" className="h-9 text-xs rounded-md border-slate-200 focus:ring-orange-500" /></div>
@@ -658,7 +652,6 @@ export function OrganizationProfile() {
                  <div className="flex items-center gap-3 text-sm text-slate-600"><Phone className="h-4 w-4 text-orange-400 shrink-0" /> <span className="font-medium">{profileData.phone || "Not provided"}</span></div>
                  <Separator className="bg-slate-100" />
                  
-                 {/* COMBINED LOCATION DISPLAY */}
                  <div className="flex items-start gap-3 text-sm text-slate-600 leading-relaxed">
                     <MapPin className="h-4 w-4 text-orange-400 shrink-0 mt-0.5" /> 
                     <div>
@@ -674,7 +667,7 @@ export function OrganizationProfile() {
         </div>
       </div>
 
-      {/* --- 3. UPGRADED DYNAMIC AUDIT MODAL --- */}
+      {/* Audit modal */}
       {showVerifyModal && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#043E52]/90 backdrop-blur-sm p-4 overflow-y-auto">
           <Card className="w-full max-w-4xl bg-white rounded-2xl shadow-2xl overflow-hidden border-none my-auto flex flex-col md:flex-row h-full max-h-[90vh]">
@@ -765,7 +758,7 @@ export function OrganizationProfile() {
                   </div>
                 </div>
 
-                {/* LEGAL CONSENT BLOCK */}
+                {/* Legal consent block */}
                 <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-3">
                   <div className="flex items-center gap-2 text-[#043E52]">
                      <Gavel className="h-5 w-5 text-orange-500" />

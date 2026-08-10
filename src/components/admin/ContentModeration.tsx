@@ -31,7 +31,7 @@ export function ContentModeration() {
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
 
-  // --- 1. FETCH LIVE REPORTS ---
+  // Fetch live reports
   useEffect(() => {
     const q = collection(db, "reports");
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -41,7 +41,7 @@ export function ContentModeration() {
       snapshot.docs.forEach((doc) => {
         const data = { id: doc.id, ...doc.data() };
         
-        // 🛡️ BULLETPROOF CHECK: Default to 'pending' if missing, force lowercase
+        // Default to 'pending' when status is missing, and normalize case for comparison
         const currentStatus = (data.status || 'pending').toLowerCase();
 
         if (currentStatus === 'pending') {
@@ -51,7 +51,7 @@ export function ContentModeration() {
         }
       });
 
-      // 🛡️ STRICT TYPESCRIPT SORTING: Safely convert Firebase Timestamps to JS Time
+      // Firestore timestamps need .toDate() before they can be compared numerically
       pending.sort((a, b) => {
         const timeA = a.reportDate?.toDate ? a.reportDate.toDate().getTime() : 0;
         const timeB = b.reportDate?.toDate ? b.reportDate.toDate().getTime() : 0;
@@ -72,7 +72,7 @@ export function ContentModeration() {
     return () => unsubscribe();
   }, []);
 
-  // --- 2. ACTION HANDLERS ---
+  // Action handlers
   const handleModerationAction = async (id: string, actionResult: 'Approved' | 'Removed') => {
     setProcessingId(id);
     try {
@@ -96,7 +96,7 @@ export function ContentModeration() {
     alert("Navigating to flagged content in read-only sandbox mode...");
   };
 
-  // --- 🔥 3. PRESENTATION DEMO TOOL 🔥 ---
+  // Demo utility that seeds a fake report, used to showcase the moderation flow live
   const injectSimulatedReport = async () => {
     const types = ['Opportunity Post', 'Comment', 'Organization Profile'];
     const severities = ['high', 'medium', 'low'];
@@ -120,7 +120,6 @@ export function ContentModeration() {
     }
   };
 
-  // Helper for formatting timestamps
   const formatTimeAgo = (timestamp: any) => {
     if (!timestamp) return 'Just now';
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
@@ -134,7 +133,6 @@ export function ContentModeration() {
     return `${Math.floor(diffInHours / 24)}d ago`;
   };
 
-  // Dynamic Styles based on Severity
   const getSeverityStyles = (severity: string) => {
     switch (severity?.toLowerCase()) {
       case 'high':
@@ -150,7 +148,6 @@ export function ContentModeration() {
 
   if (loading) return <div className="p-12 text-center text-[#043E52] font-bold flex flex-col items-center justify-center"><Loader2 className="h-8 w-8 animate-spin mb-4" /> Syncing Moderation Queue...</div>;
 
-  // Calculate Reviewed Today safely
   const today = new Date().setHours(0,0,0,0);
   const reviewedToday = reviewedContent.filter(item => {
     const d = item.reviewedDate?.toDate ? item.reviewedDate.toDate().getTime() : 0;
@@ -178,7 +175,7 @@ export function ContentModeration() {
         </div>
       </div>
 
-      {/* VIBRANT STATS */}
+      {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card className="bg-gradient-to-br from-[#E16A3D] to-[#c2562d] text-white border-none shadow-lg">
           <CardContent className="p-6">

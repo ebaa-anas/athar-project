@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { initializeApp } from "firebase/app";
 import { getFirestore, collection, onSnapshot, doc, setDoc, updateDoc, serverTimestamp } from "firebase/firestore";
-// 🔥 NEW: Import Auth modules for the Secondary App Trick
+// Auth SDK pieces needed for the secondary app instance below
 import { getAuth, createUserWithEmailAndPassword, signOut } from "firebase/auth";
 
 import { Card, CardContent } from '../ui/card';
@@ -37,11 +37,13 @@ const firebaseConfig = {
   appId: "1:715063889584:web:3443ae48678c91a7f4b575",
 };
 
-// 1. Main App (Handles the Admin's current session and Database)
+// Primary app instance, used for the admin's own session and Firestore access
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// 2. 🔥 THE SECONDARY APP TRICK 🔥 (Handles creating new users silently)
+// A second app instance lets us create Auth users for other people without
+// signing the admin out of their own session (Firebase Auth only supports
+// one active user per app instance).
 const secondaryApp = initializeApp(firebaseConfig, "SecondaryApp");
 const secondaryAuth = getAuth(secondaryApp);
 
@@ -60,7 +62,7 @@ export function UserManagement() {
     name: '', email: '', password: '', role: 'volunteer', status: 'Active'
   });
 
-  // --- 1. FETCH LIVE DATA ---
+  // Fetch live data
   useEffect(() => {
     const allRecords = new Map();
 
@@ -106,8 +108,8 @@ export function UserManagement() {
     return () => { unsubUsers(); unsubOrgs(); };
   }, []);
 
-  // --- 2. ACTION HANDLERS ---
-  
+  // Action handlers
+
   const toggleAccountStatus = async (id: string, collectionName: string, currentStatus: string) => {
     const newStatus = (currentStatus?.toLowerCase() === 'suspended' || currentStatus?.toLowerCase() === 'revoked') ? 'Active' : 'Suspended';
     if (!window.confirm(`Are you sure you want to mark this account as ${newStatus}?`)) return;
@@ -133,21 +135,21 @@ export function UserManagement() {
     window.location.href = `mailto:${email}?subject=Athar Platform Administrator Notice`;
   };
 
-  // 🔥 3. THE UPGRADED SECURE USER CREATION ENGINE 🔥
+  // Creates the Auth account via the secondary app, then writes the matching Firestore profile
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newUser.name || !newUser.email || !newUser.password) return alert("Fill all fields.");
-    
+
     setIsSubmittingUser(true);
     try {
-      // Step 1: Create the real Auth User using the ghost Secondary App
+      // Create the Auth user through the secondary app so the admin's session is untouched
       const userCredential = await createUserWithEmailAndPassword(secondaryAuth, newUser.email, newUser.password);
       const newUid = userCredential.user.uid;
 
-      // Step 2: Sign out of the ghost app immediately to clear memory
+      // Sign out of the secondary app right away; we don't need to stay authenticated there
       await signOut(secondaryAuth);
 
-      // Step 3: Link the new Auth UID to a fresh Firestore Database Profile
+      // Create the Firestore profile that corresponds to the new Auth account
       const targetCollection = newUser.role === 'organization' ? 'organizations' : 'users';
       
       const payload: any = {
@@ -167,7 +169,7 @@ export function UserManagement() {
         payload.verificationStatus = 'pending';
       }
 
-      // Use setDoc with the exact UID so the Auth and Database perfectly match
+      // Use the Auth UID as the document ID so the Auth account and Firestore profile stay linked
       await setDoc(doc(db, targetCollection, newUid), payload);
       
       setShowAddUserModal(false);
@@ -211,9 +213,7 @@ export function UserManagement() {
   if (loading) return <div className="p-12 text-center text-[#043E52] font-bold flex flex-col items-center justify-center"><Loader2 className="h-8 w-8 animate-spin mb-4" /> Fetching Master Database...</div>;
 
 
-  // ============================================================================
-  // 🔥 UNIVERSAL INLINE PROFILE VIEWER 🔥
-  // ============================================================================
+  // Inline profile viewer, shared across volunteers, organizations, and admins
   if (viewingProfile) {
     const isOrg = viewingProfile.role === 'organization' || viewingProfile.collectionName === 'organizations';
     const isAdmin = viewingProfile.role === 'admin' || viewingProfile.accessLevel;
@@ -629,9 +629,7 @@ export function UserManagement() {
         </Tabs>
       </div>
 
-      {/* ================================================================================= */}
-      {/* 🔥 ADD USER MODAL 🔥 */}
-      {/* ================================================================================= */}
+      {/* Add User Modal */}
       {showAddUserModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#043E52]/80 backdrop-blur-sm p-4">
           <Card className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200 border-none">

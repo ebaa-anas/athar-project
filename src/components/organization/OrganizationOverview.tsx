@@ -19,7 +19,7 @@ import {
 import { useUserProfile } from '../../hooks/useUserProfile';
 import { db } from '../../lib/firebase';
 
-// --- MAP COORDINATES HELPER ---
+// Approximate map coordinates for major Turkish cities
 const getCityCoordinates = (locationString: string) => {
   if (!locationString) return { x: 50, y: 50 };
   const loc = locationString.toLowerCase();
@@ -43,16 +43,13 @@ const getCityCoordinates = (locationString: string) => {
 export function OrganizationOverview() {
   const { user } = useUserProfile();
 
-  // --- TIER ENFORCEMENT ---
   const currentTier = user?.tier || 'tier1';
   const isVerified = user?.verified || user?.verificationStatus === 'verified' || currentTier === 'tier1';
-  
-  // --- UI STATES ---
+
   const [isOppModalOpen, setIsOppModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
-  
-  // --- REAL DATA STATES ---
+
   const [crises, setCrises] = useState<any[]>([]);
   const [activeCrisis, setActiveCrisis] = useState<any | null>(null);
   
@@ -67,17 +64,15 @@ export function OrganizationOverview() {
   const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]);
   const [topVolunteers, setTopVolunteers] = useState<any[]>([]);
 
-  // --- NEW OPPORTUNITY FORM STATE ---
   const [newOpp, setNewOpp] = useState({
     title: "", cause: "Community Support", type: "On-Site (Physical)",
     location: "", skills: "", volunteersNeeded: "", date: "", description: ""
   });
 
-  // --- 1. FETCH LIVE DASHBOARD DATA ---
   useEffect(() => {
     if (!user) return;
 
-    // Fetch All Crises for Map (Strictly Tier 3 only)
+    // Only tier3 orgs see the crisis map
     let unsubCrises = () => {};
     if (currentTier === 'tier3') {
         unsubCrises = onSnapshot(query(collection(db, "crises")), (snapshot) => {
@@ -98,7 +93,6 @@ export function OrganizationOverview() {
         });
     }
 
-    // Fetch Organization's Opportunities
     const qOpps = query(collection(db, "opportunities"), where("orgId", "==", user.uid));
     const unsubOpps = onSnapshot(qOpps, (snapshot) => {
       const opps = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
@@ -114,7 +108,6 @@ export function OrganizationOverview() {
       setDashboardStats(prev => ({ ...prev, openOpportunities: openCount }));
     });
 
-    // Fetch Organization's Applications
     const qApps = query(collection(db, "applications"), where("orgId", "==", user.uid));
     const unsubApps = onSnapshot(qApps, (snapshot) => {
       const apps = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
@@ -157,7 +150,6 @@ export function OrganizationOverview() {
     return () => { unsubCrises(); unsubOpps(); unsubApps(); };
   }, [user, currentTier]);
 
-  // --- 2. HANDLE POSTING NEW OPPORTUNITY ---
   const handleDeployOpportunity = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !newOpp.title || !newOpp.date) return alert("Title and Date are required.");
@@ -195,7 +187,7 @@ export function OrganizationOverview() {
   return (
     <div className="space-y-6 pb-12">
       
-      {/* 1. HEADER & ACTIONS */}
+      {/* Header & actions */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-5">
         <div>
           <h1 className="text-2xl font-bold text-[#043E52] uppercase tracking-tight">Project Command Center</h1>
@@ -288,7 +280,7 @@ export function OrganizationOverview() {
         </div>
       </div>
 
-      {/* 2. DYNAMIC HUB CARD (TIER BASED) */}
+      {/* Tier-based hub card */}
       {currentTier === 'tier3' ? (
         <Card className="border border-rose-500/30 bg-rose-500/5 shadow-sm overflow-hidden relative">
           <div className="absolute top-0 left-0 w-1 h-full bg-rose-500" />
@@ -326,7 +318,7 @@ export function OrganizationOverview() {
         </Card>
       ) : null /* Tier 1 sees no banner, keeping their UI lean and focused on their own projects */}
 
-      {/* 3. DYNAMIC STATS GRID */}
+      {/* Stats grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="border-none shadow-sm hover:shadow-md transition-all">
           <CardContent className="p-5 flex items-start justify-between">
@@ -369,7 +361,7 @@ export function OrganizationOverview() {
         </Card>
       </div>
 
-      {/* 3.5 THE GEOSPATIAL MAP (STRICTLY RESTRICTED TO TIER 3 CRISIS OPS) */}
+      {/* Crisis map (tier3 only) */}
       {currentTier === 'tier3' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[450px]">
           <Card className="lg:col-span-2 bg-[#021c25] border-slate-800 shadow-md overflow-hidden relative flex flex-col">
@@ -415,7 +407,7 @@ export function OrganizationOverview() {
             </div>
           </Card>
 
-          {/* MAP SIDEBAR */}
+          {/* Map sidebar */}
           <Card className="bg-white border-slate-200 shadow-md flex flex-col overflow-hidden">
             <div className="p-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
               <h3 className="font-bold text-[#043E52] text-sm flex items-center gap-2">
@@ -466,9 +458,9 @@ export function OrganizationOverview() {
         </div>
       )}
 
-      {/* 4. LISTS GRID */}
+      {/* Lists grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-2">
-        {/* RECENT APPLICATIONS */}
+        {/* Recent applications */}
         <div className="lg:col-span-2 space-y-6">
           <Card className="border-slate-200 shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between border-b border-slate-100 pb-3 pt-4 px-5">
@@ -502,7 +494,7 @@ export function OrganizationOverview() {
           </Card>
         </div>
 
-        {/* SIDEBAR: TOP VOLUNTEERS & TIMELINE */}
+        {/* Top volunteers & upcoming events */}
         <div className="space-y-6">
           <Card className="border-slate-200 shadow-sm">
             <CardHeader className="border-b border-slate-100 pb-3 pt-4 px-5">

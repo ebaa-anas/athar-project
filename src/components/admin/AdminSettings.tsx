@@ -48,7 +48,7 @@ export function AdminSettings() {
   const [isBackingUp, setIsBackingUp] = useState(false);
   const [backupSuccess, setBackupSuccess] = useState(false);
 
-  // --- 1. FETCH GLOBAL SETTINGS ---
+  // Fetch global settings
   useEffect(() => {
     const settingsRef = doc(db, "systemSettings", "global");
     
@@ -64,7 +64,7 @@ export function AdminSettings() {
     return () => unsubscribe();
   }, []);
 
-  // --- 2. INSTANT TOGGLE SAVER ---
+  // Toggles save immediately on change rather than waiting for a form submit
   const handleToggle = async (key: string, value: boolean) => {
     setConfig((prev: any) => ({ ...prev, [key]: value }));
     try {
@@ -77,7 +77,7 @@ export function AdminSettings() {
     }
   };
 
-  // --- 3. FORM SAVERS ---
+  // Form savers
   const handleSaveGeneral = async () => {
     setIsSavingGeneral(true);
     try {
@@ -111,7 +111,7 @@ export function AdminSettings() {
     }
   };
 
-  // --- 4. SIMULATED BACKUP ---
+  // Placeholder: simulates a backup run with a timer, not wired to a real backend job yet
   const handleManualBackup = () => {
     setIsBackingUp(true);
     setBackupSuccess(false);
@@ -122,7 +122,7 @@ export function AdminSettings() {
     }, 3000);
   };
 
-  // --- 🔥 5. EMAIL TEMPLATE ENGINE 🔥 ---
+  // Builds a mailto link pre-filled with the selected template's subject and body
   const handleOpenEmailTemplate = (templateType: 'welcome' | 'approval' | 'reset') => {
     let subject = '';
     let body = '';
@@ -142,7 +142,7 @@ export function AdminSettings() {
         break;
     }
 
-    // This opens Gmail (or the default OS mail app) with the text fully pre-loaded!
+    // Opens the user's default mail client with the subject and body pre-filled
     window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
 
@@ -378,7 +378,6 @@ export function AdminSettings() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                  {/* 🔥 WIRED EMAIL TEMPLATE BUTTONS 🔥 */}
                   <Button onClick={() => handleOpenEmailTemplate('welcome')} variant="outline" className="border-slate-200 text-slate-600 font-bold hover:text-[#E16A3D] hover:border-[#E16A3D] h-12 hover:bg-orange-50">Welcome Email</Button>
                   <Button onClick={() => handleOpenEmailTemplate('approval')} variant="outline" className="border-slate-200 text-slate-600 font-bold hover:text-[#E16A3D] hover:border-[#E16A3D] h-12 hover:bg-orange-50">Org Approval</Button>
                   <Button onClick={() => handleOpenEmailTemplate('reset')} variant="outline" className="border-slate-200 text-slate-600 font-bold hover:text-[#E16A3D] hover:border-[#E16A3D] h-12 hover:bg-orange-50">Password Reset</Button>

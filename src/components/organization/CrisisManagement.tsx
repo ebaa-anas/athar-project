@@ -19,10 +19,10 @@ import {
 import { useUserProfile } from '../../hooks/useUserProfile';
 import { auth, db } from '../../lib/firebase'; 
 
-// 🔥 FIX: single shared definition of "is this volunteer AVR-certified" —
-// previously this exact OR-chain was copy-pasted in handleActivate AND in the
-// roster badge render. One helper now, used everywhere, so the dispatch logic
-// and the badge you see on screen can never disagree with each other.
+// Single shared definition of "is this volunteer AVR-certified" — previously
+// this exact OR-chain was copy-pasted in handleActivate and in the roster
+// badge render. Keeping one helper means the dispatch logic and the badge
+// shown on screen can never disagree with each other.
 function isAVRCertified(vData: any): boolean {
   return (
     vData?.isAVRMember === true ||
@@ -37,9 +37,9 @@ function isAVRCertified(vData: any): boolean {
   );
 }
 
-// 🔥 NEW: counts how many of the crisis's required skills this volunteer has.
-// Used both to filter (must match at least one, if skills were specified)
-// and to rank (best-matched volunteers get notified first).
+// Counts how many of the crisis's required skills this volunteer has. Used
+// both to filter (must match at least one, if skills were specified) and to
+// rank (best-matched volunteers get notified first).
 function countSkillMatches(volunteerSkills: string[] | undefined, requiredSkills: string[]): number {
   if (!requiredSkills.length) return 1; // no specific skills requested — everyone AVR-certified qualifies equally
   const vSkills = (volunteerSkills || []).map(s => s.toLowerCase());
@@ -60,15 +60,13 @@ export function CrisisManagement() {
   const [isLoadingTeam, setIsLoadingTeam] = useState(false);
   const [broadcastMessage, setBroadcastMessage] = useState("");
   const [isBroadcasting, setIsBroadcasting] = useState(false);
-  
-  // 🔥 AI Tasking State
+
   const [isGeneratingTasks, setIsGeneratingTasks] = useState(false);
 
   const [newCrisis, setNewCrisis] = useState({
     title: '', description: '', severity: 'Critical', location: '', volunteersNeeded: 10, skillsNeeded: '', commsLink: '' 
   });
 
-  // --- 1. FETCH LIVE CRISES ---
   useEffect(() => {
     if (!user || !user.verified) return;
 
@@ -100,7 +98,6 @@ export function CrisisManagement() {
     return () => unsubscribeData();
   }, [user]);
 
-  // --- 2. FETCH RESPONDERS ---
   const handleViewTeam = async (crisis: any) => {
     setSelectedCrisisForTeam(crisis);
     setIsLoadingTeam(true);
@@ -113,9 +110,9 @@ export function CrisisManagement() {
       const members = await Promise.all(snapshot.docs.map(async (responseDoc) => {
         const volId = responseDoc.data().volunteerId;
         const volSnap = await getDoc(doc(db, "users", volId));
-        // 🔥 FIX: if the volunteer's account was deleted after they accepted,
-        // volSnap.data() is undefined and this used to spread garbage into the
-        // roster (blank name, crash on .charAt in the avatar fallback). Skip it.
+        // If the volunteer's account was deleted after they accepted,
+        // volSnap.data() is undefined; skip it rather than spreading garbage
+        // into the roster (blank name, crash on .charAt in the avatar fallback).
         if (!volSnap.exists()) return null;
         return { id: volId, ...volSnap.data(), respondedAt: responseDoc.data().respondedAt };
       }));
@@ -127,9 +124,8 @@ export function CrisisManagement() {
     setIsLoadingTeam(false);
   };
 
-  // --- 3. MASS BROADCAST TO ALL RESPONDERS ---
   const handleMassBroadcast = async () => {
-    if (!selectedCrisisForTeam) return; // 🔥 guard: modal state can close mid-request
+    if (!selectedCrisisForTeam) return; // modal state can close mid-request
     if (!broadcastMessage.trim()) return alert("Please type a message to broadcast.");
     if (teamMembers.length === 0) return alert("No volunteers have responded yet.");
 
@@ -160,7 +156,6 @@ export function CrisisManagement() {
     setIsBroadcasting(false);
   };
 
-  // --- 4. THE SMART DISPATCH ALGORITHM ---
   const handleActivate = async () => {
     if (!user) return;
     if (!newCrisis.title || !newCrisis.description || !newCrisis.location) return alert("Please fill all required fields");
@@ -172,11 +167,9 @@ export function CrisisManagement() {
       const qUsers = query(collection(db, "users"), where("role", "==", "volunteer"));
       const usersSnapshot = await getDocs(qUsers);
 
-      // 🔥 FIX: this used to be "every AVR volunteer on the platform, notify all of
-      // them" — skillsNeeded was collected in the form but never actually used.
-      // Now: must be AVR-certified AND (no specific skills requested, or match at
-      // least one), ranked by how many required skills they have, and capped so a
-      // request for 10 people doesn't page hundreds.
+      // Must be AVR-certified and (no specific skills requested, or match at
+      // least one), ranked by how many required skills they have, and capped
+      // so a request for 10 people doesn't page hundreds.
       const ranked = usersSnapshot.docs
         .map(docSnap => {
           const vData = docSnap.data();
@@ -241,7 +234,7 @@ export function CrisisManagement() {
     setIsSubmitting(false);
   };
 
-  // --- 5. STAND DOWN (RESOLVE) CRISIS ---
+  // Called "Stand Down" in the UI.
   const handleResolveCrisis = async (crisisId: string) => {
     if (!window.confirm("Are you sure you want to stand down? This will close the emergency and volunteers will be notified that the crisis is resolved.")) {
       return;
@@ -262,7 +255,6 @@ export function CrisisManagement() {
     }
   };
 
-  // 🔥 NEW: real CSV export — the button used to just alert() a fake message.
   const handleExportCSV = () => {
     if (teamMembers.length === 0) return;
     const headers = ['Name', 'Phone', 'Blood Type', 'AVR Certified', 'Skills'];
@@ -288,7 +280,6 @@ export function CrisisManagement() {
     URL.revokeObjectURL(url);
   };
 
-  // 🔥 NEW: Generative AI Tasking Engine (Llama-3 Integration)
   const handleGenerateAITasks = async () => {
     if (!newCrisis.title || !newCrisis.location) {
       alert("Please provide at least an Incident Title and Location for the AI to analyze.");
@@ -326,7 +317,6 @@ export function CrisisManagement() {
     setIsGeneratingTasks(false);
   };
 
-  // --- SECURITY LOCK ---
   if (loading) return <div className="p-10 font-bold text-[#043E52]">Verifying Organization Status...</div>;
   
   if (!user?.verified && user?.verificationStatus !== 'verified') {
@@ -490,7 +480,7 @@ export function CrisisManagement() {
         })}
       </div>
 
-      {/* --- THE COMMAND HUB MODAL --- */}
+      {/* Command hub modal */}
       {selectedCrisisForTeam && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
           <Card className="w-full max-w-4xl shadow-2xl border-none rounded-2xl overflow-hidden flex flex-col max-h-[90vh]">
@@ -626,7 +616,7 @@ export function CrisisManagement() {
         </div>
       )}
 
-      {/* --- CREATE CRISIS MODAL --- */}
+      {/* Create crisis modal */}
       {showCreateForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
             <Card className="w-full max-w-xl shadow-2xl border-none rounded-2xl overflow-hidden max-h-[90vh] flex flex-col">
@@ -641,7 +631,7 @@ export function CrisisManagement() {
                 </CardHeader>
                 <div className="p-6 overflow-y-auto bg-slate-50 space-y-5">
                     
-                    {/* 🔥 AI Task Generator Banner */}
+                    {/* AI task generator banner */}
                     <div className="bg-gradient-to-r from-[#043E52] to-[#1C9290] p-4 rounded-xl flex items-center justify-between shadow-sm">
                        <div>
                          <h4 className="text-white font-bold flex items-center gap-2"><Sparkles className="h-4 w-4 text-yellow-300"/> Generative AI Tasking</h4>

@@ -77,16 +77,16 @@ export function MyProfile() {
     birthYear: ''
   });
 
-  // --- 1. CORE STATE ---
+  // --- Core Profile State ---
   const [profileData, setProfileData] = useState({
     fullName: '', email: '', phone: '', dateOfBirth: '',
     address: '', city: '', state: '', zipCode: '', country: '',
     bio: '', linkedIn: '', website: '', photoUrl: '', avatarUrl: '',
     verificationStatus: 'unverified',
-    idNumber: '' // Added to display ID captured during signup
+    idNumber: '' // ID captured at signup, shown here even before formal verification
   });
 
-  // --- 2. LISTS & OBJECT STATES ---
+  // --- Lists & Object State ---
   const [skills, setSkills] = useState<string[]>([]);
   const [experiences, setExperiences] = useState<Experience[]>([]); 
   const [educations, setEducations] = useState<Education[]>([]);
@@ -106,7 +106,7 @@ export function MyProfile() {
   const [activeExp, setActiveExp] = useState<Experience | null>(null);
   const [activeEdu, setActiveEdu] = useState<Education | null>(null);
 
-  // --- COMPREHENSIVE MANDATORY PROFILE COMPLETION VALIDATION ---
+  // Profile is only considered complete once every mandatory section below is filled in.
   const isProfileComplete = Boolean(
     profileData.fullName?.trim() && 
     profileData.city?.trim() && 
@@ -120,11 +120,11 @@ export function MyProfile() {
     languages.length > 0
   );
 
-  // --- 4. FETCH FROM FIREBASE & AUTO-TRIGGER EDIT MODE ---
+  // --- Load profile data and auto-enter edit mode if incomplete ---
   useEffect(() => {
     if (user && user.uid) {
-      
-      // FETCH FULL DATA DIRECTLY FROM THE FIRESTORE "USERS" COLLECTION
+
+      // The session user object can be stale, so pull the latest profile directly from Firestore.
       const loadVolunteerData = async () => {
         let currentData = user as any;
         
@@ -157,7 +157,7 @@ export function MyProfile() {
   linkedIn: currentData.linkedIn || '', 
   website: currentData.website || '',
   photoUrl: currentData.photoUrl || currentData.avatarUrl || '',
-  avatarUrl: currentData.avatarUrl || currentData.photoUrl || '', // <-- ADD THIS LINE
+  avatarUrl: currentData.avatarUrl || currentData.photoUrl || '',
   verificationStatus: currentData.verificationStatus || 'unverified',
   idNumber: officialId
 });
@@ -179,7 +179,7 @@ export function MyProfile() {
           emergencyPhone: currentData.crisisInfo?.emergencyPhone || ''
         });
 
-        // 🔥 AUTO-EDIT MAGIC 🔥
+        // Drop new users straight into edit mode when required fields are still missing.
         if (!currentData.bio || !currentData.city || !(currentData.crisisInfo?.bloodType)) {
             setIsEditing(true);
         }
@@ -208,7 +208,7 @@ export function MyProfile() {
 
         const qSkills = query(collection(db, "userSkills"), where("userId", "==", user.uid));
         
-        if (unsubSkills) unsubSkills(); // Clean up previous listener to prevent memory leaks
+        if (unsubSkills) unsubSkills(); // detach the previous skills listener before attaching a new one
         
         unsubSkills = onSnapshot(qSkills, (skillSnap) => {
           const skillsList: any[] = [];
@@ -277,7 +277,7 @@ export function MyProfile() {
     }
   }, [user]);
 
-  // --- 5. HANDLERS ---
+  // --- Handlers ---
   const handleInputChange = (field: string, value: string) => setProfileData({ ...profileData, [field]: value });
   const handleCrisisChange = (field: string, value: any) => setCrisisInfo({ ...crisisInfo, [field]: value });
   const handleAvailChange = (field: string, value: any) => setAvailability({ ...availability, [field]: value });
@@ -370,7 +370,7 @@ export function MyProfile() {
   const handleSave = async () => {
     if (!user) return;
     
-    // Strict Full Completion Enforcement across all mandatory sections
+    // Re-validate completeness here in case this fires before isProfileComplete updates
     if (
       !profileData.fullName?.trim() || 
       !profileData.city?.trim() || 
@@ -516,7 +516,7 @@ export function MyProfile() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12 animate-in fade-in duration-300">
       
-      {/* COMPREHENSIVE PROFILE COMPLETION WARNING BANNER */}
+      {/* Profile completion warning banner */}
       {!isProfileComplete && (
         <div className="bg-rose-50 border border-rose-200 p-4 rounded-2xl flex items-center gap-4 shadow-sm animate-in slide-in-from-top-2">
           <div className="bg-rose-600 p-2.5 rounded-xl text-white"><ShieldAlert size={20} /></div>
@@ -529,7 +529,7 @@ export function MyProfile() {
         </div>
       )}
 
-      {/* THE HIGH-SECURITY VERIFICATION MODAL */}
+      {/* Identity verification modal */}
       {showVerifyModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-200 flex flex-col">

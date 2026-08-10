@@ -32,7 +32,7 @@ export default function ChatbotWidget({ userType }: Props) {
 
   const msg = userMessage.toLowerCase();
 
-  // ✨ 1. Greeting (بدون API)
+  // Simple greetings are answered locally without calling the AI API
   if (["hi", "hello", "hey"].includes(msg)) {
     setMessages(prev => [...prev, { text: userMessage, isUser: true }]);
     setInput("");
@@ -44,7 +44,7 @@ export default function ChatbotWidget({ userType }: Props) {
     return;
   }
 
-  // ✨ 2. سؤال معروف
+  // Same for this common question, no need to hit the AI API
   if (msg.includes("what is athar")) {
     setMessages(prev => [...prev, { text: userMessage, isUser: true }]);
     setInput("");
@@ -59,7 +59,6 @@ export default function ChatbotWidget({ userType }: Props) {
     return;
   }
 
-  // ✨ 3. AI + MEMORY
   const newMessages = [
     ...messages,
     { text: userMessage, isUser: true }
@@ -70,13 +69,13 @@ export default function ChatbotWidget({ userType }: Props) {
   setIsTyping(true);
 
   try {
-    // 🔥 نحول الرسائل لصيغة يفهمها AI
+    // Convert the message history into the role/content shape the AI API expects
     const formatted = newMessages.map(m => ({
       role: m.isUser ? "user" : "assistant",
       content: m.text
     }));
 
-    // 🔥 هنا الفرق (نرسل كل المحادثة مو بس رسالة)
+    // Send the whole conversation, not just the latest message, so the AI keeps context
     const botReply = await getAtharResponse(formatted, userType);
 
     setMessages(prev => [...prev, { text: botReply, isUser: false }]);

@@ -11,10 +11,10 @@ import { Hash, Send, Users,ShieldCheck, MessageSquare, ShieldAlert, Radio, Spark
 import { useUserProfile } from '../../hooks/useUserProfile';
 import { Badge } from '../ui/badge';
 
-// 🔥 FIX: db now comes from the single shared Firebase connection instead of
-// calling initializeApp() again in this file — the duplicate init throws
-// "Firebase App named '[DEFAULT]' already exists" with no error boundary
-// around it, which is almost certainly what caused the white screen.
+// db comes from the single shared Firebase connection rather than calling
+// initializeApp() again here — a duplicate init throws "Firebase App named
+// '[DEFAULT]' already exists" with no error boundary around it, which is
+// almost certainly what caused the white screen we used to see.
 import { db } from '../../lib/firebase';
 
 async function callGemini(model: string, message: string): Promise<string> {
@@ -32,7 +32,6 @@ async function callGemini(model: string, message: string): Promise<string> {
   return data.text;
 }
 
-// Helper for formatting time
 const timeAgo = (timestamp: number) => {
   if (!timestamp) return '';
   const seconds = Math.floor((Date.now() - timestamp) / 1000);
@@ -73,7 +72,6 @@ export function OrganizationMessages() {
     scrollToBottom();
   }, [messages]);
 
-  // --- 1. FETCH ORG'S MISSIONS & BUILD CHANNELS ---
   useEffect(() => {
     if (!user) return;
 
@@ -81,10 +79,13 @@ export function OrganizationMessages() {
     const qCrises = query(collection(db, "crises"), where("orgId", "==", user.uid));
     const qApps = query(collection(db, "applications"), where("orgId", "==", user.uid), where("status", "==", "accepted"));
 
-    
+
     let unsubCrises = () => {};
     let unsubApps = () => {};
 
+    // Nested rather than parallel subscriptions: channels combine opportunities,
+    // crises, and accepted applications into one list, so each level re-subscribes
+    // inside the previous snapshot's callback to always rebuild from current data.
     const unsubOpps = onSnapshot(qOpps, (oppsSnap) => {
         unsubCrises();
         unsubCrises = onSnapshot(qCrises, (crisesSnap) => {
@@ -172,7 +173,6 @@ export function OrganizationMessages() {
   }, [user]);
 
 
-  // --- 2. FETCH MESSAGES ---
   useEffect(() => {
     if (!activeChannel) return;
 
@@ -194,7 +194,6 @@ export function OrganizationMessages() {
     return () => unsubMsgs();
   }, [activeChannel]);
 
-  // --- 3. SEND MESSAGE AS ORG ---
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim() || !activeChannel || !user) return;
@@ -243,7 +242,6 @@ export function OrganizationMessages() {
     return 'Recently';
   };
 
-  // --- 🤖 4. THE AI TRIAGE ENGINE 🤖 ---
   const runAITriage = async () => {
     if (messages.length === 0) return alert("Not enough data to analyze.");
     setIsAnalyzing(true);
@@ -281,7 +279,6 @@ export function OrganizationMessages() {
     setIsAnalyzing(false);
   };
 
-  // --- 5. SAVE AI REPORT TO OFFICIAL CRISIS DOC ---
   const saveReportToDatabase = async () => {
     if (!activeChannel || !aiReport) return;
     setIsSavingReport(true);
@@ -437,9 +434,9 @@ export function OrganizationMessages() {
                       <Avatar className={`h-9 w-9 shrink-0 shadow-sm border-2 ${isMe ? 'border-[#043E52]' : 'border-[#1C9290]'}`}>
                         <AvatarImage src={msg.avatar} className="object-cover" />
                         <AvatarFallback className={`text-xs font-bold ${isMe ? 'bg-[#043E52] text-white' : 'bg-[#1C9290] text-white'}`}>
-                          {/* 🔥 FIX: added ?. and a fallback — this used to throw a
-                              TypeError and blank the whole panel if any message
-                              document was ever missing senderName. */}
+                          {/* Optional chaining plus a fallback: a message document
+                              missing senderName used to throw a TypeError here and
+                              blank the whole panel. */}
                           {msg.senderName?.charAt(0).toUpperCase() || 'U'}
                         </AvatarFallback>
                       </Avatar>

@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { ResponsiveContainer, AreaChart, Area, XAxis, Tooltip, CartesianGrid } from 'recharts';
-// Change this line:
+
 export function OverviewDashboard({ onNavigate }: { onNavigate?: (section: string) => void }) {
 
   const { user } = useUserProfile();
@@ -18,14 +18,14 @@ export function OverviewDashboard({ onNavigate }: { onNavigate?: (section: strin
   const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]);
   const [suggestedPaths, setSuggestedPaths] = useState<any[]>([]);
 
-  // --- 🔥 AVR DB MAPPING based on your actual 4 steps 🔥 ---
-  const isAvrReady = user?.isAVRMember === true; 
-  
+  // Readiness fields below correspond to the four AVR steps shown on the Crisis Response page.
+  const isAvrReady = user?.isAVRMember === true;
+
   // Step 1
   const isVerified = user?.verificationStatus === 'verified';
-  // Step 2 (Using a placeholder boolean, adjust to your actual DB field)
-  const isProtocolCertified = user?.protocolCertified === true; 
-  // Step 3 (Adjust to your actual DB field for simulator scores)
+  // Step 2 (placeholder field until protocol certification is tracked properly in Firestore)
+  const isProtocolCertified = user?.protocolCertified === true;
+  // Step 3 (placeholder field until simulator scores are tracked properly in Firestore)
   const simulationsMastered = user?.simulationsMastered || 0;
   const hasPassedSims = simulationsMastered >= 2;
   // Step 4
@@ -125,7 +125,7 @@ export function OverviewDashboard({ onNavigate }: { onNavigate?: (section: strin
           </CardContent>
         </Card>
       ) : (
-        // INCOMPLETE AVR STATE (The "Unlock" Call to Action with REAL Steps)
+        // Locked AVR state: unlock CTA plus the four real readiness requirements
         <Card className="border-2 border-dashed border-slate-200 bg-slate-50 relative rounded-[2rem] overflow-hidden">
           <CardContent className="p-8">
             <div className="flex flex-col md:flex-row items-center justify-between gap-6">
@@ -140,15 +140,15 @@ export function OverviewDashboard({ onNavigate }: { onNavigate?: (section: strin
                   </p>
                 </div>
               </div>
-              <Button 
-  onClick={() => onNavigate?.('crisis-response')} // 🔥 ADD THIS LINE
+              <Button
+  onClick={() => onNavigate?.('crisis-response')}
   className="shrink-0 bg-[#0C4A54] hover:bg-[#1C9290] text-white rounded-xl font-black text-[10px] uppercase tracking-widest px-6 h-12 transition-colors"
 >
   View Requirements <ChevronRight size={16} className="ml-2" />
 </Button>
             </div>
             
-            {/* The Actual 4 Steps from your Crisis Response page */}
+            {/* Mirrors the four AVR readiness steps from the Crisis Response page */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-6 border-t border-slate-200/60">
               {/* Step 1: KYC */}
               <div className="flex flex-col gap-1">

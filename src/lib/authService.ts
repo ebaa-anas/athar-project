@@ -3,7 +3,6 @@ import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "fire
 import { doc, setDoc, updateDoc, collection, addDoc, serverTimestamp, getDoc } from "firebase/firestore";
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 
-// --- 1. VOLUNTEER SIGN UP (UPDATED WITH PHONE) ---
 export const signUpVolunteer = async (email: string, pass: string, fullName: string, phone: string) => {
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
@@ -13,7 +12,7 @@ export const signUpVolunteer = async (email: string, pass: string, fullName: str
       uid: user.uid,
       name: fullName,
       email: email,
-      phone: phone, // FIXED: Added phone to database payload
+      phone: phone,
       role: "volunteer",
       createdAt: new Date().toISOString(),
       impactScore: 0,
@@ -30,15 +29,12 @@ export const signUpVolunteer = async (email: string, pass: string, fullName: str
   }
 };
 
-// --- 2. ORGANIZATION SIGN UP (UPDATED FOR CORRECT 3-TIER WORKFLOW) ---
-// FIXED: Added phone and taxId parameters
 export const signUpOrganization = async (email: string, pass: string, orgName: string, orgTier: string, phone: string, taxId: string) => {
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
     const user = userCredential.user;
 
-    // 🔥 DYNAMIC TIER LOGIC FIXED 🔥
-    let initialStatus = "unverified"; 
+    let initialStatus = "unverified";
     let isVerified = false;
 
     if (orgTier === "tier1") {
@@ -56,8 +52,8 @@ export const signUpOrganization = async (email: string, pass: string, orgName: s
       email: email,
       role: "organization", 
       tier: orgTier, 
-      phone: phone,              // FIXED: Added phone to database payload
-      registrationId: taxId,     // FIXED: Added taxId to database payload
+      phone: phone,
+      registrationId: taxId,
       createdAt: new Date().toISOString(),
       bio: "",
       location: "",
@@ -84,7 +80,6 @@ export const signUpOrganization = async (email: string, pass: string, orgName: s
   }
 };
 
-// --- 4. LOGIN (CHECKS ROLE FROM THE NAMETAG) ---
 export const loginUser = async (email: string, pass: string) => {
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, pass);
@@ -105,7 +100,6 @@ export const loginUser = async (email: string, pass: string) => {
   }
 };
 
-// --- 5. UPDATE VOLUNTEER PROFILE ---
 export const updateVolunteerProfile = async (uid: string, updatedData: any) => {
   try {
     const userRef = doc(db, "users", uid);
@@ -119,7 +113,6 @@ export const updateVolunteerProfile = async (uid: string, updatedData: any) => {
   }
 };
 
-// --- 6. UPDATE ORGANIZATION PROFILE ---
 export const updateOrganizationProfile = async (uid: string, updatedData: any) => {
   try {
     const orgRef = doc(db, "organizations", uid);
@@ -144,7 +137,6 @@ export const updateOrganizationProfile = async (uid: string, updatedData: any) =
   }
 };
 
-// --- 7. VERIFICATION REQUEST ---
 export const submitVerificationRequest = async (orgId: string, formData: any) => {
   try {
     await addDoc(collection(db, "verificationRequests"), {
@@ -165,7 +157,6 @@ export const submitVerificationRequest = async (orgId: string, formData: any) =>
   }
 };
 
-// --- 8. GOOGLE SOCIAL LOGIN ---
 export const loginWithGoogle = async (expectedRole: 'volunteer' | 'organization') => {
   try {
     const provider = new GoogleAuthProvider();
@@ -204,7 +195,9 @@ export const loginWithGoogle = async (expectedRole: 'volunteer' | 'organization'
     } else {
       const actualRole = userDoc.data().role;
       if (actualRole !== expectedRole) {
-        await auth.signOut(); 
+        // Google auth already succeeded at this point, so sign out again since the account's
+        // actual role doesn't match the role the user selected on this page
+        await auth.signOut();
         return { success: false, error: `Account exists, but is registered as a ${actualRole}.` };
       }
       return { success: true, role: actualRole };

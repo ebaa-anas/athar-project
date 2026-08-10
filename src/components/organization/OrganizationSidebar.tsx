@@ -20,7 +20,6 @@ import { Badge } from '../ui/badge';
 import atharLogo from "../../assets/athar-logo.png";
 import { useUserProfile } from '../../hooks/useUserProfile';
 
-// 🔥 IMPORT FIREBASE FUNCTIONS 🔥
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from "../../lib/firebase"; 
 
@@ -37,7 +36,6 @@ interface MenuItem {
   verifiedOnly?: boolean;
 }
 
-// Removed the static 'badge' property from the base array
 const menuItems: MenuItem[] = [
   { id: 'profile', label: 'Organization Profile', icon: Building2 },
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
@@ -59,16 +57,13 @@ export function OrganizationSidebar({
 }: SidebarProps) {
   const { user } = useUserProfile();
   
-  // 🔥 STATE FOR DYNAMIC BADGES 🔥
   const [pendingAppsCount, setPendingAppsCount] = useState<number>(0);
   const [unreadNotifsCount, setUnreadNotifsCount] = useState<number>(0);
 
-  // 🔥 REAL-TIME FIREBASE LISTENERS 🔥
   useEffect(() => {
-    // Wait until we have the user's ID before querying
     if (!user?.uid) return;
 
-    // 1. Listen for Pending Applications
+    // Pending applications
     const appsRef = collection(db, 'applications');
     const appsQuery = query(
       appsRef, 
@@ -80,7 +75,7 @@ export function OrganizationSidebar({
       setPendingAppsCount(snapshot.size);
     });
 
-    // 2. Listen for Unread Notifications
+    // Unread notifications
     const notifsRef = collection(db, 'notifications');
     const notifsQuery = query(
       notifsRef, 
@@ -92,14 +87,13 @@ export function OrganizationSidebar({
       setUnreadNotifsCount(snapshot.size);
     });
 
-    // Cleanup listeners when component unmounts
     return () => {
       unsubscribeApps();
       unsubscribeNotifs();
     };
   }, [user?.uid]);
 
-  // Security Gate: Filter tabs based on Tier
+  // Crisis management is only visible to tier3 orgs
   const visibleMenuItems = menuItems.filter((item) => {
     if (item.id === 'crisis-management') {
       return user?.tier === 'tier3';
@@ -112,7 +106,7 @@ export function OrganizationSidebar({
   return (
     <aside className="fixed inset-y-0 left-0 w-64 h-screen bg-[#043E52] flex flex-col shadow-2xl z-50 font-sans">
       
-      {/* --- FIXED UPPER SECTION --- */}
+      {/* Fixed upper section */}
       <div className="flex-none flex flex-col">
         <div className="px-6 pt-8 pb-4">
           <div className="flex items-center gap-3">
@@ -153,7 +147,7 @@ export function OrganizationSidebar({
         </div>
       </div>
 
-      {/* --- SCROLLABLE MIDDLE SECTION --- */}
+      {/* Scrollable middle section */}
       <div className="flex-1 overflow-y-auto px-3 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         <nav className="space-y-1 py-2">
           {visibleMenuItems.map((item) => {
@@ -161,7 +155,6 @@ export function OrganizationSidebar({
             const isActive = activeSection === item.id;
             const isCrisis = item.id === 'crisis-management';
 
-            // 🔥 DYNAMICALLY ASSIGN BADGE VALUES HERE 🔥
             let displayBadge = null;
             if (item.id === 'applications' && pendingAppsCount > 0) {
               displayBadge = pendingAppsCount;
@@ -189,7 +182,6 @@ export function OrganizationSidebar({
                 </div>
                 
                 <div className="flex items-center gap-2">
-                    {/* Render badge only if displayBadge has a value */}
                     {displayBadge !== null && (
                     <Badge className={`px-1.5 h-5 text-[10px] min-w-[20px] justify-center border-none ${
                         isActive 
@@ -207,7 +199,7 @@ export function OrganizationSidebar({
         </nav>
       </div>
 
-      {/* --- FIXED BOTTOM SECTION --- */}
+      {/* Fixed bottom section */}
       <div className="flex-none p-4 border-t border-white/5 bg-[#033040]/30">
         <Button
           variant="ghost"

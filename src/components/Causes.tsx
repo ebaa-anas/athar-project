@@ -7,12 +7,11 @@ import { Progress } from './ui/progress';
 import { Input } from './ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 
-// DATABASE CONNECTION
-import { db, auth } from '../lib/firebase'; 
+import { db, auth } from '../lib/firebase';
 import { collection, onSnapshot, doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
-import { useUserProfile } from '../hooks/useUserProfile'; 
+import { useUserProfile } from '../hooks/useUserProfile';
 
-// --- 🔥 FIXED GLOBAL CAUSES (ZERO DB READS, INSTANT LOAD) 🔥 ---
+// Causes are a fixed catalog rather than a Firestore collection, so the page renders instantly with zero reads.
 const GLOBAL_CAUSES = [
   {
     id: "cause_1",
@@ -212,7 +211,7 @@ export function Causes() {
   return (
     <div className="space-y-8 relative pb-10 animate-in fade-in duration-300 font-sans">
       
-      {/* SECTION 1: HEADER & SEARCH */}
+      {/* Header & Search */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-4 border-b pb-6 border-slate-100">
         <div>
           <h1 className="text-[#0C4A54] text-2xl font-bold">Explore Causes</h1>
@@ -234,7 +233,7 @@ export function Causes() {
         </div>
       </div>
 
-      {/* SECTION 2: THEMED ANALYTICS BAR */}
+      {/* Analytics Bar */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="bg-[#0C4A54] text-white border-none shadow-md rounded-2xl overflow-hidden relative">
           <div className="absolute -right-4 -top-4 opacity-10"><Clock className="w-32 h-32" /></div>
@@ -270,7 +269,7 @@ export function Causes() {
         </Card>
       </div>
 
-      {/* SECTION 3: MY ACTIVE SUPPORT */}
+      {/* My Active Support */}
       <Card className="bg-slate-50 border-dashed border-2 border-slate-200 rounded-2xl shadow-sm">
         <CardHeader>
           <CardTitle className="text-lg font-bold text-[#0C4A54]">My Supported Causes</CardTitle>
@@ -297,7 +296,7 @@ export function Causes() {
         </CardContent>
       </Card>
 
-      {/* SECTION 4: GLOBAL CAUSES GRID */}
+      {/* Global Causes Grid */}
       <div>
         <h2 className="text-xl font-bold text-[#0C4A54] mb-6 flex items-center gap-3">
           <div className="h-2 w-2 bg-orange-500 rounded-full" />

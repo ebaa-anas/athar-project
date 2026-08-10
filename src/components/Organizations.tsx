@@ -58,7 +58,7 @@ export function Organizations() {
 
   const [isApplying, setIsApplying] = useState(false);
 
-  // --- 🔥 GLOBAL VERIFICATION & FULL PROFILE COMPLETION GATEWAY 🔥 ---
+  // Gatekeepers used throughout this page to lock applications behind verification and a complete profile.
   const isVerified = user?.verificationStatus === 'verified' || user?.verified === true;
   const isAvrMember = user?.isAvrMember === true || user?.avrStatus === 'active' || user?.tier === 'tier3';
   
@@ -76,7 +76,7 @@ export function Organizations() {
     (userData?.languages && userData?.languages.length > 0)
   );
 
-  // --- 1. FETCH DATA ---
+  // --- Fetch data ---
   useEffect(() => {
     const qOrgs = query(collection(db, "organizations"));
     const unsubOrgs = onSnapshot(qOrgs, (snapshot) => {
@@ -94,7 +94,7 @@ export function Organizations() {
     return () => unsubOrgs();
   }, [user]);
 
-  // --- 2. SUBMIT TIER-SPECIFIC APPLICATION ---
+  // --- Submit tier-specific application ---
   const handleJoinSubmit = async () => {
     if (!user) return alert("Must be logged in.");
     if (!isProfileComplete) return alert("Action Blocked: You must fully complete all mandatory profile sections before applying to any organization.");
@@ -145,7 +145,7 @@ export function Organizations() {
     setIsApplying(false);
   };
 
-  // --- 3. FILTERING ENGINE ---
+  // --- Filtering ---
   const filteredOrgs = organizations.filter(org => {
     const matchesSearch = org.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           org.description?.toLowerCase().includes(searchTerm.toLowerCase());

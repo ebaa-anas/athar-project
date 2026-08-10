@@ -16,7 +16,7 @@ import {
   CheckCircle, MessageSquare, TrendingUp, Clock, Check, Trash2, Info
 } from 'lucide-react';
 
-// --- FIREBASE CONFIG ---
+// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyDRSETgWx1F3RX3_KAzgceyYBJKfpheRQk",
   authDomain: "athar-project-aa74e.firebaseapp.com",
@@ -64,12 +64,10 @@ function getNotificationStyling(type: string) {
 export function OrganizationNotifications() {
   const [notifications, setNotifications] = useState<any[]>([]);
 
-  // --- 1. FETCH NOTIFICATIONS ---
   useEffect(() => {
     const unsubscribeAuth = auth.onAuthStateChanged((user) => {
       if (user) {
-        // Query notifications meant for THIS organization
-        // Note: For organizations, we query by 'orgId'. (Volunteers query by 'userId')
+        // Organizations are queried by 'orgId'; volunteers query the same collection by 'userId'
         const q = query(collection(db, "notifications"), where("orgId", "==", user.uid));
         
         const unsubscribeData = onSnapshot(q, (snapshot) => {
@@ -102,7 +100,6 @@ export function OrganizationNotifications() {
     return () => unsubscribeAuth();
   }, []);
 
-  // --- 2. ACTIONS ---
   const markAsRead = async (id: string) => {
     try { await updateDoc(doc(db, "notifications", id), { read: true }); } 
     catch (error) { console.error("Error updating notification:", error); }
@@ -121,7 +118,6 @@ export function OrganizationNotifications() {
     catch (error) { console.error("Error deleting notification:", error); }
   };
 
-  // --- 3. COMPUTED STATS ---
   const unreadCount = notifications.filter(n => !n.read).length;
 
   // Custom Stat Card Component
@@ -150,12 +146,10 @@ export function OrganizationNotifications() {
           : 'bg-[#043E52]/[0.02] border-[#043E52]/20 shadow-sm border-l-4 border-l-[#043E52]'
         }`}
       >
-        {/* Icon */}
         <div className={`shrink-0 h-12 w-12 rounded-xl flex items-center justify-center ${notification.bg}`}>
           <Icon className={`h-6 w-6 ${notification.color}`} />
         </div>
 
-        {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -198,7 +192,7 @@ export function OrganizationNotifications() {
   return (
     <div className="space-y-8 pb-10">
       
-      {/* 1. Header */}
+      {/* Header */}
       <div className="flex items-center justify-between border-b border-slate-200 pb-6">
         <div>
           <h1 className="text-3xl font-bold text-[#043E52]">Notifications</h1>
@@ -219,7 +213,7 @@ export function OrganizationNotifications() {
         </div>
       </div>
 
-      {/* 2. High-Impact Stats */}
+      {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <StatCard 
           title="All Notifications" 
@@ -255,7 +249,7 @@ export function OrganizationNotifications() {
         />
       </div>
 
-      {/* 3. Main Content Tabs */}
+      {/* Main content tabs */}
       <Tabs defaultValue="all" className="w-full">
         <TabsList className="bg-slate-100 p-1 rounded-xl w-full md:w-auto flex justify-start mb-6 overflow-x-auto">
           <TabsTrigger value="all" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#043E52] data-[state=active]:shadow-sm px-4 font-bold">All</TabsTrigger>
@@ -265,7 +259,7 @@ export function OrganizationNotifications() {
           <TabsTrigger value="settings" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-slate-600 data-[state=active]:shadow-sm px-4 font-bold">Preferences</TabsTrigger>
         </TabsList>
 
-        {/* List Sections */}
+        {/* List sections */}
         {['all', 'unread', 'applications', 'volunteers'].map((tab) => (
           <TabsContent key={tab} value={tab} className="animate-in fade-in-50 slide-in-from-bottom-2 duration-500">
             <Card className="border-slate-200 shadow-sm">
@@ -299,7 +293,7 @@ export function OrganizationNotifications() {
           </TabsContent>
         ))}
 
-        {/* Settings Tab */}
+        {/* Settings tab */}
         <TabsContent value="settings" className="animate-in fade-in-50 slide-in-from-bottom-2 duration-500">
           <Card className="border-slate-200 shadow-sm">
             <CardHeader className="border-b border-slate-100 pb-4">
@@ -307,7 +301,6 @@ export function OrganizationNotifications() {
             </CardHeader>
             <CardContent className="space-y-8 pt-6">
               
-              {/* Group 1 */}
               <div>
                 <h4 className="text-sm font-bold text-[#043E52] uppercase tracking-wide mb-4">Email Alerts</h4>
                 <div className="space-y-4">
@@ -327,7 +320,6 @@ export function OrganizationNotifications() {
                 </div>
               </div>
 
-              {/* Group 2 */}
               <div>
                 <h4 className="text-sm font-bold text-[#E16A3D] uppercase tracking-wide mb-4">Urgent Alerts</h4>
                 <div className="space-y-4">

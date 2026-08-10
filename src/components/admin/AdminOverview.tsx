@@ -24,7 +24,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// 🔥 GEMINI PROXY HELPER 🔥
+// Calls our Vercel proxy so the Gemini API key never reaches the client
 async function callGemini(model: string, message: string): Promise<string> {
   const response = await fetch("/api/gemini", {
     method: "POST",
@@ -49,9 +49,9 @@ export function AdminOverview() {
   const [pendingCounts, setPendingCounts] = useState({ verifications: 0, reports: 0 });
   const [recentActivities, setRecentActivities] = useState<any[]>([]);
 
-  // --- 1. FETCH REAL-TIME MASTER DATA ---
+  // Fetch real-time master data
   useEffect(() => {
-    // We use a unified state aggregator to combine data from multiple collections
+    // Aggregates counts across multiple collection listeners into one combined state update
     let currentVols = 0;
     let currentOrgs = 0;
     let currentPendingOrgs = 0;
@@ -65,7 +65,7 @@ export function AdminOverview() {
       return ts.toDate ? ts.toDate() : new Date(ts);
     };
 
-    // Listen to Users & Organizations
+    // Organization records can also appear in the "users" collection, so we split by role here
     const unsubUsers = onSnapshot(collection(db, "users"), (snapshot) => {
       currentVols = 0;
       currentOrgs = 0;
@@ -98,19 +98,17 @@ export function AdminOverview() {
 
       setMetrics(prev => ({ ...prev, users: currentVols + currentOrgs + 1, vols: currentVols, orgs: currentOrgs }));
       setPendingCounts(prev => ({ ...prev, verifications: currentPendingOrgs }));
-      
-      // Update Activity Feed
+
       latestEvents = [...latestEvents.filter(e => !e.action.includes('signed up') && !e.action.includes('organization applied')), ...userEvents];
       updateActivityFeed(latestEvents);
     });
 
-    // Listen to Applications (For Total Hours)
+    // Approved applications double as our proxy for hours volunteered, since we don't track actual logged hours
     const unsubApps = onSnapshot(query(collection(db, "applications"), where("status", "==", "accepted")), (snapshot) => {
-      currentHours = snapshot.docs.length * 4; // 4 hours per accepted mission average
+      currentHours = snapshot.docs.length * 4; // assume an average of 4 hours per accepted mission
       setMetrics(prev => ({ ...prev, hours: currentHours }));
     });
 
-    // Listen to Content Reports
     const unsubReports = onSnapshot(collection(db, "reports"), (snapshot) => {
       currentPendingReports = 0;
       const reportEvents: any[] = [];
@@ -129,8 +127,7 @@ export function AdminOverview() {
       });
 
       setPendingCounts(prev => ({ ...prev, reports: currentPendingReports }));
-      
-      // Update Activity Feed
+
       latestEvents = [...latestEvents.filter(e => !e.action.includes('flagged')), ...reportEvents];
       updateActivityFeed(latestEvents);
       setLoading(false);
@@ -141,7 +138,6 @@ export function AdminOverview() {
         .sort((a, b) => b.rawDate.getTime() - a.rawDate.getTime())
         .slice(0, 5)
         .map(e => {
-          // Calculate 'time ago'
           const diffMins = Math.floor((new Date().getTime() - e.rawDate.getTime()) / 60000);
           let timeStr = 'Just now';
           if (diffMins > 0 && diffMins < 60) timeStr = `${diffMins} minutes ago`;
@@ -157,7 +153,7 @@ export function AdminOverview() {
   }, []);
 
 
-  // --- 2. AI REPORT GENERATOR 🔥 ---
+  // AI report generator
   const handleGenerateReport = async () => {
     setIsGenerating(true);
     try {
@@ -182,7 +178,7 @@ export function AdminOverview() {
 
       const reportHTML = await callGemini("gemini-flash-latest", prompt);
 
-      // Create a hidden iframe for PDF Printing
+      // Render the report in a hidden iframe so we can trigger the browser's print-to-PDF dialog
       const iframe = document.createElement('iframe');
       iframe.style.display = 'none';
       document.body.appendChild(iframe);
@@ -265,8 +261,7 @@ export function AdminOverview() {
           <p className="text-slate-500">Monitor and manage the entire Athar ecosystem</p>
         </div>
         <div className="flex gap-3">
-          {/* 🔥 AI REPORT BUTTON 🔥 */}
-          <Button 
+          <Button
             onClick={handleGenerateReport} 
             disabled={isGenerating}
             className="bg-[#043E52] hover:bg-[#033040] text-white shadow-md h-11 px-6 font-bold uppercase tracking-wider text-xs"

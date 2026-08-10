@@ -58,13 +58,12 @@ export function Certificates() {
   const [loading, setLoading] = useState(true);
   const [isGeneratingCert, setIsGeneratingCert] = useState<string | null>(null);
 
-  // --- 1. REAL-TIME DIRECT DB SYNC ---
+  // --- Real-time Firestore sync ---
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       if (user) {
         setCurrentUser(user);
-        
-        // Listen to Courses
+
         const qCourses = query(collection(db, "userCourses"), where("userId", "==", user.uid));
         const unsubCourses = onSnapshot(qCourses, (snapshot) => {
           const coursesList: any[] = [];
@@ -94,7 +93,6 @@ export function Certificates() {
             }
           });
 
-          // Listen to Skills
           const qSkills = query(collection(db, "userSkills"), where("userId", "==", user.uid));
           const unsubSkills = onSnapshot(qSkills, (skillSnap) => {
             const skillsList: any[] = [];
@@ -115,7 +113,6 @@ export function Certificates() {
               }
             });
 
-            // Merge everything and sort by newest!
             const combinedCerts = [...coursesList, ...skillsList].sort((a, b) => b.timestamp - a.timestamp);
             setEarnedCerts(combinedCerts);
             setPendingCourses(pendingList);
@@ -137,7 +134,7 @@ export function Certificates() {
     return () => unsubscribeAuth();
   }, []);
 
-  // --- 2. PDF GENERATOR ENGINE ---
+  // --- Certificate PDF generation ---
   const handleDownloadCertificate = (certId: string, title: string, type: string, dateAwarded: string) => {
     setIsGeneratingCert(certId);
     
@@ -338,7 +335,6 @@ export function Certificates() {
           <TabsTrigger value="achievements" className="rounded-md data-[state=active]:bg-white data-[state=active]:text-[#016A6D] data-[state=active]:shadow-sm px-5 py-2 font-bold text-xs uppercase tracking-wider">Milestones</TabsTrigger>
         </TabsList>
 
-        {/* 🔥 DYNAMIC EARNED CERTIFICATES 🔥 */}
         <TabsContent value="earned" className="mt-6">
           {earnedCerts.length === 0 ? (
              <div className="text-center py-16 bg-slate-50 rounded-2xl border border-slate-200 border-dashed">
@@ -394,7 +390,6 @@ export function Certificates() {
           )}
         </TabsContent>
 
-        {/* 🔥 DYNAMIC IN PROGRESS 🔥 */}
         <TabsContent value="in-progress" className="mt-6">
           {pendingCourses.length === 0 ? (
              <div className="text-center py-16 bg-slate-50 rounded-2xl border border-slate-200 border-dashed">

@@ -25,7 +25,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// Safe Date Formatter
 const formatDate = (timestamp: any) => {
   try {
     if (!timestamp) return 'Ongoing';
@@ -57,7 +56,6 @@ export function MyTasks() {
   const [selectedTask, setSelectedTask] = useState<any | null>(null);
   const [statusFilter, setStatusFilter] = useState<'all' | 'actionable' | 'verifying' | 'completed'>('actionable');
 
-  // 🔥 ADDED orgId TO THE PROOF MODAL STATE 🔥
   const [proofModal, setProofModal] = useState<{isOpen: boolean, id: string, type: 'normal'|'crisis', title: string, orgId: string} | null>(null);
   const [proofNote, setProofNote] = useState('');
   const [proofLink, setProofLink] = useState('');
@@ -102,14 +100,12 @@ export function MyTasks() {
   const totalVerifying = applications.filter(a => String(a.status).toLowerCase() === 'pending_verification').length + crisisResponses.filter(r => String(r.status).toLowerCase() === 'pending_verification').length;
   const totalCompleted = applications.filter(a => String(a.status).toLowerCase() === 'completed').length + crisisResponses.filter(r => String(r.status).toLowerCase() === 'completed').length;
 
-  // --- 3. SUBMIT PROOF & FIRE NOTIFICATION ---
   const handleSubmitVerification = async () => {
     if (!proofModal || !user) return;
     setIsSubmittingProof(true);
     try {
       const collectionName = proofModal.type === 'normal' ? 'applications' : 'crisisResponses';
-      
-      // 1. Update Application Status
+
       await updateDoc(doc(db, collectionName, proofModal.id), {
         status: 'pending_verification',
         proofNote: proofNote,
@@ -117,16 +113,15 @@ export function MyTasks() {
         submittedAt: serverTimestamp()
       });
 
-      // 2. 🔥 SEND REAL-TIME NOTIFICATION TO ORGANIZATION 🔥
       if (proofModal.orgId) {
         await addDoc(collection(db, "notifications"), {
-          orgId: proofModal.orgId, 
+          orgId: proofModal.orgId,
           title: 'Action Required: Verification Request',
           message: `${user.name || 'A volunteer'} has submitted proof of completion for "${proofModal.title}". Please review it in your Verification Desk.`,
-          type: 'alert', // Will show up with the Orange Alert icon
+          type: 'alert',
           read: false,
           createdAt: serverTimestamp(),
-          link: '/applications' // Points them to the right page
+          link: '/applications'
         });
       }
 
@@ -147,7 +142,7 @@ export function MyTasks() {
     const org = isCrisis ? (task.crisisData?.organization || 'Command Center') : (matchedOrg?.name || task.orgName || task.organizationName || task.organization || 'Organization Unknown');
     const descriptionSnippet = isCrisis ? task.crisisData?.description : (task.description || `Cover Letter: "${task.coverLetter || 'No cover letter provided.'}"`);
     
-    // We need the orgId to send the notification!
+    // orgId is required to notify the organization once verification is submitted
     const targetOrgId = isCrisis ? task.crisisData?.orgId : task.orgId;
 
     if (task.isCompleted) {
@@ -158,7 +153,7 @@ export function MyTasks() {
             <h4 className="text-gray-900 font-bold">{title}</h4>
             <div className="flex items-center gap-3 mt-1 text-sm font-medium text-gray-500">
               <span className={isCrisis ? 'text-red-700' : 'text-[#1C9290]'}>{org}</span><span>•</span>
-              {/* Fix for the "Ongoing" issue you mentioned earlier */}
+              {/* Falls back through verifiedAt/completedAt/submittedAt since older records don't always have all three fields */}
               <span>Verified on {formatDate(task.verifiedAt || task.completedAt || task.submittedAt)}</span>
               {isCrisis && <Badge className="bg-red-100 text-red-700 border-none h-5 px-1.5 text-[10px]">AVR</Badge>}
             </div>

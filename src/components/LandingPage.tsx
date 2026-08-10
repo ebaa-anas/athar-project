@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import atharLogo from "../assets/athar-logo.png";
 
-// --- NEW: Animated Counter Component ---
+// --- Animated Counter Component ---
 const AnimatedCounter = ({ end, duration = 2000, suffix = "" }: { end: number, duration?: number, suffix?: string }) => {
   const [count, setCount] = useState(0);
 
@@ -211,7 +211,7 @@ export function LandingPage({
                 </Button>
             </div>
 
-            {/* INTEGRATED ANIMATED STATS (Inside Hero, Transparent) */}
+            {/* Animated stats live inline within the hero rather than a separate section */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-16 border-t border-white/10 pt-8 max-w-3xl mx-auto">
                {[
                    { value: 3247, label: "AVR Members", suffix: "" },
@@ -220,7 +220,6 @@ export function LandingPage({
                    { value: 94, label: "Match Accuracy", suffix: "%" }
                ].map((stat, i) => (
                    <div key={i} className="flex flex-col items-center">
-                       {/* Sleek, thin font for numbers with Animation */}
                        <p className="text-3xl md:text-4xl font-light text-white tracking-tight mb-1">
                          <AnimatedCounter end={stat.value} suffix={stat.suffix} />
                        </p>

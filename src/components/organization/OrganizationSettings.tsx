@@ -23,7 +23,6 @@ import {
 } from 'lucide-react';
 import { useUserProfile } from '../../hooks/useUserProfile';
 
-// --- FIREBASE CONFIG ---
 const firebaseConfig = {
   apiKey: "AIzaSyDRSETgWx1F3RX3_KAzgceyYBJKfpheRQk",
   authDomain: "athar-project-aa74e.firebaseapp.com",
@@ -40,12 +39,10 @@ const auth = getAuth(app);
 export function OrganizationSettings() {
   const { user } = useUserProfile();
   
-  // --- UI STATES ---
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // --- FORM STATES ---
   const [orgData, setOrgData] = useState({
     name: "", email: "", phone: "", website: ""
   });
@@ -59,14 +56,12 @@ export function OrganizationSettings() {
     newPassword: "", confirmPassword: ""
   });
 
-  // --- TEAM STATES ---
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [inviteData, setInviteData] = useState({ name: "", email: "", role: "Coordinator" });
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editData, setEditData] = useState<any | null>(null);
 
-  // --- 1. FETCH DATA (ORG + TEAM) ---
   useEffect(() => {
     if (!user?.uid) return;
 
@@ -98,7 +93,6 @@ export function OrganizationSettings() {
       }
     };
 
-    // Live listener for Team Members subcollection
     const teamRef = collection(db, "organizations", user.uid, "team");
     const unsubTeam = onSnapshot(teamRef, (snapshot) => {
       const fetchedTeam = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -110,7 +104,6 @@ export function OrganizationSettings() {
     return () => unsubTeam();
   }, [user]);
 
-  // --- 2. HANDLERS: GENERAL & PREFERENCES ---
   const handleUpdateProfile = async () => {
     if (!user?.uid) return;
     setIsSaving(true);
@@ -128,7 +121,6 @@ export function OrganizationSettings() {
     setIsSaving(false);
   };
 
-  // --- 3. HANDLERS: SECURITY ---
   const handleUpdatePassword = async () => {
     if (!securityData.newPassword || !securityData.confirmPassword) return alert("Please fill in both password fields.");
     if (securityData.newPassword !== securityData.confirmPassword) return alert("Passwords do not match!");
@@ -158,7 +150,6 @@ export function OrganizationSettings() {
     }
   };
 
-  // --- 4. HANDLERS: TEAM MANAGEMENT ---
   const handleInviteStaff = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inviteData.name || !inviteData.email) return alert("Name and Email are required.");
@@ -208,9 +199,8 @@ export function OrganizationSettings() {
     }
   };
 
-  // --- 5. HANDLERS: BILLING ---
+  // Stubbed out: a real implementation would trigger a PDF blob download.
   const handleDownloadInvoice = (invoiceId: string) => {
-    // In a real app, this triggers a PDF blob download. We simulate it here:
     alert(`Generating PDF for ${invoiceId}... The download will begin shortly.`);
   };
 
@@ -340,7 +330,7 @@ export function OrganizationSettings() {
                   <CardDescription className="text-xs font-semibold mt-1">Manage personnel access levels</CardDescription>
                 </div>
                 
-                {/* 🚀 INVITE MODAL */}
+                {/* Invite modal */}
                 <Dialog open={isInviteModalOpen} onOpenChange={setIsInviteModalOpen}>
                   <DialogTrigger asChild>
                     <Button className="bg-[#1C9290] hover:bg-[#157a78] text-white shadow-md font-bold h-10 px-5 text-[10px] uppercase tracking-widest">
@@ -399,7 +389,7 @@ export function OrganizationSettings() {
                       <Badge variant="outline" className="border-slate-200 text-slate-600 text-[10px] uppercase tracking-wider">{member.role}</Badge>
                       <div className="flex gap-2 ml-auto sm:ml-0">
                         
-                        {/* 🚀 EDIT ROLE MODAL */}
+                        {/* Edit role modal */}
                         <Dialog open={isEditModalOpen && editData?.id === member.id} onOpenChange={(open) => { setIsEditModalOpen(open); if(open) setEditData(member); else setEditData(null); }}>
                           <DialogTrigger asChild>
                              <Button variant="outline" size="sm" className="border-slate-200 text-slate-600 hover:text-[#043E52] font-bold h-8 text-[10px] uppercase">Edit</Button>
@@ -517,7 +507,6 @@ export function OrganizationSettings() {
                   <h4 className="text-sm font-bold text-rose-800 uppercase tracking-tight">Active Sessions</h4>
                   <p className="text-xs text-rose-600/80 font-medium mt-1">Review where your account is currently logged in</p>
                 </div>
-                {/* 🚀 REVOKE ACCESS BUTTON */}
                 <Button onClick={handleRevokeAccess} variant="outline" className="border-rose-200 text-rose-700 hover:bg-rose-100 font-bold text-[10px] uppercase tracking-wider h-9 shadow-sm">
                   Revoke All Access
                 </Button>
@@ -627,7 +616,6 @@ export function OrganizationSettings() {
                     <div className="flex items-center gap-4">
                       <span className="font-black text-[#043E52]">{item.amount}</span>
                       
-                      {/* 🚀 DOWNLOAD INVOICE BUTTON */}
                       <Button onClick={() => handleDownloadInvoice(item.invoice)} variant="ghost" size="sm" className="text-[#1C9290] hover:bg-teal-50 font-bold text-[10px] uppercase h-8 px-3">
                         Download
                       </Button>
