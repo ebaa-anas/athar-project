@@ -206,7 +206,7 @@ export function Causes() {
       });
   };
 
-  if (authLoading) return <div className="p-10 text-center text-[#168181] font-medium tracking-wider">Loading...</div>;
+  if (authLoading) return <div className="p-10 text-center text-role-accent-teal font-medium tracking-wider">Loading...</div>;
 
   return (
     <div className="space-y-8 relative pb-10 animate-in fade-in duration-300 font-sans">
@@ -214,7 +214,7 @@ export function Causes() {
       {/* Header & Search */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-4 border-b pb-6 border-slate-100">
         <div>
-          <h1 className="text-[#0C4A54] text-2xl font-bold">Explore Causes</h1>
+          <h1 className="text-role-volunteer-dark text-2xl font-bold">Explore Causes</h1>
           <p className="text-slate-500 font-medium mt-1">Discover and support global initiatives.</p>
         </div>
         <div className="flex items-center gap-3">
@@ -222,12 +222,12 @@ export function Causes() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <Input 
               placeholder="Filter by title or category..." 
-              className="pl-10 w-72 border-slate-200 focus:ring-[#168181] focus:border-[#168181] rounded-xl font-medium shadow-sm text-[#0C4A54]"
+              className="pl-10 w-72 border-slate-200 focus:ring-role-accent-teal focus:border-role-accent-teal rounded-xl font-medium shadow-sm text-role-volunteer-dark"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <Button className="bg-[#168181] hover:bg-[#11666B] rounded-xl font-semibold px-6 shadow-sm">
+          <Button className="bg-role-accent-teal hover:bg-role-volunteer rounded-xl font-semibold px-6 shadow-sm">
             <Heart className="mr-2 h-4 w-4" /> Save Search
           </Button>
         </div>
@@ -235,34 +235,34 @@ export function Causes() {
 
       {/* Analytics Bar */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="bg-[#0C4A54] text-white border-none shadow-md rounded-2xl overflow-hidden relative">
+        <Card className="bg-role-volunteer-dark text-white border-none shadow-md rounded-2xl overflow-hidden relative">
           <div className="absolute -right-4 -top-4 opacity-10"><Clock className="w-32 h-32" /></div>
           <CardContent className="pt-6 flex items-center gap-4 relative z-10">
             <div className="p-3 bg-white/10 rounded-xl"><Clock className="h-6 w-6 text-white" /></div>
             <div>
-              <p className="text-[#86A7AC] text-xs font-semibold uppercase tracking-wider">Total Contribution</p>
+              <p className="text-white/70 text-xs font-semibold uppercase tracking-wider">Total Contribution</p>
               <h3 className="text-2xl font-bold">{totalHours} Hours</h3>
             </div>
           </CardContent>
         </Card>
         
-        <Card className="bg-orange-500 text-white border-none shadow-md rounded-2xl overflow-hidden relative">
+        <Card className="bg-brand-cta text-white border-none shadow-md rounded-2xl overflow-hidden relative">
            <div className="absolute -right-4 -top-4 opacity-10"><Zap className="w-32 h-32" /></div>
           <CardContent className="pt-6 flex items-center gap-4 relative z-10">
             <div className="p-3 bg-white/20 rounded-xl"><Zap className="h-6 w-6 text-white" /></div>
             <div>
-              <p className="text-orange-100 text-xs font-semibold uppercase tracking-wider">Impact Score</p>
+              <p className="text-white/70 text-xs font-semibold uppercase tracking-wider">Impact Score</p>
               <h3 className="text-2xl font-bold">{avgImpact}/100</h3>
             </div>
           </CardContent>
         </Card>
         
-        <Card className="bg-[#168181] text-white border-none shadow-md rounded-2xl overflow-hidden relative">
+        <Card className="bg-role-accent-teal text-white border-none shadow-md rounded-2xl overflow-hidden relative">
            <div className="absolute -right-4 -top-4 opacity-10"><Award className="w-32 h-32" /></div>
           <CardContent className="pt-6 flex items-center gap-4 relative z-10">
             <div className="p-3 bg-white/20 rounded-xl"><Award className="h-6 w-6 text-white" /></div>
             <div>
-              <p className="text-white/80 text-xs font-semibold uppercase tracking-wider">Volunteer Status</p>
+              <p className="text-white/70 text-xs font-semibold uppercase tracking-wider">Volunteer Status</p>
               <h3 className="text-2xl font-bold">{totalHours > 50 ? 'Elite Member' : 'Active Member'}</h3>
             </div>
           </CardContent>
@@ -272,19 +272,19 @@ export function Causes() {
       {/* My Active Support */}
       <Card className="bg-slate-50 border-dashed border-2 border-slate-200 rounded-2xl shadow-sm">
         <CardHeader>
-          <CardTitle className="text-lg font-bold text-[#0C4A54]">My Supported Causes</CardTitle>
+          <CardTitle className="text-lg font-bold text-role-volunteer-dark">My Supported Causes</CardTitle>
           <CardDescription className="font-medium text-slate-500">Missions you are actively following.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {user?.supportedCauses?.length > 0 ? (
               user.supportedCauses.map((myCause: any) => (
-                <div key={myCause.id} className="p-4 bg-white border border-slate-100 rounded-xl shadow-sm flex justify-between items-center border-l-4 border-l-[#168181] transition-all hover:shadow-md">
+                <div key={myCause.id} className="p-4 bg-white border border-slate-100 rounded-xl shadow-sm flex justify-between items-center border-l-4 border-l-role-accent-teal transition-all hover:shadow-md">
                   <div>
-                    <h3 className="text-[#0C4A54] font-bold text-sm">{myCause.title}</h3>
-                    <p className="text-[10px] text-[#168181] font-semibold uppercase tracking-wider mt-0.5">Verified Action</p>
+                    <h3 className="text-role-volunteer-dark font-bold text-sm">{myCause.title}</h3>
+                    <p className="text-[10px] text-role-accent-teal font-semibold uppercase tracking-wider mt-0.5">Verified Action</p>
                   </div>
-                  <Button variant="ghost" size="sm" className="text-slate-400 hover:text-orange-600 hover:bg-orange-50" onClick={() => handleToggleSupport(myCause)}>
+                  <Button variant="ghost" size="sm" className="text-slate-400 hover:text-brand-cta-dark hover:bg-brand-cta/10" onClick={() => handleToggleSupport(myCause)}>
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
@@ -298,8 +298,8 @@ export function Causes() {
 
       {/* Global Causes Grid */}
       <div>
-        <h2 className="text-xl font-bold text-[#0C4A54] mb-6 flex items-center gap-3">
-          <div className="h-2 w-2 bg-orange-500 rounded-full" />
+        <h2 className="text-xl font-bold text-role-volunteer-dark mb-6 flex items-center gap-3">
+          <div className="h-2 w-2 bg-brand-cta rounded-full" />
           Global Mission Pool
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -308,47 +308,47 @@ export function Causes() {
             return (
               <Card key={cause.id} className="overflow-hidden border-slate-100 shadow-sm group hover:shadow-md transition-all rounded-2xl flex flex-col bg-white">
                 <div className="h-56 overflow-hidden relative">
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0C4A54]/80 to-transparent z-10" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-role-volunteer-dark/80 to-transparent z-10" />
                   <img src={cause.image} alt={cause.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                   <div className="absolute top-4 left-4 z-20">
-                    <Badge className="bg-white/95 text-[#0C4A54] hover:bg-white border-none py-1.5 px-4 font-semibold text-[10px] uppercase tracking-wider shadow-sm backdrop-blur-sm">
-                      <Heart className="h-3 w-3 mr-1.5 text-orange-500 fill-orange-500" />
+                    <Badge className="bg-white/95 text-role-volunteer-dark hover:bg-white border-none py-1.5 px-4 font-semibold text-[10px] uppercase tracking-wider shadow-sm backdrop-blur-sm">
+                      <Heart className="h-3 w-3 mr-1.5 text-brand-cta fill-brand-cta" />
                       {cause.category}
                     </Badge>
                   </div>
                 </div>
                 <CardHeader className="pb-3 pt-5">
                   <div className="flex items-start justify-between gap-2">
-                    <CardTitle className="text-lg font-bold text-[#0C4A54] leading-tight">{cause.title}</CardTitle>
+                    <CardTitle className="text-lg font-bold text-role-volunteer-dark leading-tight">{cause.title}</CardTitle>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-6 flex-1 flex flex-col justify-end">
                   <div className="grid grid-cols-3 gap-4 border-y border-slate-100 py-4 bg-slate-50/50 rounded-xl px-2">
                     <div className="text-center">
-                      <Users className="h-4 w-4 mx-auto text-[#168181] mb-1" />
-                      <span className="block text-sm font-bold text-[#0C4A54]">{cause.volunteers}</span>
+                      <Users className="h-4 w-4 mx-auto text-role-accent-teal mb-1" />
+                      <span className="block text-sm font-bold text-role-volunteer-dark">{cause.volunteers}</span>
                       <p className="text-[10px] font-medium text-slate-500 uppercase">Volunteers</p>
                     </div>
                     <div className="text-center border-l border-r border-slate-200">
-                      <Target className="h-4 w-4 mx-auto text-[#168181] mb-1" />
-                      <span className="block text-sm font-bold text-[#0C4A54]">{cause.funded}%</span>
+                      <Target className="h-4 w-4 mx-auto text-role-accent-teal mb-1" />
+                      <span className="block text-sm font-bold text-role-volunteer-dark">{cause.funded}%</span>
                       <p className="text-[10px] font-medium text-slate-500 uppercase">Funded</p>
                     </div>
                     <div className="text-center">
-                      <TrendingUp className="h-4 w-4 mx-auto text-orange-500 mb-1" />
-                      <span className="block text-sm font-bold text-[#0C4A54]">{cause.impact}</span>
+                      <TrendingUp className="h-4 w-4 mx-auto text-brand-cta mb-1" />
+                      <span className="block text-sm font-bold text-role-volunteer-dark">{cause.impact}</span>
                       <p className="text-[10px] font-medium text-slate-500 uppercase">Impact</p>
                     </div>
                   </div>
-                  <Progress value={Number(cause.funded)} className="h-2 bg-slate-100 [&>div]:bg-[#168181]" />
+                  <Progress value={Number(cause.funded)} className="h-2 bg-slate-100 [&>div]:bg-role-accent-teal" />
                   <div className="flex gap-3">
                     <Button 
                       onClick={() => handleToggleSupport(cause)} 
-                      className={`flex-1 font-bold h-11 text-xs rounded-xl shadow-sm transition-all ${isSupported ? 'bg-orange-50 text-orange-600 hover:bg-orange-100' : 'bg-[#168181] hover:bg-[#11666B] text-white'}`}
+                      className={`flex-1 font-bold h-11 text-xs rounded-xl shadow-sm transition-all ${isSupported ? 'bg-brand-cta/10 text-brand-cta-dark hover:bg-brand-cta/20' : 'bg-role-accent-teal hover:bg-role-volunteer text-white'}`}
                     >
                       {isSupported ? 'Remove Support' : 'Support Cause'}
                     </Button>
-                    <Button variant="outline" className="flex-1 h-11 border-slate-200 text-slate-600 hover:bg-[#168181]/10 hover:text-[#0C4A54] hover:border-[#168181]/30 font-bold text-xs rounded-xl shadow-sm" onClick={() => setSelectedCause(cause)}>
+                    <Button variant="outline" className="flex-1 h-11 border-slate-200 text-slate-600 hover:bg-role-accent-teal/10 hover:text-role-volunteer-dark hover:border-role-accent-teal/30 font-bold text-xs rounded-xl shadow-sm" onClick={() => setSelectedCause(cause)}>
                       Explore Deeper
                     </Button>
                   </div>
@@ -361,17 +361,17 @@ export function Causes() {
 
       {/* --- DETAILED MODAL --- */}
       {selectedCause && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0C4A54]/80 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-role-volunteer-dark/80 backdrop-blur-sm animate-in fade-in duration-200">
           <Card className="max-w-3xl w-full max-h-[90vh] overflow-y-auto relative shadow-2xl border border-slate-200 rounded-2xl flex flex-col bg-slate-50 animate-in zoom-in-95">
             
             <button onClick={() => setSelectedCause(null)} className="absolute right-4 top-4 p-2 rounded-full bg-white/20 hover:bg-white/40 text-white transition-colors z-50 backdrop-blur-md"><X className="h-5 w-5" /></button>
             
             <div className="h-64 md:h-80 w-full relative shrink-0">
-              <div className="absolute inset-0 bg-gradient-to-t from-[#0C4A54]/90 via-[#0C4A54]/40 to-transparent z-10" />
+              <div className="absolute inset-0 bg-gradient-to-t from-role-volunteer-dark/90 via-role-volunteer-dark/40 to-transparent z-10" />
               <img src={selectedCause.image} alt={selectedCause.title} className="w-full h-full object-cover" />
               <div className="absolute bottom-6 left-8 right-8 z-20">
                 <div className="flex items-center gap-3 mb-3">
-                  <Badge className="bg-orange-500 text-white hover:bg-orange-600 border-none px-3 py-1 font-semibold text-[10px] tracking-wider uppercase shadow-sm">Verified Mission Area</Badge>
+                  <Badge className="bg-brand-cta text-white hover:bg-brand-cta-dark border-none px-3 py-1 font-semibold text-[10px] tracking-wider uppercase shadow-sm">Verified Mission Area</Badge>
                   <span className="text-[10px] font-bold text-white/90 uppercase tracking-wider">{selectedCause.category}</span>
                 </div>
                 <CardTitle className="text-2xl md:text-3xl font-bold text-white drop-shadow-md">{selectedCause.title}</CardTitle>
@@ -381,32 +381,32 @@ export function Causes() {
             <CardContent className="p-8 space-y-8 flex-1">
               <div className="space-y-6">
                 <div>
-                  <h4 className="font-bold text-xs text-[#0C4A54] uppercase tracking-wider mb-3 flex items-center gap-2"><div className="h-1.5 w-1.5 bg-[#168181] rounded-full" /> Mission Overview</h4>
+                  <h4 className="font-bold text-xs text-role-volunteer-dark uppercase tracking-wider mb-3 flex items-center gap-2"><div className="h-1.5 w-1.5 bg-role-accent-teal rounded-full" /> Mission Overview</h4>
                   <p className="text-slate-700 leading-relaxed font-medium bg-white p-5 rounded-xl border border-slate-100 shadow-sm text-sm">{selectedCause.description}</p>
                 </div>
                 <div>
-                  <h4 className="font-bold text-xs text-orange-600 uppercase tracking-wider mb-3 flex items-center gap-2"><div className="h-1.5 w-1.5 bg-orange-500 rounded-full" /> Strategic Impact Target</h4>
+                  <h4 className="font-bold text-xs text-brand-cta-dark uppercase tracking-wider mb-3 flex items-center gap-2"><div className="h-1.5 w-1.5 bg-brand-cta rounded-full" /> Strategic Impact Target</h4>
                   <p className="text-slate-600 leading-relaxed font-medium px-2 text-sm italic">
                     {selectedCause.longDescription || "This project focuses on measurable, long-term impact through strategic resource deployment and local empowerment. Verified organizations below are actively leading field operations in this sector."}
                   </p>
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm text-center">
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Funding Progress</p>
-                  <p className="text-2xl font-bold text-[#0C4A54]">{selectedCause.funded}%</p>
-                  <Progress value={selectedCause.funded} className="h-1.5 mt-3 bg-slate-100 [&>div]:bg-[#168181]" />
+                  <p className="text-2xl font-bold text-role-volunteer-dark">{selectedCause.funded}%</p>
+                  <Progress value={selectedCause.funded} className="h-1.5 mt-3 bg-slate-100 [&>div]:bg-role-accent-teal" />
                 </div>
                 <div className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm text-center">
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Impact Potential</p>
-                  <p className="text-2xl font-bold text-orange-500">{selectedCause.impact}</p>
+                  <p className="text-2xl font-bold text-brand-cta">{selectedCause.impact}</p>
                 </div>
               </div>
 
               <div className="pt-4">
-                 <h4 className="font-bold text-xs text-[#0C4A54] uppercase tracking-wider mb-4 flex items-center gap-2 border-b border-slate-200 pb-2">
-                    <Building2 className="h-4 w-4 text-[#168181]" /> Organizations Driving This Cause
+                 <h4 className="font-bold text-xs text-role-volunteer-dark uppercase tracking-wider mb-4 flex items-center gap-2 border-b border-slate-200 pb-2">
+                    <Building2 className="h-4 w-4 text-role-accent-teal" /> Organizations Driving This Cause
                  </h4>
                  {(() => {
                      const matchedOrgs = getOrganizationsForCause(selectedCause);
@@ -416,13 +416,13 @@ export function Causes() {
                      return (
                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                              {matchedOrgs.map(org => (
-                                 <div key={org.id} className="flex items-center gap-3 p-3 bg-white border border-slate-100 rounded-xl shadow-sm hover:border-[#168181]/30 transition-colors cursor-default">
+                                 <div key={org.id} className="flex items-center gap-3 p-3 bg-white border border-slate-100 rounded-xl shadow-sm hover:border-role-accent-teal/30 transition-colors cursor-default">
                                      <Avatar className="h-12 w-12 border border-slate-100 shadow-sm shrink-0">
                                          <AvatarImage src={org.photoUrl || org.logoUrl || org.avatarUrl} className="object-cover" />
-                                         <AvatarFallback className="bg-[#168181]/10 text-[#0C4A54] font-bold text-lg">{String(org.name || 'O').charAt(0).toUpperCase()}</AvatarFallback>
+                                         <AvatarFallback className="bg-role-accent-teal/10 text-role-volunteer-dark font-bold text-lg">{String(org.name || 'O').charAt(0).toUpperCase()}</AvatarFallback>
                                      </Avatar>
                                      <div className="min-w-0">
-                                         <h4 className="font-bold text-[#0C4A54] text-sm leading-tight truncate">{org.name}</h4>
+                                         <h4 className="font-bold text-role-volunteer-dark text-sm leading-tight truncate">{org.name}</h4>
                                          <div className="flex items-center gap-1 mt-0.5 text-[10px] text-slate-500 font-medium uppercase tracking-wider">
                                             <MapPin className="h-3 w-3" /> <span className="truncate">{org.city || org.location || 'Global'}</span>
                                          </div>
@@ -436,12 +436,12 @@ export function Causes() {
 
               <div className="pt-6 flex gap-3 sticky bottom-0 bg-slate-50 border-t border-slate-200 mt-6 -mx-8 px-8 pb-4">
                 <Button 
-                  className={`flex-1 h-12 text-xs font-bold shadow-md transition-all active:scale-95 rounded-xl ${user?.supportedCauses?.some((c: any) => c.id === selectedCause.id) ? 'bg-orange-50 hover:bg-orange-100 text-orange-600 border border-orange-200' : 'bg-[#168181] hover:bg-[#11666B] text-white'}`}
+                  className={`flex-1 h-12 text-xs font-bold shadow-md transition-all active:scale-95 rounded-xl ${user?.supportedCauses?.some((c: any) => c.id === selectedCause.id) ? 'bg-brand-cta/10 hover:bg-brand-cta/20 text-brand-cta-dark border border-brand-cta/30' : 'bg-role-accent-teal hover:bg-role-volunteer text-white'}`}
                   onClick={() => { handleToggleSupport(selectedCause); setSelectedCause(null); }}
                 >
                   {user?.supportedCauses?.some((c: any) => c.id === selectedCause.id) ? 'Remove Support' : 'Commit to Mission'}
                 </Button>
-                <Button variant="outline" className="flex-1 h-12 border-slate-200 text-slate-600 hover:bg-white hover:text-[#0C4A54] font-bold text-xs rounded-xl shadow-sm" onClick={() => setSelectedCause(null)}>Close Overview</Button>
+                <Button variant="outline" className="flex-1 h-12 border-slate-200 text-slate-600 hover:bg-white hover:text-role-volunteer-dark font-bold text-xs rounded-xl shadow-sm" onClick={() => setSelectedCause(null)}>Close Overview</Button>
               </div>
             </CardContent>
           </Card>
