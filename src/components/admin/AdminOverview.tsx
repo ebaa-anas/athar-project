@@ -192,12 +192,12 @@ export function AdminOverview() {
               <title>Athar System Overview</title>
               <style>
                 body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; padding: 40px; max-width: 800px; margin: 0 auto; }
-                .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; border-bottom: 2px solid #043E52; padding-bottom: 20px; }
-                .logo { font-size: 28px; font-weight: 900; color: #043E52; letter-spacing: -0.5px; }
-                .logo span { color: #1C9290; }
+                .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; border-bottom: 2px solid #d97706; padding-bottom: 20px; }
+                .logo { font-size: 28px; font-weight: 900; color: #1e293b; letter-spacing: -0.5px; }
+                .logo span { color: #d97706; }
                 .date { color: #64748b; font-size: 14px; font-weight: bold; }
-                h1 { color: #043E52; font-size: 24px; margin-bottom: 30px; text-transform: uppercase; letter-spacing: 1px;}
-                h2 { color: #043E52; font-size: 18px; margin-top: 30px; text-transform: uppercase; border-bottom: 1px solid #eee; padding-bottom: 8px;}
+                h1 { color: #1e293b; font-size: 24px; margin-bottom: 30px; text-transform: uppercase; letter-spacing: 1px;}
+                h2 { color: #1e293b; font-size: 18px; margin-top: 30px; text-transform: uppercase; border-bottom: 1px solid #eee; padding-bottom: 8px;}
                 p, li { font-size: 14px; color: #475569; }
                 .footer { margin-top: 60px; border-top: 1px solid #e2e8f0; padding-top: 20px; font-size: 11px; color: #94a3b8; text-align: center; text-transform: uppercase; letter-spacing: 1px; }
               </style>
@@ -232,16 +232,16 @@ export function AdminOverview() {
 
   // --- UI CONSTANTS ---
   const statsConfig = [
-    { label: 'Total Users', value: metrics.users.toLocaleString(), change: '+12.5%', icon: Users, color: 'text-[#043E52]', bgColor: 'bg-[#043E52]/10', borderColor: 'border-[#043E52]/20' },
-    { label: 'Volunteers', value: metrics.vols.toLocaleString(), change: '+8.2%', icon: UserCheck, color: 'text-[#1C9290]', bgColor: 'bg-[#1C9290]/10', borderColor: 'border-[#1C9290]/20' },
-    { label: 'Organizations', value: metrics.orgs.toLocaleString(), change: '+15.3%', icon: Building2, color: 'text-[#016A6D]', bgColor: 'bg-[#016A6D]/10', borderColor: 'border-[#016A6D]/20' },
-    { label: 'Total Hours', value: metrics.hours.toLocaleString(), change: '+20.1%', icon: Clock, color: 'text-[#E16A3D]', bgColor: 'bg-[#E16A3D]/10', borderColor: 'border-[#E16A3D]/20' },
+    { label: 'Total Users', value: metrics.users.toLocaleString(), change: '+12.5%', icon: Users, color: 'text-slate-700', bgColor: 'bg-slate-100', borderColor: 'border-slate-300' },
+    { label: 'Volunteers', value: metrics.vols.toLocaleString(), change: '+8.2%', icon: UserCheck, color: 'text-role-admin-accent-dark', bgColor: 'bg-role-admin-accent/10', borderColor: 'border-role-admin-accent/30' },
+    { label: 'Organizations', value: metrics.orgs.toLocaleString(), change: '+15.3%', icon: Building2, color: 'text-blue-600', bgColor: 'bg-blue-50', borderColor: 'border-blue-200' },
+    { label: 'Total Hours', value: metrics.hours.toLocaleString(), change: '+20.1%', icon: Clock, color: 'text-emerald-600', bgColor: 'bg-emerald-50', borderColor: 'border-emerald-200' },
   ];
 
   const pendingActions = [
-    { type: 'Verification Requests', count: pendingCounts.verifications, color: 'bg-[#E16A3D]', textColor: 'text-[#E16A3D]' },
-    { type: 'Content Reports', count: pendingCounts.reports, color: 'bg-[#FFA45D]', textColor: 'text-[#d97706]' },
-    { type: 'Support Tickets', count: 0, color: 'bg-[#1C9290]', textColor: 'text-[#1C9290]' }, 
+    { type: 'Verification Requests', count: pendingCounts.verifications, color: 'bg-amber-500', textColor: 'text-amber-600' },
+    { type: 'Content Reports', count: pendingCounts.reports, color: 'bg-red-500', textColor: 'text-red-600' },
+    { type: 'Support Tickets', count: 0, color: 'bg-blue-500', textColor: 'text-blue-600' },
   ];
 
   const platformHealth = [
@@ -250,21 +250,21 @@ export function AdminOverview() {
     { metric: 'Response Time', value: 87, status: 'good' },
   ];
 
-  if (loading) return <div className="p-12 text-center text-[#043E52] font-bold flex flex-col items-center justify-center"><Loader2 className="h-8 w-8 animate-spin mb-4" /> Initializing Command Center...</div>;
+  if (loading) return <div className="p-12 text-center text-slate-700 font-bold flex flex-col items-center justify-center"><Loader2 className="h-8 w-8 animate-spin mb-4" /> Initializing Command Center...</div>;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300 pb-12">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-5">
         <div>
-          <h1 className="text-[#043E52] font-bold text-3xl mb-2">Platform Overview</h1>
+          <h1 className="text-slate-900 font-bold text-3xl mb-2">Platform Overview</h1>
           <p className="text-slate-500">Monitor and manage the entire Athar ecosystem</p>
         </div>
         <div className="flex gap-3">
           <Button
-            onClick={handleGenerateReport} 
+            onClick={handleGenerateReport}
             disabled={isGenerating}
-            className="bg-[#043E52] hover:bg-[#033040] text-white shadow-md h-11 px-6 font-bold uppercase tracking-wider text-xs"
+            className="bg-role-admin-accent hover:bg-role-admin-accent-dark text-slate-900 shadow-md h-11 px-6 font-bold uppercase tracking-wider text-xs"
           >
             {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
             {isGenerating ? 'Analyzing System...' : 'AI Health Report'}
@@ -273,52 +273,52 @@ export function AdminOverview() {
       </div>
 
       {/* AI ECOSYSTEM STATUS */}
-      <Card className="border border-[#016A6D]/30 bg-white shadow-sm overflow-hidden">
+      <Card className="border border-role-admin-accent/30 bg-white shadow-sm overflow-hidden">
         <CardContent className="p-6 md:p-8">
           <div className="flex flex-col md:flex-row items-start gap-6">
-            <div className="bg-gradient-to-br from-[#016A6D] to-[#1C9290] text-white p-4 rounded-xl shadow-lg shadow-teal-900/20 shrink-0">
+            <div className="bg-gradient-to-br from-role-admin-accent to-role-admin-accent-dark text-slate-900 p-4 rounded-xl shadow-lg shadow-amber-900/20 shrink-0">
               <Brain className="h-8 w-8" />
             </div>
             <div className="flex-1 w-full">
-              <h3 className="text-[#043E52] font-bold text-xl mb-2">🤖 AI Ecosystem Feedback Loop Status</h3>
+              <h3 className="text-slate-900 font-bold text-xl mb-2">🤖 AI Ecosystem Feedback Loop Status</h3>
               <p className="text-slate-500 mb-6">
                 The self-learning system is actively analyzing crisis data and optimizing volunteer training
               </p>
-              
+
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 w-full">
-                <div className="bg-orange-50/50 rounded-xl p-4 border border-orange-100 hover:shadow-md transition-shadow">
+                <div className="bg-red-50/50 rounded-xl p-4 border border-red-100 hover:shadow-md transition-shadow">
                   <div className="flex items-center gap-2 mb-2">
-                    <div className="bg-white p-1.5 rounded-md shadow-sm"><Zap className="h-4 w-4 text-[#E16A3D]" /></div>
-                    <p className="text-sm font-bold text-[#E16A3D]">Crisis Events</p>
+                    <div className="bg-white p-1.5 rounded-md shadow-sm"><Zap className="h-4 w-4 text-red-600" /></div>
+                    <p className="text-sm font-bold text-red-600">Crisis Events</p>
                   </div>
-                  <p className="text-[#043E52] font-bold text-lg">52 Active</p>
+                  <p className="text-slate-900 font-bold text-lg">52 Active</p>
                   <p className="text-xs text-slate-500 font-medium">Auto-matched</p>
                 </div>
-                
+
                 <div className="bg-amber-50/50 rounded-xl p-4 border border-amber-100 hover:shadow-md transition-shadow">
                   <div className="flex items-center gap-2 mb-2">
-                     <div className="bg-white p-1.5 rounded-md shadow-sm"><Activity className="h-4 w-4 text-[#FFA45D]" /></div>
-                    <p className="text-sm font-bold text-[#d97706]">Skill Gaps</p>
+                     <div className="bg-white p-1.5 rounded-md shadow-sm"><Activity className="h-4 w-4 text-amber-600" /></div>
+                    <p className="text-sm font-bold text-amber-700">Skill Gaps</p>
                   </div>
-                  <p className="text-[#043E52] font-bold text-lg">4 Detected</p>
+                  <p className="text-slate-900 font-bold text-lg">4 Detected</p>
                   <p className="text-xs text-slate-500 font-medium">AI Analyzed</p>
                 </div>
-                
-                <div className="bg-teal-50/50 rounded-xl p-4 border border-teal-100 hover:shadow-md transition-shadow">
+
+                <div className="bg-role-admin-accent/10 rounded-xl p-4 border border-role-admin-accent/20 hover:shadow-md transition-shadow">
                   <div className="flex items-center gap-2 mb-2">
-                     <div className="bg-white p-1.5 rounded-md shadow-sm"><Brain className="h-4 w-4 text-[#1C9290]" /></div>
-                    <p className="text-sm font-bold text-[#1C9290]">Auto Updates</p>
+                     <div className="bg-white p-1.5 rounded-md shadow-sm"><Brain className="h-4 w-4 text-role-admin-accent-dark" /></div>
+                    <p className="text-sm font-bold text-role-admin-accent-dark">Auto Updates</p>
                   </div>
-                  <p className="text-[#043E52] font-bold text-lg">3 Paths</p>
+                  <p className="text-slate-900 font-bold text-lg">3 Paths</p>
                   <p className="text-xs text-slate-500 font-medium">Promoted</p>
                 </div>
-                
-                <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 hover:shadow-md transition-shadow">
+
+                <div className="bg-emerald-50 rounded-xl p-4 border border-emerald-100 hover:shadow-md transition-shadow">
                   <div className="flex items-center gap-2 mb-2">
-                     <div className="bg-white p-1.5 rounded-md shadow-sm"><TrendingUp className="h-4 w-4 text-[#043E52]" /></div>
-                    <p className="text-sm font-bold text-[#043E52]">AVR Members</p>
+                     <div className="bg-white p-1.5 rounded-md shadow-sm"><TrendingUp className="h-4 w-4 text-emerald-600" /></div>
+                    <p className="text-sm font-bold text-emerald-700">AVR Members</p>
                   </div>
-                  <p className="text-[#043E52] font-bold text-lg">3,247</p>
+                  <p className="text-slate-900 font-bold text-lg">3,247</p>
                   <p className="text-xs text-slate-500 font-medium">+15% growth</p>
                 </div>
               </div>
@@ -337,7 +337,7 @@ export function AdminOverview() {
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">{stat.label}</p>
-                    <p className="text-3xl font-black text-[#043E52] mb-2">{stat.value}</p>
+                    <p className="text-3xl font-black text-slate-900 mb-2">{stat.value}</p>
                     <Badge variant="secondary" className="text-[9px] font-bold text-emerald-700 bg-emerald-50 border-none uppercase tracking-wider">{stat.change}</Badge>
                   </div>
                   <div className={`${stat.bgColor} ${stat.color} p-3 rounded-xl`}>
@@ -356,7 +356,7 @@ export function AdminOverview() {
         <div className="lg:col-span-1 space-y-6">
             <Card className="border-slate-200 shadow-sm bg-white">
               <CardHeader>
-                <CardTitle className="text-[#043E52]">Pending Actions</CardTitle>
+                <CardTitle className="text-slate-900">Pending Actions</CardTitle>
                 <CardDescription>Items requiring your attention</CardDescription>
               </CardHeader>
               <CardContent>
@@ -376,7 +376,7 @@ export function AdminOverview() {
 
             <Card className="border-slate-200 shadow-sm bg-white">
               <CardHeader>
-                <CardTitle className="text-[#043E52]">Platform Health</CardTitle>
+                <CardTitle className="text-slate-900">Platform Health</CardTitle>
                 <CardDescription>System performance metrics</CardDescription>
               </CardHeader>
               <CardContent>
@@ -385,14 +385,14 @@ export function AdminOverview() {
                     <div key={index}>
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-sm font-bold text-slate-600">{item.metric}</span>
-                        <span className="text-sm font-black text-[#043E52]">{item.value}%</span>
+                        <span className="text-sm font-black text-slate-900">{item.value}%</span>
                       </div>
-                      <Progress value={item.value} className="h-2.5 bg-slate-100 [&>div]:bg-[#016A6D]" />
+                      <Progress value={item.value} className="h-2.5 bg-slate-100 [&>div]:bg-role-admin-accent" />
                     </div>
                   ))}
-                  
+
                   <div className="pt-4 border-t border-slate-100">
-                    <div className="flex items-center gap-2 text-xs text-[#1C9290] font-bold bg-[#1C9290]/10 p-3 rounded-lg w-full justify-center uppercase tracking-widest">
+                    <div className="flex items-center gap-2 text-xs text-emerald-700 font-bold bg-emerald-50 p-3 rounded-lg w-full justify-center uppercase tracking-widest">
                       <CheckCircle className="h-4 w-4" /> All systems operational
                     </div>
                   </div>
@@ -406,7 +406,7 @@ export function AdminOverview() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-[#043E52]">Live Activity Feed</CardTitle>
+                <CardTitle className="text-slate-900">Live Activity Feed</CardTitle>
                 <CardDescription>Real-time events across the ecosystem</CardDescription>
               </div>
               <div className="flex h-3 w-3">
@@ -422,9 +422,9 @@ export function AdminOverview() {
               ) : recentActivities.map((activity, index) => (
                 <div key={index} className="flex items-start gap-4 p-4 hover:bg-slate-50 rounded-xl transition-colors border-b border-slate-50 last:border-0">
                   <div className={`mt-1 p-2 rounded-full bg-white shadow-sm border border-slate-100 ${
-                    activity.status === 'pending' ? 'text-[#E16A3D]' : 
-                    activity.status === 'approved' ? 'text-[#1C9290]' : 
-                    activity.status === 'flagged' ? 'text-[#FFA45D]' : 'text-slate-400'
+                    activity.status === 'pending' ? 'text-amber-600' :
+                    activity.status === 'approved' ? 'text-emerald-600' :
+                    activity.status === 'flagged' ? 'text-red-600' : 'text-slate-400'
                   }`}>
                     {activity.status === 'pending' ? <AlertCircle className="h-4 w-4" /> :
                      activity.status === 'approved' ? <CheckCircle className="h-4 w-4" /> :
@@ -432,7 +432,7 @@ export function AdminOverview() {
                      <CheckCircle2 className="h-4 w-4" />}
                   </div>
                   <div className="flex-1 pt-1">
-                    <p className="text-sm font-bold text-[#043E52] leading-tight">{activity.action}</p>
+                    <p className="text-sm font-bold text-slate-900 leading-tight">{activity.action}</p>
                     <p className="text-xs font-semibold text-slate-500 mt-1">{activity.org}</p>
                   </div>
                   <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pt-1">
