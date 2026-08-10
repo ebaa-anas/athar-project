@@ -76,26 +76,26 @@ export function OverviewDashboard({ onNavigate }: { onNavigate?: (section: strin
     <div className="space-y-8 max-w-7xl mx-auto pb-12 animate-in fade-in duration-500 font-sans">
       
       {/* --- HEADER --- */}
-      <div className="flex justify-between items-end">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4">
         <div>
           <h1 className="text-3xl font-black text-slate-900 tracking-tight">Marhaba, {user?.name?.split(' ')[0] || "Volunteer"}</h1>
           <p className="text-slate-500 font-medium text-sm mt-1">
-            Volunteer Ecosystem Status: 
-            <span className={`font-bold ml-1 ${isAvrReady ? 'text-[#1C9290]' : 'text-slate-400'}`}>
+            Volunteer Ecosystem Status:
+            <span className={`font-bold ml-1 ${isAvrReady ? 'text-role-accent-teal' : 'text-slate-400'}`}>
               {isAvrReady ? 'STANDBY READY' : 'ONBOARDING'}
             </span>
           </p>
         </div>
-        <div className="flex items-center gap-2 bg-orange-50 px-4 py-2 rounded-2xl border border-orange-100 shadow-sm">
-            <Zap size={16} className="text-orange-500 fill-orange-500" />
-            <span className="text-orange-700 font-black text-xs uppercase tracking-widest">Impact: {liveStats.points}</span>
+        <div className="flex items-center gap-2 bg-brand-cta/10 px-4 py-2 rounded-2xl border border-brand-cta/20 shadow-sm self-start sm:self-auto">
+            <Zap size={16} className="text-brand-cta fill-brand-cta" />
+            <span className="text-brand-cta-dark font-black text-xs uppercase tracking-widest">Impact: {liveStats.points}</span>
         </div>
       </div>
 
       {/* --- CONDITIONAL AVR BANNER --- */}
       {isAvrReady ? (
         // ACTIVE AVR STATE (The Elite Green Banner)
-        <Card className="border-none shadow-xl shadow-[#1C9290]/10 bg-[#1C9290] text-white overflow-hidden relative rounded-[2rem]">
+        <Card className="border-none shadow-xl shadow-role-accent-teal/10 bg-role-accent-teal text-white overflow-hidden relative rounded-[2rem]">
           <div className="absolute top-0 right-0 opacity-10 translate-x-1/4 -translate-y-1/4"><Shield size={320} /></div>
           <CardContent className="p-8 relative z-10">
             <div className="flex flex-col lg:flex-row items-center gap-8">
@@ -117,7 +117,7 @@ export function OverviewDashboard({ onNavigate }: { onNavigate?: (section: strin
                   <p className="text-2xl font-black">{user?.skills?.length || 0}</p>
                 </div>
                 <div className="bg-white/10 border border-white/20 p-5 rounded-2xl backdrop-blur-sm flex-1 text-center">
-                  <p className="text-[10px] font-black text-orange-300 uppercase tracking-widest mb-1">Readiness</p>
+                  <p className="text-[10px] font-black text-teal-100 uppercase tracking-widest mb-1">Readiness</p>
                   <p className="text-2xl font-black">Tier 1</p>
                 </div>
               </div>
@@ -134,18 +134,18 @@ export function OverviewDashboard({ onNavigate }: { onNavigate?: (section: strin
                   <Lock className="h-8 w-8 text-slate-400" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-black tracking-tight text-[#0C4A54] uppercase mb-1">Athar Volunteer Reserve (AVR)</h3>
+                  <h3 className="text-lg font-black tracking-tight text-role-volunteer-dark uppercase mb-1">Athar Volunteer Reserve (AVR)</h3>
                   <p className="text-slate-500 text-sm font-medium">
                     The AVR is our elite emergency deployment unit. Complete your clearance requirements to access live crisis comms and field deployments.
                   </p>
                 </div>
               </div>
               <Button
-  onClick={() => onNavigate?.('crisis-response')}
-  className="shrink-0 bg-[#0C4A54] hover:bg-[#1C9290] text-white rounded-xl font-black text-[10px] uppercase tracking-widest px-6 h-12 transition-colors"
->
-  View Requirements <ChevronRight size={16} className="ml-2" />
-</Button>
+                onClick={() => onNavigate?.('crisis-response')}
+                className="shrink-0 bg-role-volunteer-dark hover:bg-role-accent-teal text-white rounded-xl font-black text-[10px] uppercase tracking-widest px-6 h-12 transition-colors"
+              >
+                View Requirements <ChevronRight size={16} className="ml-2" />
+              </Button>
             </div>
             
             {/* Mirrors the four AVR readiness steps from the Crisis Response page */}
@@ -153,8 +153,8 @@ export function OverviewDashboard({ onNavigate }: { onNavigate?: (section: strin
               {/* Step 1: KYC */}
               <div className="flex flex-col gap-1">
                 <div className="flex items-center gap-2">
-                  {isVerified ? <CheckCircle className="h-4 w-4 text-[#1C9290]" /> : <ShieldAlert className="h-4 w-4 text-orange-400" />}
-                  <span className={`text-[10px] font-black uppercase tracking-wider ${isVerified ? 'text-[#1C9290]' : 'text-slate-500'}`}>
+                  {isVerified ? <CheckCircle className="h-4 w-4 text-role-accent-teal" /> : <ShieldAlert className="h-4 w-4 text-warning" />}
+                  <span className={`text-[10px] font-black uppercase tracking-wider ${isVerified ? 'text-role-accent-teal' : 'text-slate-500'}`}>
                     1. KYC Verification
                   </span>
                 </div>
@@ -166,8 +166,8 @@ export function OverviewDashboard({ onNavigate }: { onNavigate?: (section: strin
               {/* Step 2: Protocol */}
               <div className="flex flex-col gap-1">
                 <div className="flex items-center gap-2">
-                  {isProtocolCertified ? <CheckCircle className="h-4 w-4 text-[#1C9290]" /> : <BookOpen className="h-4 w-4 text-slate-300" />}
-                  <span className={`text-[10px] font-black uppercase tracking-wider ${isProtocolCertified ? 'text-[#1C9290]' : 'text-slate-500'}`}>
+                  {isProtocolCertified ? <CheckCircle className="h-4 w-4 text-role-accent-teal" /> : <BookOpen className="h-4 w-4 text-slate-300" />}
+                  <span className={`text-[10px] font-black uppercase tracking-wider ${isProtocolCertified ? 'text-role-accent-teal' : 'text-slate-500'}`}>
                     2. Core Protocol
                   </span>
                 </div>
@@ -179,8 +179,8 @@ export function OverviewDashboard({ onNavigate }: { onNavigate?: (section: strin
               {/* Step 3: Simulator */}
               <div className="flex flex-col gap-1">
                 <div className="flex items-center gap-2">
-                  {hasPassedSims ? <CheckCircle className="h-4 w-4 text-[#1C9290]" /> : <Activity className="h-4 w-4 text-slate-300" />}
-                  <span className={`text-[10px] font-black uppercase tracking-wider ${hasPassedSims ? 'text-[#1C9290]' : 'text-slate-500'}`}>
+                  {hasPassedSims ? <CheckCircle className="h-4 w-4 text-role-accent-teal" /> : <Activity className="h-4 w-4 text-slate-300" />}
+                  <span className={`text-[10px] font-black uppercase tracking-wider ${hasPassedSims ? 'text-role-accent-teal' : 'text-slate-500'}`}>
                     3. AI Stress Testing
                   </span>
                 </div>
@@ -192,8 +192,8 @@ export function OverviewDashboard({ onNavigate }: { onNavigate?: (section: strin
               {/* Step 4: Impact Points */}
               <div className="flex flex-col gap-1">
                 <div className="flex items-center gap-2">
-                  {hasImpactPoints ? <CheckCircle className="h-4 w-4 text-[#1C9290]" /> : <Zap className="h-4 w-4 text-slate-300" />}
-                  <span className={`text-[10px] font-black uppercase tracking-wider ${hasImpactPoints ? 'text-[#1C9290]' : 'text-slate-500'}`}>
+                  {hasImpactPoints ? <CheckCircle className="h-4 w-4 text-role-accent-teal" /> : <Zap className="h-4 w-4 text-slate-300" />}
+                  <span className={`text-[10px] font-black uppercase tracking-wider ${hasImpactPoints ? 'text-role-accent-teal' : 'text-slate-500'}`}>
                     4. Field Impact
                   </span>
                 </div>
@@ -217,7 +217,7 @@ export function OverviewDashboard({ onNavigate }: { onNavigate?: (section: strin
                 <CardTitle className="text-sm font-black text-slate-400 uppercase tracking-[0.2em]">Impact Analytics</CardTitle>
                 <p className="text-2xl font-black text-slate-900 mt-1">Volunteer Velocity</p>
             </div>
-            <BarChart3 className="text-[#1C9290] h-6 w-6" />
+            <BarChart3 className="text-role-accent-teal h-6 w-6" />
           </CardHeader>
           <CardContent className="p-0 h-[220px] mt-4">
             <ResponsiveContainer width="100%" height="100%">
@@ -241,10 +241,10 @@ export function OverviewDashboard({ onNavigate }: { onNavigate?: (section: strin
         <div className="space-y-4">
           {[
             { label: 'Cumulative Hours', val: liveStats.hours, icon: Clock, color: 'text-blue-500', bg: 'bg-blue-50' },
-            { label: 'Completed Missions', val: liveStats.completed, icon: CheckCircle, color: 'text-[#1C9290]', bg: 'bg-teal-50' },
-            { label: 'Current Deployments', val: liveStats.active, icon: Zap, color: 'text-orange-500', bg: 'bg-orange-50' },
+            { label: 'Completed Missions', val: liveStats.completed, icon: CheckCircle, color: 'text-role-accent-teal', bg: 'bg-teal-50' },
+            { label: 'Current Deployments', val: liveStats.active, icon: Zap, color: 'text-brand-cta', bg: 'bg-brand-cta/10' },
           ].map((stat, i) => (
-            <div key={i} className="bg-white p-6 rounded-3xl flex items-center justify-between shadow-sm border border-slate-50 group hover:border-[#1C9290]/20 transition-all">
+            <div key={i} className="bg-white p-6 rounded-3xl flex items-center justify-between shadow-sm border border-slate-50 group hover:border-role-accent-teal/20 transition-all">
                <div className="space-y-1">
                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{stat.label}</p>
                  <p className="text-2xl font-black text-slate-900">{stat.val}</p>
@@ -267,17 +267,17 @@ export function OverviewDashboard({ onNavigate }: { onNavigate?: (section: strin
             {upcomingEvents.length > 0 ? upcomingEvents.map((event) => (
               <div key={event.id} className="bg-white p-5 rounded-[1.5rem] shadow-sm border border-slate-50 flex items-center justify-between group hover:shadow-md transition-all">
                 <div className="flex items-center gap-5">
-                  <div className="h-12 w-12 bg-slate-50 rounded-xl flex items-center justify-center text-[#1C9290] border border-slate-100">
+                  <div className="h-12 w-12 bg-slate-50 rounded-xl flex items-center justify-center text-role-accent-teal border border-slate-100">
                     <Calendar size={20} />
                   </div>
                   <div>
                     <h4 className="font-black text-slate-900 text-sm leading-none">{event.oppTitle}</h4>
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1.5 flex items-center gap-2">
-                       <MapPin size={10} className="text-[#1C9290]" /> {event.location || "Online Deployment"}
+                       <MapPin size={10} className="text-role-accent-teal" /> {event.location || "Online Deployment"}
                     </p>
                   </div>
                 </div>
-                <Button variant="ghost" className="text-slate-300 group-hover:text-[#1C9290] group-hover:translate-x-1 transition-all">
+                <Button variant="ghost" className="text-slate-300 group-hover:text-role-accent-teal group-hover:translate-x-1 transition-all">
                   <ChevronRight size={20} />
                 </Button>
               </div>
@@ -290,10 +290,10 @@ export function OverviewDashboard({ onNavigate }: { onNavigate?: (section: strin
         {/* Smart Suggestion Engine */}
         <div className="space-y-6">
           <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight">Adaptive Learning</h3>
-          <Card className="border-none shadow-xl shadow-[#1C9290]/5 rounded-[2rem] bg-white overflow-hidden">
-            <div className="bg-[#1C9290]/5 p-6 border-b border-[#1C9290]/10 flex items-center gap-3">
-               <Brain className="text-[#1C9290]" size={20} />
-               <span className="text-[10px] font-black text-[#1C9290] uppercase tracking-widest">Recommended Skill Paths</span>
+          <Card className="border-none shadow-xl shadow-role-accent-teal/5 rounded-[2rem] bg-white overflow-hidden">
+            <div className="bg-role-accent-teal/5 p-6 border-b border-role-accent-teal/10 flex items-center gap-3">
+               <Brain className="text-role-accent-teal" size={20} />
+               <span className="text-[10px] font-black text-role-accent-teal uppercase tracking-widest">Recommended Skill Paths</span>
             </div>
             <CardContent className="p-6 space-y-6">
               {suggestedPaths.map((path, idx) => (
@@ -302,12 +302,12 @@ export function OverviewDashboard({ onNavigate }: { onNavigate?: (section: strin
                     <h5 className="font-black text-slate-800 text-xs">{path.title}</h5>
                     <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{path.category} Certification</p>
                   </div>
-                  <div className="bg-slate-50 text-slate-300 group-hover:bg-[#1C9290] group-hover:text-white p-2 rounded-lg transition-all">
+                  <div className="bg-slate-50 text-slate-300 group-hover:bg-role-accent-teal group-hover:text-white p-2 rounded-lg transition-all">
                     <Rocket size={14} />
                   </div>
                 </div>
               ))}
-              <Button className="w-full h-12 bg-[#1C9290] hover:bg-[#157a78] text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-lg shadow-[#1C9290]/20 mt-2">
+              <Button className="w-full h-12 bg-role-accent-teal hover:bg-role-accent-teal/80 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-lg shadow-role-accent-teal/20 mt-2">
                 Open Training Simulator
               </Button>
             </CardContent>
