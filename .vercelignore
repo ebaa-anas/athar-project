@@ -1,0 +1,3 @@
+api/**/*.test.ts
+src/**/*.test.js
+firestore-tests
