@@ -291,7 +291,7 @@ export function OrganizationProfile() {
     }
   };
 
-  if (loading) return <div className="h-screen flex items-center justify-center font-bold text-[#043E52] animate-pulse">SYNCING DATA...</div>;
+  if (loading) return <div className="h-screen flex items-center justify-center font-bold text-role-org animate-pulse">SYNCING DATA...</div>;
 
   const currentCausesArray = profileData.causes ? profileData.causes.split(',').map(c => c.trim()).filter(Boolean) : [];
 
@@ -300,11 +300,11 @@ export function OrganizationProfile() {
 
       {/* Profile completion warning banner */}
       {!isProfileComplete && (
-        <div className="bg-rose-50 border border-rose-200 p-4 rounded-b-2xl shadow-sm mb-6 flex items-start sm:items-center gap-4 max-w-6xl mx-auto border-t-0">
-          <div className="bg-rose-600 p-2.5 rounded-xl text-white shrink-0"><ShieldAlert size={20} /></div>
+        <div className="bg-red-50 border border-red-200 p-4 rounded-b-2xl shadow-sm mb-6 flex items-start sm:items-center gap-4 max-w-6xl mx-auto border-t-0">
+          <div className="bg-red-600 p-2.5 rounded-xl text-white shrink-0"><ShieldAlert size={20} /></div>
           <div>
-            <h4 className="text-rose-900 font-bold text-sm">Action Required: Complete Organization Profile</h4>
-            <p className="text-rose-700 text-xs font-medium mt-0.5">
+            <h4 className="text-red-900 font-bold text-sm">Action Required: Complete Organization Profile</h4>
+            <p className="text-red-700 text-xs font-medium mt-0.5">
               Your profile is incomplete. <strong>You cannot post any volunteering opportunities</strong> until all mandatory fields (About Entity, Mission Statement, Causes, Contact, and Location) are completed.
             </p>
           </div>
@@ -312,8 +312,8 @@ export function OrganizationProfile() {
       )}
       
       {/* Profile header */}
-      <div className="bg-white border-b border-orange-500/10 shadow-sm">
-        <div className="h-32 md:h-48 w-full relative group/hero bg-[#043E52]">
+      <div className="bg-white border-b border-role-accent-teal/10 shadow-sm">
+        <div className="h-32 md:h-48 w-full relative group/hero bg-role-org">
           {profileData.coverUrl ? (
             <img src={profileData.coverUrl} alt="Cover" className="w-full h-full object-cover" />
           ) : (
@@ -322,8 +322,8 @@ export function OrganizationProfile() {
           
           <input type="file" accept="image/*" ref={coverInputRef} onChange={(e) => handleImageUpload(e, 'cover')} className="hidden" />
           <div className={`absolute top-3 right-4 z-20 transition-opacity duration-200 ${isEditing ? 'opacity-100' : 'opacity-0 group-hover/hero:opacity-100'}`}>
-             <Button onClick={() => coverInputRef.current?.click()} size="sm" variant="secondary" className="bg-white/90 hover:bg-white text-[#043E52] font-bold shadow-sm text-xs">
-               {isUploadingCover ? <Loader2 className="mr-1.5 h-3 w-3 animate-spin" /> : <ImageIcon className="mr-1.5 h-3 w-3 text-orange-500" />}
+             <Button onClick={() => coverInputRef.current?.click()} size="sm" variant="secondary" className="bg-white/90 hover:bg-white text-role-org font-bold shadow-sm text-xs">
+               {isUploadingCover ? <Loader2 className="mr-1.5 h-3 w-3 animate-spin" /> : <ImageIcon className="mr-1.5 h-3 w-3 text-role-accent-teal" />}
                Change Cover
              </Button>
           </div>
@@ -335,7 +335,7 @@ export function OrganizationProfile() {
             <div className="relative group inline-block shrink-0">
               <Avatar className="w-24 h-24 md:w-28 md:h-28 ring-4 ring-white bg-white shadow-sm rounded-xl">
                 <AvatarImage src={profileData.photoUrl} className="object-cover rounded-xl bg-white" />
-                <AvatarFallback className="bg-slate-100 text-[#043E52] text-2xl font-bold rounded-xl border-b-4 border-orange-500">
+                <AvatarFallback className="bg-slate-100 text-role-org text-2xl font-bold rounded-xl border-b-4 border-role-accent-teal">
                   {profileData.name ? profileData.name.charAt(0).toUpperCase() : 'ORG'}
                 </AvatarFallback>
               </Avatar>
@@ -345,7 +345,7 @@ export function OrganizationProfile() {
                 className={`absolute inset-0 bg-black/60 rounded-xl flex items-center justify-center cursor-pointer transition-opacity backdrop-blur-sm
                   ${isEditing ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
               >
-                {isUploadingLogo ? <Loader2 className="h-6 w-6 text-white animate-spin" /> : <Camera className="h-6 w-6 text-orange-400" />}
+                {isUploadingLogo ? <Loader2 className="h-6 w-6 text-white animate-spin" /> : <Camera className="h-6 w-6 text-role-accent-teal" />}
               </div>
             </div>
 
@@ -356,19 +356,19 @@ export function OrganizationProfile() {
                     <Input 
                       value={profileData.name} 
                       onChange={(e) => setProfileData({...profileData, name: e.target.value})} 
-                      className="text-lg font-bold text-[#043E52] h-9 w-full md:w-72 border-orange-200 focus:ring-orange-500"
+                      className="text-lg font-bold text-role-org h-9 w-full md:w-72 border-role-accent-teal/30 focus:ring-role-accent-teal"
                       placeholder="Official Organization Name *"
                     />
                   ) : (
                     <div className="flex items-center gap-2">
-                      <h1 className="text-xl md:text-2xl font-bold text-[#043E52]">{profileData.name || "Unnamed Organization"}</h1>
-                      {isVerified && !isEditing && <ShieldCheck className="h-5 w-5 text-orange-500" title="Verified" />}
+                      <h1 className="text-xl md:text-2xl font-bold text-slate-900">{profileData.name || "Unnamed Organization"}</h1>
+                      {isVerified && !isEditing && <ShieldCheck className="h-5 w-5 text-emerald-500" title="Verified" />}
                     </div>
                   )}
                   {!isEditing && (
                     <Badge className={`text-[10px] uppercase font-bold px-2 py-0.5 border shadow-none ${
-                        currentTier === 'tier3' ? 'bg-rose-100 text-rose-700 border-rose-300' : 
-                        currentTier === 'tier2' ? 'bg-indigo-100 text-indigo-700 border-indigo-300' :
+                        currentTier === 'tier3' ? 'bg-red-100 text-red-700 border-red-300' : 
+                        currentTier === 'tier2' ? 'bg-blue-100 text-blue-700 border-blue-300' :
                         'bg-emerald-100 text-emerald-700 border-emerald-300'
                     }`}>
                         {currentTier === 'tier3' ? 'Tier 3: Crisis Ops' : currentTier === 'tier2' ? 'Tier 2: NGO' : 'Tier 1: Initiative'}
@@ -380,7 +380,7 @@ export function OrganizationProfile() {
                   <Input 
                     value={profileData.tagline} 
                     onChange={(e) => setProfileData({...profileData, tagline: e.target.value})} 
-                    className="text-slate-600 text-sm h-8 w-full md:w-80 border-slate-300 focus:ring-orange-500 mt-2"
+                    className="text-slate-600 text-sm h-8 w-full md:w-80 border-slate-300 focus:ring-role-accent-teal mt-2"
                     placeholder="Short mission tagline..."
                   />
                 ) : (
@@ -393,12 +393,12 @@ export function OrganizationProfile() {
 
               <div className="shrink-0 w-full md:w-auto">
                 {!isEditing ? (
-                  <Button onClick={() => setIsEditing(true)} size="sm" variant="outline" className="w-full md:w-auto border-slate-200 text-[#043E52] hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200 font-bold shadow-sm text-xs uppercase tracking-wider h-9 transition-colors">
+                  <Button onClick={() => setIsEditing(true)} size="sm" variant="outline" className="w-full md:w-auto border-slate-200 text-role-org hover:bg-role-accent-teal/10 hover:text-role-accent-teal hover:border-role-accent-teal/30 font-bold shadow-sm text-xs uppercase tracking-wider h-9 transition-colors">
                     <Edit3 className="mr-2 h-4 w-4" /> Edit Profile
                   </Button>
                 ) : (
                   <div className="flex gap-2">
-                    <Button onClick={handleSave} disabled={isSaving} size="sm" className="w-full md:w-auto bg-orange-500 hover:bg-orange-600 text-white font-bold shadow-sm text-xs uppercase tracking-wider h-9 transition-colors">
+                    <Button onClick={handleSave} disabled={isSaving} size="sm" className="w-full md:w-auto bg-role-accent-teal hover:bg-role-accent-teal/80 text-white font-bold shadow-sm text-xs uppercase tracking-wider h-9 transition-colors">
                       <Save className="mr-2 h-4 w-4" /> {isSaving ? "Saving..." : "Save Changes"}
                     </Button>
                     {isProfileComplete && (
@@ -422,14 +422,14 @@ export function OrganizationProfile() {
           
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
              {[
-               { label: 'Impact Hours', val: orgStats.hours.toString(), icon: Timer, color: 'text-[#1C9290]', bg: 'bg-teal-50' },
-               { label: 'Missions', val: orgStats.missions.toString(), icon: Activity, color: 'text-orange-500', bg: 'bg-orange-50' },
-               { label: 'Volunteers', val: orgStats.volunteers.toString(), icon: Users2, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+               { label: 'Impact Hours', val: orgStats.hours.toString(), icon: Timer, color: 'text-role-accent-teal', bg: 'bg-teal-50' },
+               { label: 'Missions', val: orgStats.missions.toString(), icon: Activity, color: 'text-role-accent-teal', bg: 'bg-role-accent-teal/10' },
+               { label: 'Volunteers', val: orgStats.volunteers.toString(), icon: Users2, color: 'text-blue-600', bg: 'bg-blue-50' },
                { label: 'Trust Rank', val: isVerified ? 'A+' : 'N/A', icon: Scale, color: 'text-amber-600', bg: 'bg-amber-50' }
              ].map((m, i) => (
-               <Card key={i} className="border border-slate-200 shadow-sm p-3 flex flex-col items-center justify-center text-center bg-white rounded-xl hover:border-orange-200 transition-colors">
+               <Card key={i} className="border border-slate-200 shadow-sm p-3 flex flex-col items-center justify-center text-center bg-white rounded-xl hover:border-role-accent-teal/30 transition-colors">
                  <div className={`p-2 rounded-lg ${m.bg} mb-1.5`}><m.icon className={`h-4 w-4 ${m.color}`} /></div>
-                 <div className="text-xl font-bold text-[#043E52]">{m.val}</div>
+                 <div className="text-xl font-bold text-role-org">{m.val}</div>
                  <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{m.label}</div>
                </Card>
              ))}
@@ -437,24 +437,24 @@ export function OrganizationProfile() {
 
           <Card className="border border-slate-200 shadow-sm rounded-xl bg-white overflow-hidden">
             <CardHeader className="px-5 py-4 border-b border-slate-100 bg-slate-50/50">
-               <CardTitle className="text-base font-bold text-[#043E52] flex items-center gap-2 uppercase tracking-tight">
-                 <Landmark className="h-5 w-5 text-[#1C9290]" /> Entity Governance & Charter
+               <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2 uppercase tracking-tight">
+                 <Landmark className="h-5 w-5 text-role-accent-teal" /> Entity Governance & Charter
                </CardTitle>
             </CardHeader>
             <CardContent className="p-5 space-y-6">
                <div className="space-y-2">
-                 <Label className="font-bold text-[#043E52] text-[10px] uppercase tracking-widest flex items-center gap-1.5"><Building className="h-3.5 w-3.5" /> About the Entity *</Label>
+                 <Label className="font-bold text-role-org text-[10px] uppercase tracking-widest flex items-center gap-1.5"><Building className="h-3.5 w-3.5" /> About the Entity *</Label>
                  {isEditing ? (
-                   <Textarea value={profileData.description} onChange={(e)=>setProfileData({...profileData, description: e.target.value})} className="bg-white border-slate-300 p-3 text-sm min-h-[100px] rounded-lg focus:ring-[#1C9290]" placeholder="Provide a detailed operational description..." />
+                   <Textarea value={profileData.description} onChange={(e)=>setProfileData({...profileData, description: e.target.value})} className="bg-white border-slate-300 p-3 text-sm min-h-[100px] rounded-lg focus:ring-role-accent-teal" placeholder="Provide a detailed operational description..." />
                  ) : (
                    <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-wrap">{profileData.description || "Operational description pending."}</p>
                  )}
                </div>
 
                <div className="space-y-2 pt-2">
-                 <Label className="font-bold text-[#043E52] text-[10px] uppercase tracking-widest flex items-center gap-1.5"><Activity className="h-3.5 w-3.5" /> Impact Summary</Label>
+                 <Label className="font-bold text-role-org text-[10px] uppercase tracking-widest flex items-center gap-1.5"><Activity className="h-3.5 w-3.5" /> Impact Summary</Label>
                  {isEditing ? (
-                   <Textarea value={profileData.impactSummary} onChange={(e)=>setProfileData({...profileData, impactSummary: e.target.value})} className="bg-white border-slate-300 p-3 text-sm min-h-[80px] rounded-lg focus:ring-[#1C9290]" placeholder="Provide a brief summary of organizational impact (e.g. 100+ projects completed)..." />
+                   <Textarea value={profileData.impactSummary} onChange={(e)=>setProfileData({...profileData, impactSummary: e.target.value})} className="bg-white border-slate-300 p-3 text-sm min-h-[80px] rounded-lg focus:ring-role-accent-teal" placeholder="Provide a brief summary of organizational impact (e.g. 100+ projects completed)..." />
                  ) : (
                    <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-wrap">{profileData.impactSummary || "No impact summary provided."}</p>
                  )}
@@ -462,8 +462,8 @@ export function OrganizationProfile() {
 
                <div className="space-y-3 pt-2">
                  <div className="flex items-center justify-between">
-                   <Label className="font-bold text-[#043E52] text-[10px] uppercase tracking-widest flex items-center gap-1.5">
-                     <HeartHandshake className="h-3.5 w-3.5 text-orange-500" /> Core Causes (Matching Keywords) *
+                   <Label className="font-bold text-role-org text-[10px] uppercase tracking-widest flex items-center gap-1.5">
+                     <HeartHandshake className="h-3.5 w-3.5 text-role-accent-teal" /> Core Causes (Matching Keywords) *
                    </Label>
                    {isEditing && <span className="text-[10px] text-slate-400">{currentCausesArray.length}/5 Selected</span>}
                  </div>
@@ -479,8 +479,8 @@ export function OrganizationProfile() {
                            onClick={() => toggleCause(cause)}
                            className={`cursor-pointer px-3 py-1.5 text-xs font-semibold transition-all duration-200 
                              ${isSelected 
-                               ? 'bg-orange-100 text-orange-700 border-orange-400 shadow-sm scale-[1.02]' 
-                               : 'bg-white text-slate-500 border-slate-200 hover:border-orange-300 hover:text-orange-500'}`}
+                               ? 'bg-role-accent-teal/15 text-role-accent-teal border-role-accent-teal shadow-sm scale-[1.02]' 
+                               : 'bg-white text-slate-500 border-slate-200 hover:border-role-accent-teal/50 hover:text-role-accent-teal'}`}
                          >
                            {cause}
                          </Badge>
@@ -490,7 +490,7 @@ export function OrganizationProfile() {
                  ) : (
                    <div className="flex flex-wrap gap-2">
                      {currentCausesArray.length > 0 ? currentCausesArray.map((cause, idx) => (
-                       <Badge key={idx} variant="secondary" className="bg-orange-50 text-orange-700 hover:bg-orange-100 border border-orange-200 font-semibold px-3 py-1 text-xs">
+                       <Badge key={idx} variant="secondary" className="bg-role-accent-teal/10 text-role-accent-teal hover:bg-role-accent-teal/15 border border-role-accent-teal/30 font-semibold px-3 py-1 text-xs">
                          {cause}
                        </Badge>
                      )) : (
@@ -503,11 +503,11 @@ export function OrganizationProfile() {
                <Separator className="bg-slate-100" />
                
                <div className="space-y-2">
-                 <Label className="font-bold text-[#043E52] text-[10px] uppercase tracking-widest flex items-center gap-1.5"><Scale className="h-3.5 w-3.5" /> Legal Mission Statement *</Label>
+                 <Label className="font-bold text-role-org text-[10px] uppercase tracking-widest flex items-center gap-1.5"><Scale className="h-3.5 w-3.5" /> Legal Mission Statement *</Label>
                  {isEditing ? (
-                   <Textarea value={profileData.mission} onChange={(e)=>setProfileData({...profileData, mission: e.target.value})} className="bg-white border-slate-300 p-3 text-sm min-h-[60px] rounded-lg focus:ring-[#1C9290]" placeholder="Enter official registered mission statement..." />
+                   <Textarea value={profileData.mission} onChange={(e)=>setProfileData({...profileData, mission: e.target.value})} className="bg-white border-slate-300 p-3 text-sm min-h-[60px] rounded-lg focus:ring-role-accent-teal" placeholder="Enter official registered mission statement..." />
                  ) : (
-                   <blockquote className="border-l-2 border-orange-400 pl-4 py-1 text-sm font-medium text-slate-700 italic bg-orange-50/30 rounded-r-lg">
+                   <blockquote className="border-l-2 border-role-accent-teal pl-4 py-1 text-sm font-medium text-slate-700 italic bg-role-accent-teal/5 rounded-r-lg">
                      "{profileData.mission || "Mission statement pending review."}"
                    </blockquote>
                  )}
@@ -516,7 +516,7 @@ export function OrganizationProfile() {
                {/* Board & safeguarding fields are editable at any tier, but only required for tier2/3 */}
                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
                    <div className="space-y-2">
-                       <Label className="font-bold text-[#043E52] text-[10px] uppercase tracking-widest flex items-center gap-1.5"><Users2 className="h-3.5 w-3.5" /> Board of Directors {currentTier !== 'tier1' && '*'}</Label>
+                       <Label className="font-bold text-role-org text-[10px] uppercase tracking-widest flex items-center gap-1.5"><Users2 className="h-3.5 w-3.5" /> Board of Directors {currentTier !== 'tier1' && '*'}</Label>
                        {isEditing ? (
                        <Textarea value={profileData.boardMembers} onChange={(e)=>setProfileData({...profileData, boardMembers: e.target.value})} className="bg-white border-slate-300 text-sm h-20" placeholder="List key board members/trustees..." />
                        ) : (
@@ -524,7 +524,7 @@ export function OrganizationProfile() {
                        )}
                    </div>
                    <div className="space-y-2">
-                       <Label className="font-bold text-[#043E52] text-[10px] uppercase tracking-widest flex items-center gap-1.5"><ShieldAlert className="h-3.5 w-3.5" /> Safeguarding Policy {currentTier !== 'tier1' && '*'}</Label>
+                       <Label className="font-bold text-role-org text-[10px] uppercase tracking-widest flex items-center gap-1.5"><ShieldAlert className="h-3.5 w-3.5" /> Safeguarding Policy {currentTier !== 'tier1' && '*'}</Label>
                        {isEditing ? (
                        <Textarea value={profileData.safeguardingPolicy} onChange={(e)=>setProfileData({...profileData, safeguardingPolicy: e.target.value})} className="bg-white border-slate-300 text-sm h-20" placeholder="Briefly detail volunteer/minor safeguarding protocols..." />
                        ) : (
@@ -540,7 +540,7 @@ export function OrganizationProfile() {
         {/* RIGHT COLUMN */}
         <div className="space-y-6">
           
-          <Card className={`border shadow-sm rounded-xl overflow-hidden ${isVerified ? 'bg-[#043E52] text-white border-transparent' : 'bg-white border-slate-200'}`}>
+          <Card className={`border shadow-sm rounded-xl overflow-hidden ${isVerified ? 'bg-role-org text-white border-transparent' : 'bg-white border-slate-200'}`}>
             <div className="p-5 space-y-4">
               <div className="flex items-center justify-between">
                 <ShieldCheck className={`h-7 w-7 ${isVerified ? 'text-emerald-400' : 'text-amber-500'}`} />
@@ -562,27 +562,27 @@ export function OrganizationProfile() {
                         ? 'This entity has passed the National Disaster Response Framework (NDRF) audit and is legally authorized for public crisis deployment.' 
                         : 'This entity has passed the standard verification audit and is authorized for regular platform operations.'}
                    </p>
-                   <div className="bg-[#033040] rounded-lg p-3 space-y-2 mt-2 border border-white/10">
+                   <div className="bg-role-org-dark rounded-lg p-3 space-y-2 mt-2 border border-white/10">
                       <div className="flex justify-between text-xs"><span className="text-teal-100/60 font-semibold uppercase tracking-wider text-[9px]">Reg ID</span><span className="font-bold font-mono text-teal-100">{profileData.registrationId || 'Verified'}</span></div>
                       <div className="flex justify-between text-xs"><span className="text-teal-100/60 font-semibold uppercase tracking-wider text-[9px]">Founded</span><span className="font-bold">{profileData.yearFounded || 'Verified'}</span></div>
                    </div>
                 </div>
               ) : vStatus === "pending" ? (
                 <div className="space-y-3">
-                   <h3 className="text-lg font-bold text-[#043E52] tracking-tight">Audit in Progress</h3>
+                   <h3 className="text-lg font-bold text-slate-900 tracking-tight">Audit in Progress</h3>
                    <p className="text-xs text-slate-500 leading-relaxed">Your corporate documents are currently under review by the Compliance Team.</p>
-                   <div className="bg-orange-50 border border-orange-200 p-3 rounded-lg flex flex-col gap-2 mt-2">
-                      <div className="flex justify-between items-center text-xs font-bold text-orange-800 uppercase tracking-wider">
+                   <div className="bg-amber-50 border border-amber-200 p-3 rounded-lg flex flex-col gap-2 mt-2">
+                      <div className="flex justify-between items-center text-xs font-bold text-amber-800 uppercase tracking-wider">
                         <span>Review Queue</span>
-                        <Timer className="h-4 w-4 animate-spin-slow text-orange-500" />
+                        <Timer className="h-4 w-4 animate-spin-slow text-amber-500" />
                       </div>
-                      <Progress value={65} className="h-1.5 bg-orange-200 [&>div]:bg-orange-500" />
-                      <span className="text-[10px] font-bold text-orange-600 uppercase tracking-widest text-right">Est. 48-72h</span>
+                      <Progress value={65} className="h-1.5 bg-amber-200 [&>div]:bg-amber-500" />
+                      <span className="text-[10px] font-bold text-amber-600 uppercase tracking-widest text-right">Est. 48-72h</span>
                    </div>
                 </div>
               ) : (
                 <div className="space-y-3 relative">
-                  <h3 className="text-lg font-bold text-[#043E52] tracking-tight">Unverified Entity</h3>
+                  <h3 className="text-lg font-bold text-slate-900 tracking-tight">Unverified Entity</h3>
                   <p className="text-xs text-slate-500 leading-relaxed">
                     {currentTier === 'tier3' 
                         ? 'To access the Athar Volunteer Reserve (AVR) crisis portal, you must complete the mandatory government NDRF audit.' 
@@ -609,7 +609,7 @@ export function OrganizationProfile() {
                     </div>
                   ) : (
                     <Button 
-                      className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold h-10 rounded-lg text-xs uppercase tracking-wider mt-2 transition-colors relative z-10 cursor-pointer"
+                      className="w-full bg-role-accent-teal hover:bg-role-accent-teal/80 text-white font-bold h-10 rounded-lg text-xs uppercase tracking-wider mt-2 transition-colors relative z-10 cursor-pointer"
                       onClick={(e) => {
                         e.preventDefault(); 
                         e.stopPropagation(); 
@@ -625,35 +625,35 @@ export function OrganizationProfile() {
           </Card>
 
           <Card className="border border-slate-200 shadow-sm rounded-xl bg-white p-5 space-y-4">
-             <h4 className="text-xs font-bold text-[#043E52] uppercase tracking-wider flex items-center gap-2 mb-1 border-b border-slate-100 pb-3">
-               <Globe className="h-4 w-4 text-orange-500" /> Public Directory Info
+             <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2 mb-1 border-b border-slate-100 pb-3">
+               <Globe className="h-4 w-4 text-role-accent-teal" /> Public Directory Info
              </h4>
              
              {isEditing ? (
                <div className="space-y-3">
-                 <div className="space-y-1"><Label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Gov Registration / Tax ID *</Label><Input value={profileData.registrationId} onChange={(e)=>setProfileData({...profileData, registrationId: e.target.value})} placeholder="e.g. EIN-12345" className="h-9 text-xs rounded-md border-slate-200 focus:ring-orange-500" /></div>
-                 <div className="space-y-1"><Label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Year Founded</Label><Input value={profileData.yearFounded} onChange={(e)=>setProfileData({...profileData, yearFounded: e.target.value})} placeholder="e.g. 2010" type="number" className="h-9 text-xs rounded-md border-slate-200 focus:ring-orange-500" /></div>
-                 <div className="space-y-1"><Label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Website</Label><Input value={profileData.website} onChange={(e)=>setProfileData({...profileData, website: e.target.value})} placeholder="https://..." className="h-9 text-xs rounded-md border-slate-200 focus:ring-orange-500" /></div>
-                 <div className="space-y-1"><Label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Public Email</Label><Input value={profileData.email} onChange={(e)=>setProfileData({...profileData, email: e.target.value})} placeholder="contact@org.com" className="h-9 text-xs rounded-md border-slate-200 focus:ring-orange-500" /></div>
-                 <div className="space-y-1"><Label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Phone *</Label><Input value={profileData.phone} onChange={(e)=>setProfileData({...profileData, phone: e.target.value})} placeholder="+90..." className="h-9 text-xs rounded-md border-slate-200 focus:ring-orange-500" /></div>
+                 <div className="space-y-1"><Label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Gov Registration / Tax ID *</Label><Input value={profileData.registrationId} onChange={(e)=>setProfileData({...profileData, registrationId: e.target.value})} placeholder="e.g. EIN-12345" className="h-9 text-xs rounded-md border-slate-200 focus:ring-role-accent-teal" /></div>
+                 <div className="space-y-1"><Label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Year Founded</Label><Input value={profileData.yearFounded} onChange={(e)=>setProfileData({...profileData, yearFounded: e.target.value})} placeholder="e.g. 2010" type="number" className="h-9 text-xs rounded-md border-slate-200 focus:ring-role-accent-teal" /></div>
+                 <div className="space-y-1"><Label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Website</Label><Input value={profileData.website} onChange={(e)=>setProfileData({...profileData, website: e.target.value})} placeholder="https://..." className="h-9 text-xs rounded-md border-slate-200 focus:ring-role-accent-teal" /></div>
+                 <div className="space-y-1"><Label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Public Email</Label><Input value={profileData.email} onChange={(e)=>setProfileData({...profileData, email: e.target.value})} placeholder="contact@org.com" className="h-9 text-xs rounded-md border-slate-200 focus:ring-role-accent-teal" /></div>
+                 <div className="space-y-1"><Label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Phone *</Label><Input value={profileData.phone} onChange={(e)=>setProfileData({...profileData, phone: e.target.value})} placeholder="+90..." className="h-9 text-xs rounded-md border-slate-200 focus:ring-role-accent-teal" /></div>
                  
                  <div className="grid grid-cols-2 gap-3">
-                   <div className="space-y-1"><Label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">City</Label><Input value={profileData.city} onChange={(e)=>setProfileData({...profileData, city: e.target.value})} placeholder="City" className="h-9 text-xs rounded-md border-slate-200 focus:ring-orange-500" /></div>
-                   <div className="space-y-1"><Label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Country</Label><Input value={profileData.country} onChange={(e)=>setProfileData({...profileData, country: e.target.value})} placeholder="Country" className="h-9 text-xs rounded-md border-slate-200 focus:ring-orange-500" /></div>
+                   <div className="space-y-1"><Label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">City</Label><Input value={profileData.city} onChange={(e)=>setProfileData({...profileData, city: e.target.value})} placeholder="City" className="h-9 text-xs rounded-md border-slate-200 focus:ring-role-accent-teal" /></div>
+                   <div className="space-y-1"><Label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Country</Label><Input value={profileData.country} onChange={(e)=>setProfileData({...profileData, country: e.target.value})} placeholder="Country" className="h-9 text-xs rounded-md border-slate-200 focus:ring-role-accent-teal" /></div>
                  </div>
                  
-                 <div className="space-y-1"><Label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">HQ Address *</Label><Textarea value={profileData.address} onChange={(e)=>setProfileData({...profileData, address: e.target.value})} placeholder="Full Address..." className="h-16 text-xs resize-none rounded-md border-slate-200 focus:ring-orange-500" /></div>
+                 <div className="space-y-1"><Label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">HQ Address *</Label><Textarea value={profileData.address} onChange={(e)=>setProfileData({...profileData, address: e.target.value})} placeholder="Full Address..." className="h-16 text-xs resize-none rounded-md border-slate-200 focus:ring-role-accent-teal" /></div>
                </div>
              ) : (
                <div className="space-y-3.5">
-                 <div className="flex items-center gap-3 text-sm text-slate-600"><FileDigit className="h-4 w-4 text-orange-400 shrink-0" /> <span className="font-mono text-xs font-semibold">{profileData.registrationId || "Reg ID Pending"}</span></div>
-                 <div className="flex items-center gap-3 text-sm text-slate-600"><Globe className="h-4 w-4 text-orange-400 shrink-0" /> <a href={profileData.website} target="_blank" rel="noreferrer" className="hover:underline hover:text-orange-500 truncate font-medium">{profileData.website || "Not provided"}</a></div>
-                 <div className="flex items-center gap-3 text-sm text-slate-600"><Mail className="h-4 w-4 text-orange-400 shrink-0" /> <span className="truncate font-medium">{profileData.email || "Not provided"}</span></div>
-                 <div className="flex items-center gap-3 text-sm text-slate-600"><Phone className="h-4 w-4 text-orange-400 shrink-0" /> <span className="font-medium">{profileData.phone || "Not provided"}</span></div>
+                 <div className="flex items-center gap-3 text-sm text-slate-600"><FileDigit className="h-4 w-4 text-role-accent-teal shrink-0" /> <span className="font-mono text-xs font-semibold">{profileData.registrationId || "Reg ID Pending"}</span></div>
+                 <div className="flex items-center gap-3 text-sm text-slate-600"><Globe className="h-4 w-4 text-role-accent-teal shrink-0" /> <a href={profileData.website} target="_blank" rel="noreferrer" className="hover:underline hover:text-role-accent-teal truncate font-medium">{profileData.website || "Not provided"}</a></div>
+                 <div className="flex items-center gap-3 text-sm text-slate-600"><Mail className="h-4 w-4 text-role-accent-teal shrink-0" /> <span className="truncate font-medium">{profileData.email || "Not provided"}</span></div>
+                 <div className="flex items-center gap-3 text-sm text-slate-600"><Phone className="h-4 w-4 text-role-accent-teal shrink-0" /> <span className="font-medium">{profileData.phone || "Not provided"}</span></div>
                  <Separator className="bg-slate-100" />
                  
                  <div className="flex items-start gap-3 text-sm text-slate-600 leading-relaxed">
-                    <MapPin className="h-4 w-4 text-orange-400 shrink-0 mt-0.5" /> 
+                    <MapPin className="h-4 w-4 text-role-accent-teal shrink-0 mt-0.5" /> 
                     <div>
                         <span className="font-medium block">{profileData.address || "HQ Location Not Logged"}</span>
                         {(profileData.city || profileData.country) && (
@@ -669,16 +669,16 @@ export function OrganizationProfile() {
 
       {/* Audit modal */}
       {showVerifyModal && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#043E52]/90 backdrop-blur-sm p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-role-org/90 backdrop-blur-sm p-4 overflow-y-auto">
           <Card className="w-full max-w-4xl bg-white rounded-2xl shadow-2xl overflow-hidden border-none my-auto flex flex-col md:flex-row h-full max-h-[90vh]">
             
             {/* Sidebar */}
-            <div className="w-full md:w-[35%] bg-gradient-to-b from-[#043E52] to-[#021c25] p-8 text-white flex flex-col justify-between shrink-0 relative overflow-hidden">
+            <div className="w-full md:w-[35%] bg-gradient-to-b from-role-org to-role-org-dark p-8 text-white flex flex-col justify-between shrink-0 relative overflow-hidden">
               <div className="absolute top-0 right-0 opacity-10 translate-x-1/4 -translate-y-1/4">
                  <ShieldCheck className="w-64 h-64" />
               </div>
               <div className="relative z-10">
-                <Landmark className="h-10 w-10 text-orange-500 mb-5" />
+                <Landmark className="h-10 w-10 text-role-accent-teal mb-5" />
                 <h2 className="text-2xl font-black leading-tight mb-2 tracking-tight whitespace-pre-line">
                     {currentTier === 'tier3' ? 'Regulatory\nCompliance Audit' : 'Platform\nVerification'}
                 </h2>
@@ -691,9 +691,9 @@ export function OrganizationProfile() {
                     : 'To officially register and deploy community missions, you must submit foundational legal and financial documentation to ensure platform transparency.'}
                 </p>
               </div>
-              <div className="space-y-3 text-[11px] font-bold text-orange-400 mt-8 md:mt-0 relative z-10 uppercase tracking-wider">
-                 <p className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-orange-500" /> Secure 256-bit Encryption</p>
-                 <p className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-orange-500" /> {currentTier === 'tier3' ? 'Ministry Direct Routing' : 'Platform Safe Routing'}</p>
+              <div className="space-y-3 text-[11px] font-bold text-role-accent-teal mt-8 md:mt-0 relative z-10 uppercase tracking-wider">
+                 <p className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-role-accent-teal" /> Secure 256-bit Encryption</p>
+                 <p className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-role-accent-teal" /> {currentTier === 'tier3' ? 'Ministry Direct Routing' : 'Platform Safe Routing'}</p>
               </div>
             </div>
 
@@ -702,42 +702,42 @@ export function OrganizationProfile() {
               <div className="space-y-6 flex-1">
                 
                 <div>
-                  <h3 className="text-sm font-bold text-[#043E52] border-b border-slate-200 pb-2 mb-4 uppercase tracking-tight">1. Fiduciary Identification</h3>
+                  <h3 className="text-sm font-bold text-slate-900 border-b border-slate-200 pb-2 mb-4 uppercase tracking-tight">1. Fiduciary Identification</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                         <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Legal Entity Name</Label>
-                        <Input value={auditData.legalName} onChange={e => setAuditData({...auditData, legalName: e.target.value})} className="h-11 bg-white border-slate-200 rounded-lg text-sm focus:ring-[#1C9290]" placeholder="Exact Registered Name" />
+                        <Input value={auditData.legalName} onChange={e => setAuditData({...auditData, legalName: e.target.value})} className="h-11 bg-white border-slate-200 rounded-lg text-sm focus:ring-role-accent-teal" placeholder="Exact Registered Name" />
                     </div>
                     <div className="space-y-1.5">
                         <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tax ID / License Number</Label>
-                        <Input value={auditData.licenseId} onChange={e => setAuditData({...auditData, licenseId: e.target.value})} className="h-11 bg-white border-slate-200 rounded-lg text-sm font-mono focus:ring-[#1C9290]" placeholder="e.g. NGO-TAX-XXXX" />
+                        <Input value={auditData.licenseId} onChange={e => setAuditData({...auditData, licenseId: e.target.value})} className="h-11 bg-white border-slate-200 rounded-lg text-sm font-mono focus:ring-role-accent-teal" placeholder="e.g. NGO-TAX-XXXX" />
                     </div>
                     <div className="space-y-1.5">
                         <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Authorized Signatory Name</Label>
-                        <Input value={auditData.signatoryName} onChange={e => setAuditData({...auditData, signatoryName: e.target.value})} className="h-11 bg-white border-slate-200 rounded-lg text-sm focus:ring-[#1C9290]" placeholder="Full Name of Representative" />
+                        <Input value={auditData.signatoryName} onChange={e => setAuditData({...auditData, signatoryName: e.target.value})} className="h-11 bg-white border-slate-200 rounded-lg text-sm focus:ring-role-accent-teal" placeholder="Full Name of Representative" />
                     </div>
                     <div className="space-y-1.5">
                         <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Signatory Role</Label>
-                        <Input value={auditData.signatoryRole} onChange={e => setAuditData({...auditData, signatoryRole: e.target.value})} className="h-11 bg-white border-slate-200 rounded-lg text-sm focus:ring-[#1C9290]" placeholder="e.g. CEO, Board Member" />
+                        <Input value={auditData.signatoryRole} onChange={e => setAuditData({...auditData, signatoryRole: e.target.value})} className="h-11 bg-white border-slate-200 rounded-lg text-sm focus:ring-role-accent-teal" placeholder="e.g. CEO, Board Member" />
                     </div>
                   </div>
                 </div>
 
                 <div>
-                  <h3 className="text-sm font-bold text-[#043E52] border-b border-slate-200 pb-2 mb-4 uppercase tracking-tight">2. Required Documentation</h3>
+                  <h3 className="text-sm font-bold text-slate-900 border-b border-slate-200 pb-2 mb-4 uppercase tracking-tight">2. Required Documentation</h3>
                   <p className="text-xs text-slate-500 mb-4">Please upload the following official documents in PDF format. Maximum file size is 10MB per document.</p>
                   
                   <div className="space-y-3">
                     {requiredDocs.map((docItem) => (
-                      <label key={docItem.id} className="flex items-center justify-between p-4 bg-white rounded-xl border border-dashed border-slate-300 hover:border-orange-400 transition-colors cursor-pointer group">
+                      <label key={docItem.id} className="flex items-center justify-between p-4 bg-white rounded-xl border border-dashed border-slate-300 hover:border-role-accent-teal transition-colors cursor-pointer group">
                          <div className="flex items-center gap-3">
-                            <div className={`p-2 rounded-lg ${auditFiles[docItem.id] ? 'bg-orange-50' : 'bg-slate-100 group-hover:bg-orange-50'}`}>
-                              <docItem.icon className={`h-5 w-5 ${auditFiles[docItem.id] ? 'text-orange-500' : 'text-slate-500 group-hover:text-orange-500'}`} />
+                            <div className={`p-2 rounded-lg ${auditFiles[docItem.id] ? 'bg-role-accent-teal/10' : 'bg-slate-100 group-hover:bg-role-accent-teal/10'}`}>
+                              <docItem.icon className={`h-5 w-5 ${auditFiles[docItem.id] ? 'text-role-accent-teal' : 'text-slate-500 group-hover:text-role-accent-teal'}`} />
                             </div>
                             <div>
-                              <p className="text-sm font-bold text-[#043E52]">{docItem.title}</p>
+                              <p className="text-sm font-bold text-role-org">{docItem.title}</p>
                               <p className="text-[10px] text-slate-500 uppercase tracking-wider mt-0.5">
-                                {auditFiles[docItem.id] ? <span className="text-orange-600 font-bold">{auditFiles[docItem.id]}</span> : docItem.desc}
+                                {auditFiles[docItem.id] ? <span className="text-role-accent-teal font-bold">{auditFiles[docItem.id]}</span> : docItem.desc}
                               </p>
                             </div>
                          </div>
@@ -747,7 +747,7 @@ export function OrganizationProfile() {
                            className="hidden" 
                            onChange={(e) => handleAuditDocumentUpload(e, docItem.id)}
                          />
-                         <Button asChild size="sm" variant={auditFiles[docItem.id] ? 'default' : 'outline'} className={`text-xs font-bold uppercase tracking-wider h-8 ${auditFiles[docItem.id] ? 'bg-orange-500 hover:bg-orange-600 text-white border-none' : ''}`}>
+                         <Button asChild size="sm" variant={auditFiles[docItem.id] ? 'default' : 'outline'} className={`text-xs font-bold uppercase tracking-wider h-8 ${auditFiles[docItem.id] ? 'bg-role-accent-teal hover:bg-role-accent-teal/80 text-white border-none' : ''}`}>
                            <span>
                              {uploadingDoc === docItem.id ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : auditFiles[docItem.id] ? <Check className="mr-2 h-3.5 w-3.5" /> : <UploadCloud className="mr-2 h-3.5 w-3.5" />}
                              {uploadingDoc === docItem.id ? 'Uploading...' : auditFiles[docItem.id] ? 'Uploaded' : 'Upload'}
@@ -760,8 +760,8 @@ export function OrganizationProfile() {
 
                 {/* Legal consent block */}
                 <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-3">
-                  <div className="flex items-center gap-2 text-[#043E52]">
-                     <Gavel className="h-5 w-5 text-orange-500" />
+                  <div className="flex items-center gap-2 text-slate-900">
+                     <Gavel className="h-5 w-5 text-role-accent-teal" />
                      <h3 className="font-bold text-sm uppercase tracking-tight">{currentTier === 'tier3' ? 'Regulatory Terms & Oath' : 'Platform Code of Conduct'}</h3>
                   </div>
                   <div className="h-28 overflow-y-auto pr-2 text-xs text-slate-600 space-y-2.5 font-medium bg-slate-50 p-3 rounded-lg border border-slate-100">
@@ -781,8 +781,8 @@ export function OrganizationProfile() {
                     )}
                   </div>
                   <div className="flex items-center space-x-3 pt-3 mt-3">
-                     <Checkbox id="terms" checked={agreedToTerms} onCheckedChange={(c)=>setAgreedToTerms(c as boolean)} className="h-5 w-5 border-slate-300 data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500" />
-                     <label htmlFor="terms" className="text-xs font-bold text-[#043E52] cursor-pointer uppercase tracking-wider">I legally certify the accuracy of all submitted data.</label>
+                     <Checkbox id="terms" checked={agreedToTerms} onCheckedChange={(c)=>setAgreedToTerms(c as boolean)} className="h-5 w-5 border-slate-300 data-[state=checked]:bg-role-accent-teal data-[state=checked]:border-role-accent-teal" />
+                     <label htmlFor="terms" className="text-xs font-bold text-role-org cursor-pointer uppercase tracking-wider">I legally certify the accuracy of all submitted data.</label>
                   </div>
                 </div>
               </div>
@@ -792,7 +792,7 @@ export function OrganizationProfile() {
                 
                 <Button 
                   disabled={!agreedToTerms || !auditData.legalName || !auditData.licenseId || !areAllDocsUploaded() || isSubmittingAudit}
-                  className="bg-[#1C9290] hover:bg-[#157a78] text-white font-bold px-8 shadow-md h-11 uppercase tracking-wider text-xs transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="bg-role-accent-teal hover:bg-role-accent-teal/80 text-white font-bold px-8 shadow-md h-11 uppercase tracking-wider text-xs transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={handleSubmitAudit}
                 >
                   {isSubmittingAudit ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}
