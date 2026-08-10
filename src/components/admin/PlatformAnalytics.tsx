@@ -206,14 +206,14 @@ export function PlatformAnalytics() {
                   justify-content: space-between; 
                   align-items: center; 
                   margin-bottom: 40px; 
-                  border-bottom: 2px solid #1C9290;
+                  border-bottom: 2px solid #d97706;
                   padding-bottom: 20px;
                 }
-                .logo { font-size: 28px; font-weight: 900; color: #043E52; letter-spacing: -0.5px; }
-                .logo span { color: #1C9290; }
+                .logo { font-size: 28px; font-weight: 900; color: #1e293b; letter-spacing: -0.5px; }
+                .logo span { color: #d97706; }
                 .date { color: #64748b; font-size: 14px; font-weight: bold; }
-                h1 { color: #043E52; font-size: 24px; margin-bottom: 30px; text-transform: uppercase; letter-spacing: 1px;}
-                h2 { color: #1C9290; font-size: 18px; margin-top: 30px; text-transform: uppercase; border-bottom: 1px solid #eee; padding-bottom: 8px;}
+                h1 { color: #1e293b; font-size: 24px; margin-bottom: 30px; text-transform: uppercase; letter-spacing: 1px;}
+                h2 { color: #1e293b; font-size: 18px; margin-top: 30px; text-transform: uppercase; border-bottom: 1px solid #eee; padding-bottom: 8px;}
                 p, li { font-size: 14px; color: #475569; }
                 .footer { 
                   margin-top: 60px; 
@@ -261,27 +261,27 @@ export function PlatformAnalytics() {
   };
 
   const metrics = [
-    { label: 'Total Volunteers', value: stats.volunteers, change: '+12.5%', trend: 'up', icon: Users, color: 'text-[#E16A3D]', bgColor: 'bg-[#E16A3D]/10', borderColor: 'border-[#E16A3D]/20' },
-    { label: 'Verified Orgs', value: stats.organizations, change: '+5.2%', trend: 'up', icon: Building2, color: 'text-[#016A6D]', bgColor: 'bg-[#016A6D]/10', borderColor: 'border-[#016A6D]/20' },
-    { label: 'Active Opportunities', value: stats.opportunities, change: '+8.1%', trend: 'up', icon: Target, color: 'text-[#043E52]', bgColor: 'bg-[#043E52]/10', borderColor: 'border-[#043E52]/20' },
-    { label: 'Avg Response Time', value: '18m', change: '-2.4m', trend: 'down', icon: Clock, color: 'text-[#1C9290]', bgColor: 'bg-[#1C9290]/10', borderColor: 'border-[#1C9290]/20' },
+    { label: 'Total Volunteers', value: stats.volunteers, change: '+12.5%', trend: 'up', icon: Users, color: 'text-role-admin-accent-dark', bgColor: 'bg-role-admin-accent/10', borderColor: 'border-role-admin-accent/20' },
+    { label: 'Verified Orgs', value: stats.organizations, change: '+5.2%', trend: 'up', icon: Building2, color: 'text-blue-600', bgColor: 'bg-blue-50', borderColor: 'border-blue-200' },
+    { label: 'Active Opportunities', value: stats.opportunities, change: '+8.1%', trend: 'up', icon: Target, color: 'text-slate-700', bgColor: 'bg-slate-100', borderColor: 'border-slate-300' },
+    { label: 'Avg Response Time', value: '18m', change: '-2.4m', trend: 'down', icon: Clock, color: 'text-emerald-600', bgColor: 'bg-emerald-50', borderColor: 'border-emerald-200' },
   ];
 
-  if (loading) return <div className="p-12 text-center text-[#043E52] font-bold flex flex-col items-center justify-center"><Loader2 className="h-8 w-8 animate-spin mb-4" /> Aggregating Analytics...</div>;
+  if (loading) return <div className="p-12 text-center text-slate-700 font-bold flex flex-col items-center justify-center"><Loader2 className="h-8 w-8 animate-spin mb-4" /> Aggregating Analytics...</div>;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-[#043E52] font-bold text-3xl mb-2">Platform Analytics</h1>
+          <h1 className="text-slate-900 font-bold text-3xl mb-2">Platform Analytics</h1>
           <p className="text-slate-500">Comprehensive insights into platform performance and usage</p>
         </div>
         <div className="flex gap-2">
             <Button
               onClick={handleGenerateReport} 
               disabled={isGenerating}
-              className="bg-gradient-to-r from-[#043E52] to-[#1C9290] hover:from-[#033040] hover:to-[#157a78] text-white font-bold shadow-md h-11 px-6"
+              className="bg-gradient-to-r from-role-admin-accent to-role-admin-accent-dark hover:from-role-admin-accent-dark hover:to-amber-700 text-slate-900 font-bold shadow-md h-11 px-6"
             >
                 {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
                 {isGenerating ? 'Analyzing...' : 'Generate AI Report'}
@@ -290,14 +290,14 @@ export function PlatformAnalytics() {
       </div>
 
       {/* AI Ecosystem Feedback Loop */}
-      <Card className="border border-[#016A6D]/30 bg-white shadow-sm overflow-hidden">
+      <Card className="border border-role-admin-accent/30 bg-white shadow-sm overflow-hidden">
         <CardHeader>
           <div className="flex items-start gap-4">
-            <div className="bg-gradient-to-br from-[#016A6D] to-[#1C9290] text-white p-3 rounded-xl shadow-lg shadow-teal-900/20">
+            <div className="bg-gradient-to-br from-role-admin-accent to-role-admin-accent-dark text-white p-3 rounded-xl shadow-lg shadow-amber-900/20">
               <Brain className="h-6 w-6" />
             </div>
             <div className="flex-1">
-              <CardTitle className="mb-2 text-[#043E52]">🤖 AI Ecosystem Feedback Loop</CardTitle>
+              <CardTitle className="mb-2 text-slate-900">🤖 AI Ecosystem Feedback Loop</CardTitle>
               <CardDescription>
                 The core innovation: System learns from crisis mobilization data to automatically improve training recommendations
               </CardDescription>
@@ -307,51 +307,51 @@ export function PlatformAnalytics() {
         <CardContent>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
             
-            <div className="bg-orange-50 rounded-xl p-5 border border-orange-100 hover:shadow-md transition-all group">
+            <div className="bg-red-50 rounded-xl p-5 border border-red-100 hover:shadow-md transition-all group">
               <div className="flex items-center gap-3 mb-3">
                 <div className="bg-white p-2 rounded-lg shadow-sm group-hover:scale-110 transition-transform">
-                  <Zap className="h-5 w-5 text-[#E16A3D]" />
+                  <Zap className="h-5 w-5 text-red-600" />
                 </div>
-                <h4 className="font-bold text-[#E16A3D]">Crisis Mobilization</h4>
+                <h4 className="font-bold text-red-600">Crisis Mobilization</h4>
               </div>
               <p className="text-sm text-slate-600 mb-3">NLP Crisis Engine parses real-time reports</p>
               <div className="flex gap-2">
-                <Badge className="bg-[#E16A3D] hover:bg-[#c2562d] shadow-sm">52 Activations</Badge>
-                <Badge variant="outline" className="bg-white text-slate-600 border-orange-200">18 min avg</Badge>
+                <Badge className="bg-red-600 hover:bg-red-700 shadow-sm">52 Activations</Badge>
+                <Badge variant="outline" className="bg-white text-slate-600 border-red-200">18 min avg</Badge>
               </div>
             </div>
 
-            <div className="bg-slate-100 rounded-xl p-5 border border-slate-200 hover:shadow-md transition-all group">
+            <div className="bg-amber-50 rounded-xl p-5 border border-amber-100 hover:shadow-md transition-all group">
               <div className="flex items-center gap-3 mb-3">
                 <div className="bg-white p-2 rounded-lg shadow-sm group-hover:scale-110 transition-transform">
-                  <Activity className="h-5 w-5 text-[#043E52]" />
+                  <Activity className="h-5 w-5 text-amber-600" />
                 </div>
-                <h4 className="font-bold text-[#043E52]">Data Analysis</h4>
+                <h4 className="font-bold text-amber-700">Data Analysis</h4>
               </div>
               <p className="text-sm text-slate-600 mb-3">AI identifies skill gaps from crisis data</p>
               <div className="flex gap-2">
-                <Badge className="bg-[#043E52] hover:bg-[#033040] shadow-sm">4 Gaps Found</Badge>
-                <Badge variant="outline" className="bg-white text-slate-600 border-slate-300">Auto-Active</Badge>
+                <Badge className="bg-amber-500 hover:bg-amber-600 shadow-sm">4 Gaps Found</Badge>
+                <Badge variant="outline" className="bg-white text-slate-600 border-amber-200">Auto-Active</Badge>
               </div>
             </div>
 
-            <div className="bg-teal-50 rounded-xl p-5 border border-teal-100 hover:shadow-md transition-all group">
+            <div className="bg-role-admin-accent/10 rounded-xl p-5 border border-role-admin-accent/20 hover:shadow-md transition-all group">
               <div className="flex items-center gap-3 mb-3">
                 <div className="bg-white p-2 rounded-lg shadow-sm group-hover:scale-110 transition-transform">
-                  <Brain className="h-5 w-5 text-[#1C9290]" />
+                  <Brain className="h-5 w-5 text-role-admin-accent-dark" />
                 </div>
-                <h4 className="font-bold text-[#1C9290]">Training Update</h4>
+                <h4 className="font-bold text-role-admin-accent-dark">Training Update</h4>
               </div>
               <p className="text-sm text-slate-600 mb-3">System auto-promotes needed skill paths</p>
               <div className="flex gap-2">
-                <Badge className="bg-[#1C9290] hover:bg-[#157a78] shadow-sm">3 Paths Promoted</Badge>
-                <Badge variant="outline" className="bg-white text-slate-600 border-teal-200">Self-Improving</Badge>
+                <Badge className="bg-role-admin-accent-dark hover:bg-amber-700 shadow-sm">3 Paths Promoted</Badge>
+                <Badge variant="outline" className="bg-white text-slate-600 border-role-admin-accent/30">Self-Improving</Badge>
               </div>
             </div>
           </div>
 
           <div className="bg-slate-50 rounded-xl p-6 border border-slate-200">
-            <h4 className="font-bold text-[#043E52] mb-6">Skill Gap Analysis (AI Learning Data)</h4>
+            <h4 className="font-bold text-slate-900 mb-6">Skill Gap Analysis (AI Learning Data)</h4>
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={skillGapAnalysis}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
@@ -381,7 +381,7 @@ export function PlatformAnalytics() {
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-1">{metric.label}</p>
-                    <p className="text-3xl font-black text-[#043E52] mb-1">{metric.value}</p>
+                    <p className="text-3xl font-black text-slate-900 mb-1">{metric.value}</p>
                     <div className={`flex items-center gap-1 text-sm font-bold ${metric.trend === 'up' ? 'text-emerald-500' : 'text-emerald-500'}`}>
                       <TrendIcon className="h-4 w-4" />
                       <span>{metric.change}</span>
@@ -401,7 +401,7 @@ export function PlatformAnalytics() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="border-slate-200 hover:shadow-md transition-shadow bg-white">
           <CardHeader>
-            <CardTitle className="text-[#043E52]">User Growth</CardTitle>
+            <CardTitle className="text-slate-900">User Growth</CardTitle>
             <CardDescription>Monthly user registration trends</CardDescription>
           </CardHeader>
           <CardContent>
@@ -421,7 +421,7 @@ export function PlatformAnalytics() {
 
         <Card className="border-slate-200 hover:shadow-md transition-shadow bg-white">
           <CardHeader>
-            <CardTitle className="text-[#043E52]">Weekly Engagement</CardTitle>
+            <CardTitle className="text-slate-900">Weekly Engagement</CardTitle>
             <CardDescription>Opportunities vs Applications</CardDescription>
           </CardHeader>
           <CardContent>
@@ -444,7 +444,7 @@ export function PlatformAnalytics() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="border-slate-200 hover:shadow-md transition-shadow bg-white">
           <CardHeader>
-            <CardTitle className="text-[#043E52]">Cause Distribution</CardTitle>
+            <CardTitle className="text-slate-900">Cause Distribution</CardTitle>
             <CardDescription>Active opportunities by category</CardDescription>
           </CardHeader>
           <CardContent>
@@ -464,7 +464,7 @@ export function PlatformAnalytics() {
 
         <Card className="border-slate-200 hover:shadow-md transition-shadow bg-white">
           <CardHeader>
-            <CardTitle className="text-[#043E52]">Regional Active Users</CardTitle>
+            <CardTitle className="text-slate-900">Regional Active Users</CardTitle>
             <CardDescription>Database verified locations</CardDescription>
           </CardHeader>
           <CardContent>
@@ -488,25 +488,25 @@ export function PlatformAnalytics() {
       {/* Summary Stats Footer */}
       <Card className="border-slate-200 bg-slate-50">
         <CardHeader>
-          <CardTitle className="text-[#043E52]">Platform Summary</CardTitle>
+          <CardTitle className="text-slate-900">Platform Summary</CardTitle>
           <CardDescription>Overall performance metrics</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="text-center p-6 bg-white border border-teal-100 rounded-xl shadow-sm">
-              <Users className="h-8 w-8 text-[#1C9290] mx-auto mb-2" />
+            <div className="text-center p-6 bg-white border border-emerald-100 rounded-xl shadow-sm">
+              <Users className="h-8 w-8 text-emerald-600 mx-auto mb-2" />
               <p className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-1">User Satisfaction</p>
-              <p className="text-3xl font-black text-[#043E52]">94%</p>
+              <p className="text-3xl font-black text-slate-900">94%</p>
             </div>
             <div className="text-center p-6 bg-white border border-blue-100 rounded-xl shadow-sm">
-              <Building2 className="h-8 w-8 text-[#043E52] mx-auto mb-2" />
+              <Building2 className="h-8 w-8 text-blue-600 mx-auto mb-2" />
               <p className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-1">Audit Pass Rate</p>
-              <p className="text-3xl font-black text-[#043E52]">89%</p>
+              <p className="text-3xl font-black text-slate-900">89%</p>
             </div>
-            <div className="text-center p-6 bg-white border border-orange-100 rounded-xl shadow-sm">
-              <Target className="h-8 w-8 text-[#E16A3D] mx-auto mb-2" />
+            <div className="text-center p-6 bg-white border border-role-admin-accent/20 rounded-xl shadow-sm">
+              <Target className="h-8 w-8 text-role-admin-accent-dark mx-auto mb-2" />
               <p className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-1">Goal Completion</p>
-              <p className="text-3xl font-black text-[#043E52]">87%</p>
+              <p className="text-3xl font-black text-slate-900">87%</p>
             </div>
           </div>
         </CardContent>
