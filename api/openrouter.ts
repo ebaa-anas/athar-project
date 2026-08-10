@@ -68,7 +68,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         "X-Title": "Athar Project",
       },
       body: JSON.stringify({
-        model: "meta-llama/llama-3-8b-instruct",
+        model: "meta-llama/llama-3.1-8b-instruct:free",
         temperature: 0.3,
         max_tokens: 120,
         messages: [
