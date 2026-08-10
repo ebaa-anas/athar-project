@@ -217,7 +217,7 @@ export function ManageVolunteers() {
         <Button 
           variant="ghost" 
           onClick={() => setViewProfileData(null)} 
-          className="text-slate-500 hover:text-[#043E52] hover:bg-slate-100 -ml-2 font-bold mb-2"
+          className="text-slate-500 hover:text-role-org hover:bg-slate-100 -ml-2 font-bold mb-2"
         >
           <ArrowLeft className="h-4 w-4 mr-2" /> Back to Core Crew
         </Button>
@@ -225,17 +225,17 @@ export function ManageVolunteers() {
         <Card className="w-full shadow-sm border-slate-200 rounded-2xl overflow-hidden bg-slate-50">
            <div className="flex-1 overflow-y-auto">
              <div className="bg-white border-b border-slate-200 shadow-sm">
-               <div className="h-32 w-full bg-gradient-to-r from-[#043E52] to-[#1C9290]"></div>
+               <div className="h-32 w-full bg-gradient-to-r from-role-org to-role-accent-teal"></div>
                <div className="px-8 pb-8 relative -mt-16">
                  <div className="flex flex-col sm:flex-row gap-6 sm:items-end">
                    <Avatar className="w-28 h-28 border-4 border-white shadow-md bg-white shrink-0">
                      <AvatarImage src={viewProfileData.avatar} className="object-cover" />
-                     <AvatarFallback className="bg-slate-100 text-[#043E52] text-3xl font-black">{String(viewProfileData.name).charAt(0).toUpperCase()}</AvatarFallback>
+                     <AvatarFallback className="bg-slate-100 text-role-org text-3xl font-black">{String(viewProfileData.name).charAt(0).toUpperCase()}</AvatarFallback>
                    </Avatar>
                    <div className="flex-1 pb-2">
                      <div className="flex items-center gap-3">
                        <h1 className="text-2xl font-bold text-gray-900">{viewProfileData.name}</h1>
-                       <Badge className="bg-[#043E52]/10 text-[#043E52] border-none font-bold text-[10px] flex items-center gap-1">
+                       <Badge className="bg-role-org/10 text-role-org border-none font-bold text-[10px] flex items-center gap-1">
                           <Shield className="h-3 w-3" /> CORE CREW
                        </Badge>
                      </div>
@@ -246,10 +246,10 @@ export function ManageVolunteers() {
                      </div>
                    </div>
                    <div className="flex gap-3 pb-2">
-                      <Button onClick={() => { setMessageTarget(viewProfileData); setMessageModalOpen(true); }} variant="outline" className="border-slate-200 text-slate-700 hover:text-[#043E52] font-bold h-10 px-4">
+                      <Button onClick={() => { setMessageTarget(viewProfileData); setMessageModalOpen(true); }} variant="outline" className="border-slate-200 text-slate-700 hover:text-role-org font-bold h-10 px-4">
                         <MessageSquare className="mr-2 h-4 w-4" /> Message
                       </Button>
-                      <Button onClick={() => { setInviteTarget(viewProfileData); setInviteModalOpen(true); }} className="bg-[#043E52] hover:bg-[#033040] text-white font-bold shadow-sm h-10 px-4">
+                      <Button onClick={() => { setInviteTarget(viewProfileData); setInviteModalOpen(true); }} className="bg-role-org hover:bg-role-org-dark text-white font-bold shadow-sm h-10 px-4">
                         <Target className="mr-2 h-4 w-4" /> Invite to Mission
                       </Button>
                    </div>
@@ -261,17 +261,17 @@ export function ManageVolunteers() {
                {/* Left Column */}
                <div className="lg:col-span-2 space-y-6">
                  <Card className="border-slate-200 shadow-sm rounded-xl">
-                   <CardHeader className="pb-3 border-b border-slate-50"><CardTitle className="text-base font-bold uppercase tracking-tight text-[#043E52]">About</CardTitle></CardHeader>
+                   <CardHeader className="pb-3 border-b border-slate-50"><CardTitle className="text-base font-bold uppercase tracking-tight text-slate-900">About</CardTitle></CardHeader>
                    <CardContent className="pt-4"><p className="text-slate-600 text-sm leading-relaxed whitespace-pre-wrap">{viewProfileData.bio || 'No bio provided.'}</p></CardContent>
                  </Card>
 
                  <Card className="border-slate-200 shadow-sm rounded-xl">
-                   <CardHeader className="pb-3 border-b border-slate-50"><CardTitle className="text-base font-bold uppercase tracking-tight text-[#043E52] flex items-center gap-2"><Briefcase className="h-5 w-5 text-[#1C9290]" /> Experience</CardTitle></CardHeader>
+                   <CardHeader className="pb-3 border-b border-slate-50"><CardTitle className="text-base font-bold uppercase tracking-tight text-slate-900 flex items-center gap-2"><Briefcase className="h-5 w-5 text-role-accent-teal" /> Experience</CardTitle></CardHeader>
                    <CardContent className="pt-4 space-y-5">
                      {viewProfileData.experiences?.length > 0 ? viewProfileData.experiences.map((exp: any, i: number) => (
                        <div key={i} className="border-l-2 border-slate-200 pl-4 pb-4 last:pb-0">
                          <h4 className="font-bold text-slate-800 text-sm">{exp.title}</h4>
-                         <p className="text-[#1C9290] text-xs font-bold mt-0.5">{exp.organization}</p>
+                         <p className="text-role-accent-teal text-xs font-bold mt-0.5">{exp.organization}</p>
                          <p className="text-[11px] text-slate-400 mt-1">{exp.startDate} - {exp.current ? 'Present' : exp.endDate}</p>
                          <p className="text-sm text-slate-600 mt-2 leading-relaxed">{exp.description}</p>
                        </div>
@@ -280,7 +280,7 @@ export function ManageVolunteers() {
                  </Card>
 
                  <Card className="border-slate-200 shadow-sm rounded-xl">
-                   <CardHeader className="pb-3 border-b border-slate-50"><CardTitle className="text-base font-bold uppercase tracking-tight text-[#043E52] flex items-center gap-2"><GraduationCap className="h-5 w-5 text-[#1C9290]" /> Education</CardTitle></CardHeader>
+                   <CardHeader className="pb-3 border-b border-slate-50"><CardTitle className="text-base font-bold uppercase tracking-tight text-slate-900 flex items-center gap-2"><GraduationCap className="h-5 w-5 text-role-accent-teal" /> Education</CardTitle></CardHeader>
                    <CardContent className="pt-4 space-y-4">
                      {viewProfileData.educations?.length > 0 ? viewProfileData.educations.map((edu: any, i: number) => (
                        <div key={i} className="border-l-2 border-slate-200 pl-4 pb-4 last:pb-0">
@@ -299,13 +299,13 @@ export function ManageVolunteers() {
                  {/* Stats Box */}
                  <div className="grid grid-cols-2 gap-4">
                     <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm text-center">
-                      <Clock className="h-5 w-5 text-[#1C9290] mx-auto mb-2" />
-                      <div className="text-2xl font-black text-[#043E52]">{viewProfileData.totalHours}</div>
+                      <Clock className="h-5 w-5 text-role-accent-teal mx-auto mb-2" />
+                      <div className="text-2xl font-black text-role-org">{viewProfileData.totalHours}</div>
                       <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Hours Logged</div>
                     </div>
                     <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm text-center">
-                      <Award className="h-5 w-5 text-[#1C9290] mx-auto mb-2" />
-                      <div className="text-2xl font-black text-[#043E52]">{viewProfileData.completedProjects}</div>
+                      <Award className="h-5 w-5 text-role-accent-teal mx-auto mb-2" />
+                      <div className="text-2xl font-black text-role-org">{viewProfileData.completedProjects}</div>
                       <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Missions</div>
                     </div>
                  </div>
@@ -320,26 +320,26 @@ export function ManageVolunteers() {
                  </Card>
 
                  <Card className="border-slate-200 shadow-sm rounded-xl">
-                   <CardHeader className="pb-3 border-b border-slate-50"><CardTitle className="text-base font-bold uppercase tracking-tight text-[#043E52]">Verified Skills</CardTitle></CardHeader>
+                   <CardHeader className="pb-3 border-b border-slate-50"><CardTitle className="text-base font-bold uppercase tracking-tight text-slate-900">Verified Skills</CardTitle></CardHeader>
                    <CardContent className="pt-4">
                      <div className="flex flex-wrap gap-2">
                        {viewProfileData.skills?.length > 0 ? viewProfileData.skills.map((skill: string, i: number) => (
-                         <Badge key={i} variant="secondary" className="bg-slate-50 text-[#043E52] border border-slate-200 text-[10px] font-bold uppercase px-3 py-1 tracking-wider">{skill}</Badge>
+                         <Badge key={i} variant="secondary" className="bg-slate-50 text-role-org border border-slate-200 text-[10px] font-bold uppercase px-3 py-1 tracking-wider">{skill}</Badge>
                        )) : <p className="text-sm text-slate-400">No skills added.</p>}
                      </div>
                    </CardContent>
                  </Card>
 
                  <Card className="border-slate-200 shadow-sm rounded-xl">
-                   <CardHeader className="pb-3 border-b border-slate-50"><CardTitle className="text-base font-bold uppercase tracking-tight text-[#043E52]">Availability</CardTitle></CardHeader>
+                   <CardHeader className="pb-3 border-b border-slate-50"><CardTitle className="text-base font-bold uppercase tracking-tight text-slate-900">Availability</CardTitle></CardHeader>
                    <CardContent className="pt-4 space-y-3 text-sm">
                       <div className="flex justify-between"><span className="text-slate-500 font-medium text-xs">Format</span><span className="font-bold text-slate-800 text-xs">{viewProfileData.availability?.format || 'Flexible'}</span></div>
                       <Separator className="bg-slate-100" />
                       <div className="flex justify-between"><span className="text-slate-500 font-medium text-xs">Hours/Week</span><span className="font-bold text-slate-800 text-xs">{viewProfileData.availability?.hours || 'Not set'}</span></div>
                       <Separator className="bg-slate-100" />
                       <div className="flex gap-2 pt-1">
-                        <Badge variant="outline" className={viewProfileData.availability?.weekdays ? 'border-[#1C9290] text-[#1C9290] bg-teal-50 text-[10px] uppercase font-bold' : 'border-slate-200 text-slate-400 text-[10px] uppercase font-bold'}>Weekdays</Badge>
-                        <Badge variant="outline" className={viewProfileData.availability?.weekends ? 'border-[#1C9290] text-[#1C9290] bg-teal-50 text-[10px] uppercase font-bold' : 'border-slate-200 text-slate-400 text-[10px] uppercase font-bold'}>Weekends</Badge>
+                        <Badge variant="outline" className={viewProfileData.availability?.weekdays ? 'border-role-accent-teal text-role-accent-teal bg-teal-50 text-[10px] uppercase font-bold' : 'border-slate-200 text-slate-400 text-[10px] uppercase font-bold'}>Weekdays</Badge>
+                        <Badge variant="outline" className={viewProfileData.availability?.weekends ? 'border-role-accent-teal text-role-accent-teal bg-teal-50 text-[10px] uppercase font-bold' : 'border-slate-200 text-slate-400 text-[10px] uppercase font-bold'}>Weekends</Badge>
                       </div>
                    </CardContent>
                  </Card>
@@ -357,12 +357,12 @@ export function ManageVolunteers() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-6">
         <div>
-          <h1 className="text-2xl font-bold text-[#043E52] uppercase tracking-tight">Manage Core Crew</h1>
+          <h1 className="text-2xl font-bold text-slate-900 uppercase tracking-tight">Manage Core Crew</h1>
           <p className="text-slate-500 mt-1 text-sm font-semibold">View and manage your official core crew members</p>
         </div>
         <Button 
           onClick={() => { setMessageTarget(null); setMessageModalOpen(true); }}
-          className="bg-[#043E52] hover:bg-[#033040] text-white shadow-md font-bold h-10 px-5 text-xs uppercase tracking-wider"
+          className="bg-role-org hover:bg-role-org-dark text-white shadow-md font-bold h-10 px-5 text-xs uppercase tracking-wider"
         >
           <Users className="mr-2 h-4 w-4" />
           Message All (Group)
@@ -371,10 +371,10 @@ export function ManageVolunteers() {
 
       {/* Dynamic Stats Row */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="border-t-4 border-t-[#043E52] shadow-sm"><CardContent className="p-5"><div className="flex items-start justify-between"><div><p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Total Crew</p><p className="text-[#043E52] text-2xl font-black mt-1">{totalVolunteers}</p></div><div className="bg-[#043E52]/10 p-3 rounded-xl"><Users className="h-5 w-5 text-[#043E52]" /></div></div></CardContent></Card>
-        <Card className="border-t-4 border-t-[#1C9290] shadow-sm"><CardContent className="p-5"><div className="flex items-start justify-between"><div><p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Active Status</p><p className="text-[#1C9290] text-2xl font-black mt-1">{activeVolunteers}</p></div><div className="bg-[#1C9290]/10 p-3 rounded-xl"><div className="h-4 w-4 bg-[#1C9290] rounded-full shadow-sm animate-pulse" /></div></div></CardContent></Card>
-        <Card className="border-t-4 border-t-[#043E52] shadow-sm"><CardContent className="p-5"><div className="flex items-start justify-between"><div><p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Avg Rating</p><p className="text-[#043E52] text-2xl font-black mt-1">{avgRating}</p></div><div className="bg-[#043E52]/10 p-3 rounded-xl"><Star className="h-5 w-5 text-[#043E52] fill-[#043E52]" /></div></div></CardContent></Card>
-        <Card className="border-t-4 border-t-[#1C9290] shadow-sm"><CardContent className="p-5"><div className="flex items-start justify-between"><div><p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Crew Hours</p><p className="text-[#1C9290] text-2xl font-black mt-1">{totalNetworkHours}</p></div><div className="bg-teal-50 p-3 rounded-xl"><Clock className="h-5 w-5 text-[#1C9290]" /></div></div></CardContent></Card>
+        <Card className="border-t-4 border-t-role-org shadow-sm"><CardContent className="p-5"><div className="flex items-start justify-between"><div><p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Total Crew</p><p className="text-role-org text-2xl font-black mt-1">{totalVolunteers}</p></div><div className="bg-role-org/10 p-3 rounded-xl"><Users className="h-5 w-5 text-role-org" /></div></div></CardContent></Card>
+        <Card className="border-t-4 border-t-role-accent-teal shadow-sm"><CardContent className="p-5"><div className="flex items-start justify-between"><div><p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Active Status</p><p className="text-role-accent-teal text-2xl font-black mt-1">{activeVolunteers}</p></div><div className="bg-role-accent-teal/10 p-3 rounded-xl"><div className="h-4 w-4 bg-role-accent-teal rounded-full shadow-sm animate-pulse" /></div></div></CardContent></Card>
+        <Card className="border-t-4 border-t-role-org shadow-sm"><CardContent className="p-5"><div className="flex items-start justify-between"><div><p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Avg Rating</p><p className="text-role-org text-2xl font-black mt-1">{avgRating}</p></div><div className="bg-role-org/10 p-3 rounded-xl"><Star className="h-5 w-5 text-role-org fill-role-org" /></div></div></CardContent></Card>
+        <Card className="border-t-4 border-t-role-accent-teal shadow-sm"><CardContent className="p-5"><div className="flex items-start justify-between"><div><p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Crew Hours</p><p className="text-role-accent-teal text-2xl font-black mt-1">{totalNetworkHours}</p></div><div className="bg-teal-50 p-3 rounded-xl"><Clock className="h-5 w-5 text-role-accent-teal" /></div></div></CardContent></Card>
       </div>
 
       {/* Search and Filter */}
@@ -383,9 +383,9 @@ export function ManageVolunteers() {
           <div className="flex flex-col md:flex-row gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <Input placeholder="Search crew by name, email, or skills..." className="pl-10 h-11 border-slate-200 focus:border-[#043E52] focus:ring-[#043E52] text-sm rounded-xl" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+              <Input placeholder="Search crew by name, email, or skills..." className="pl-10 h-11 border-slate-200 focus:border-role-org focus:ring-role-org text-sm rounded-xl" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
             </div>
-            <Button variant="outline" className="border-slate-200 text-slate-600 hover:text-[#043E52] hover:bg-slate-50 h-11 px-6 rounded-xl font-bold text-xs uppercase tracking-wider"><Filter className="mr-2 h-4 w-4" /> Filter</Button>
+            <Button variant="outline" className="border-slate-200 text-slate-600 hover:text-role-org hover:bg-slate-50 h-11 px-6 rounded-xl font-bold text-xs uppercase tracking-wider"><Filter className="mr-2 h-4 w-4" /> Filter</Button>
           </div>
         </CardContent>
       </Card>
@@ -403,21 +403,21 @@ export function ManageVolunteers() {
       {/* Volunteers List */}
       <div className="grid grid-cols-1 gap-4">
         {filteredVolunteers.map((volunteer) => (
-          <Card key={volunteer.id} className="border-slate-200 shadow-sm hover:shadow-md transition-all hover:border-[#1C9290]/50">
+          <Card key={volunteer.id} className="border-slate-200 shadow-sm hover:shadow-md transition-all hover:border-role-accent-teal/50">
             <CardContent className="p-5">
               <div className="flex flex-col md:flex-row gap-5">
                 
                 <Avatar className="w-14 h-14 border border-slate-200 shadow-sm">
                   <AvatarImage src={volunteer.avatar} className="object-cover" />
-                  <AvatarFallback className="bg-[#043E52] text-white font-bold text-lg">{String(volunteer.name || 'U').charAt(0).toUpperCase()}</AvatarFallback>
+                  <AvatarFallback className="bg-role-org text-white font-bold text-lg">{String(volunteer.name || 'U').charAt(0).toUpperCase()}</AvatarFallback>
                 </Avatar>
                 
                 <div className="flex-1 space-y-3">
                   <div className="flex items-start justify-between">
                     <div>
                       <div className="flex items-center gap-3">
-                        <h3 className="text-[#043E52] font-bold text-base">{volunteer.name}</h3>
-                        <Badge className="bg-[#043E52]/10 text-[#043E52] hover:bg-[#043E52]/20 border-none font-bold text-[10px] tracking-wider flex items-center gap-1">
+                        <h3 className="text-slate-900 font-bold text-base">{volunteer.name}</h3>
+                        <Badge className="bg-role-org/10 text-role-org hover:bg-role-org/20 border-none font-bold text-[10px] tracking-wider flex items-center gap-1">
                           <Shield className="h-3 w-3" /> CORE CREW
                         </Badge>
                       </div>
@@ -429,10 +429,10 @@ export function ManageVolunteers() {
                   </div>
 
                   <div className="grid grid-cols-2 md:grid-cols-5 gap-4 py-3 border-y border-slate-100">
-                    <div><p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Rating</p><div className="flex items-center gap-1.5 mt-0.5"><Star className="h-3.5 w-3.5 fill-[#043E52] text-[#043E52]" /><span className="text-sm font-bold text-slate-700">{volunteer.rating}</span></div></div>
-                    <div><p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Hours</p><div className="flex items-center gap-1.5 mt-0.5"><Clock className="h-3.5 w-3.5 text-[#1C9290]" /><span className="text-sm font-bold text-slate-700">{volunteer.totalHours}h</span></div></div>
-                    <div><p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Projects</p><div className="flex items-center gap-1.5 mt-0.5"><Award className="h-3.5 w-3.5 text-[#043E52]" /><span className="text-sm font-bold text-slate-700">{volunteer.completedProjects}</span></div></div>
-                    <div><p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Reliability</p><p className="text-sm font-bold text-[#1C9290] mt-0.5">{volunteer.reliability}%</p></div>
+                    <div><p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Rating</p><div className="flex items-center gap-1.5 mt-0.5"><Star className="h-3.5 w-3.5 fill-role-org text-role-org" /><span className="text-sm font-bold text-slate-700">{volunteer.rating}</span></div></div>
+                    <div><p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Hours</p><div className="flex items-center gap-1.5 mt-0.5"><Clock className="h-3.5 w-3.5 text-role-accent-teal" /><span className="text-sm font-bold text-slate-700">{volunteer.totalHours}h</span></div></div>
+                    <div><p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Projects</p><div className="flex items-center gap-1.5 mt-0.5"><Award className="h-3.5 w-3.5 text-role-org" /><span className="text-sm font-bold text-slate-700">{volunteer.completedProjects}</span></div></div>
+                    <div><p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Reliability</p><p className="text-sm font-bold text-role-accent-teal mt-0.5">{volunteer.reliability}%</p></div>
                     <div><p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Last Active</p><p className="text-xs font-semibold text-slate-600 mt-1">{volunteer.lastActive}</p></div>
                   </div>
 
@@ -440,19 +440,19 @@ export function ManageVolunteers() {
                     <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Verified Skills</p>
                     <div className="flex flex-wrap gap-2">
                       {volunteer.skills.length > 0 ? volunteer.skills.map((skill: string, index: number) => (
-                        <Badge key={index} variant="secondary" className="bg-slate-50 text-[#043E52] border border-slate-200 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5">{skill}</Badge>
+                        <Badge key={index} variant="secondary" className="bg-slate-50 text-role-org border border-slate-200 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5">{skill}</Badge>
                       )) : <span className="text-xs text-slate-400 italic">No skills listed.</span>}
                     </div>
                   </div>
 
                   <div className="flex flex-wrap gap-2 pt-1">
-                    <Button onClick={() => setViewProfileData(volunteer)} size="sm" variant="outline" className="border-slate-200 text-slate-700 hover:text-[#043E52] hover:bg-slate-50 font-bold px-4 h-8 text-[10px] uppercase tracking-wider">
+                    <Button onClick={() => setViewProfileData(volunteer)} size="sm" variant="outline" className="border-slate-200 text-slate-700 hover:text-role-org hover:bg-slate-50 font-bold px-4 h-8 text-[10px] uppercase tracking-wider">
                       View Profile
                     </Button>
-                    <Button onClick={() => { setMessageTarget(volunteer); setMessageModalOpen(true); }} size="sm" variant="outline" className="border-slate-200 text-slate-700 hover:text-[#043E52] hover:bg-slate-50 font-bold px-4 h-8 text-[10px] uppercase tracking-wider">
+                    <Button onClick={() => { setMessageTarget(volunteer); setMessageModalOpen(true); }} size="sm" variant="outline" className="border-slate-200 text-slate-700 hover:text-role-org hover:bg-slate-50 font-bold px-4 h-8 text-[10px] uppercase tracking-wider">
                       <MessageSquare className="mr-1.5 h-3.5 w-3.5" /> Direct Message
                     </Button>
-                    <Button onClick={() => { setInviteTarget(volunteer); setInviteModalOpen(true); }} size="sm" variant="outline" className="border-slate-200 text-[#1C9290] hover:bg-teal-50 font-bold px-4 h-8 text-[10px] uppercase tracking-wider">
+                    <Button onClick={() => { setInviteTarget(volunteer); setInviteModalOpen(true); }} size="sm" variant="outline" className="border-slate-200 text-role-accent-teal hover:bg-teal-50 font-bold px-4 h-8 text-[10px] uppercase tracking-wider">
                       <Target className="mr-1.5 h-3.5 w-3.5" /> Invite to Mission
                     </Button>
                   </div>
@@ -468,7 +468,7 @@ export function ManageVolunteers() {
       {messageModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in zoom-in-95">
           <Card className="w-full max-w-lg shadow-2xl border-none rounded-2xl overflow-hidden">
-             <div className="bg-[#043E52] p-5 flex items-center justify-between text-white">
+             <div className="bg-role-org p-5 flex items-center justify-between text-white">
                <div className="flex items-center gap-3">
                  <div className="bg-white/20 p-2 rounded-full"><Send className="h-4 w-4" /></div>
                  <div>
@@ -487,14 +487,14 @@ export function ManageVolunteers() {
                   <Label className="font-bold text-slate-700 text-xs uppercase tracking-wider">Message Content</Label>
                   <Textarea 
                     placeholder="Type your message here..." 
-                    className="min-h-[120px] resize-none border-slate-200 focus:border-[#1C9290] rounded-xl bg-white text-sm"
+                    className="min-h-[120px] resize-none border-slate-200 focus:border-role-accent-teal rounded-xl bg-white text-sm"
                     value={messageText}
                     onChange={(e) => setMessageText(e.target.value)}
                   />
                 </div>
                 <div className="flex justify-end gap-3 pt-2">
                   <Button variant="ghost" onClick={() => setMessageModalOpen(false)} className="font-bold text-slate-600 text-xs">Cancel</Button>
-                  <Button onClick={handleSendMessage} disabled={isSending || !messageText.trim()} className="bg-[#1C9290] hover:bg-[#157a78] text-white font-bold shadow-md px-6 h-10 text-xs uppercase tracking-wider">
+                  <Button onClick={handleSendMessage} disabled={isSending || !messageText.trim()} className="bg-role-accent-teal hover:bg-role-accent-teal/80 text-white font-bold shadow-md px-6 h-10 text-xs uppercase tracking-wider">
                     {isSending ? "Sending..." : "Send Message"}
                   </Button>
                 </div>
@@ -507,7 +507,7 @@ export function ManageVolunteers() {
       {inviteModalOpen && inviteTarget && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in zoom-in-95">
           <Card className="w-full max-w-lg shadow-2xl border-none rounded-2xl overflow-hidden">
-             <div className="bg-[#1C9290] p-5 flex items-center justify-between text-white">
+             <div className="bg-role-accent-teal p-5 flex items-center justify-between text-white">
                <div className="flex items-center gap-3">
                  <div className="bg-white/20 p-2 rounded-full"><Target className="h-4 w-4" /></div>
                  <div>
@@ -521,12 +521,12 @@ export function ManageVolunteers() {
                 <div className="space-y-2">
                   <Label className="font-bold text-slate-700 text-xs uppercase tracking-wider">Select an Active Mission</Label>
                   {orgMissions.length === 0 ? (
-                    <div className="p-4 bg-orange-50 text-orange-800 border border-orange-200 rounded-xl text-xs font-semibold">
+                    <div className="p-4 bg-amber-50 text-amber-800 border border-amber-200 rounded-xl text-xs font-semibold">
                       You don't have any active missions. Go to "Opportunities" to create one first!
                     </div>
                   ) : (
                     <select 
-                      className="w-full h-11 px-3 border border-slate-200 rounded-xl bg-white text-sm font-medium focus:ring-2 focus:ring-[#1C9290] outline-none"
+                      className="w-full h-11 px-3 border border-slate-200 rounded-xl bg-white text-sm font-medium focus:ring-2 focus:ring-role-accent-teal outline-none"
                       value={selectedMissionId}
                       onChange={(e) => setSelectedMissionId(e.target.value)}
                     >
@@ -539,7 +539,7 @@ export function ManageVolunteers() {
                 </div>
                 <div className="flex justify-end gap-3 pt-2">
                   <Button variant="ghost" onClick={() => setInviteModalOpen(false)} className="font-bold text-slate-600 text-xs">Cancel</Button>
-                  <Button onClick={handleSendInvite} disabled={isSending || !selectedMissionId} className="bg-[#043E52] hover:bg-[#033040] text-white font-bold shadow-md px-6 h-10 text-xs uppercase tracking-wider">
+                  <Button onClick={handleSendInvite} disabled={isSending || !selectedMissionId} className="bg-role-org hover:bg-role-org-dark text-white font-bold shadow-md px-6 h-10 text-xs uppercase tracking-wider">
                     {isSending ? "Sending..." : "Send Invitation"}
                   </Button>
                 </div>
