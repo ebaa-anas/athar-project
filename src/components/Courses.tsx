@@ -227,19 +227,19 @@ export function Courses() {
                 .logo { font-size: 32px; font-weight: 900; color: #016A6D; letter-spacing: -1px; text-transform: uppercase; margin-top: 20px; margin-bottom: 30px;}
                 .logo span { color: #1C9290; }
                 
-                .title { font-family: 'Cinzel', serif; font-size: 52px; font-weight: 900; color: #043E52; letter-spacing: 4px; margin: 0; text-transform: uppercase; }
+                .title { font-family: 'Cinzel', serif; font-size: 52px; font-weight: 900; color: #016A6D; letter-spacing: 4px; margin: 0; text-transform: uppercase; }
                 .subtitle { font-size: 16px; color: #E16A3D; letter-spacing: 3px; font-weight: 800; text-transform: uppercase; margin-top: 10px; margin-bottom: 50px; }
                 
                 .presented-to { font-size: 18px; color: #64748b; margin-bottom: 15px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;}
                 .name { font-family: 'Cinzel', serif; font-size: 56px; font-weight: 700; color: #016A6D; margin: 0; border-bottom: 2px solid #e2e8f0; display: inline-block; padding: 0 50px 10px; min-width: 60%; line-height: 1.2; }
                 
                 .for-completion { font-size: 16px; color: #64748b; margin-top: 30px; margin-bottom: 15px; max-width: 70%; line-height: 1.6;}
-                .course-name { font-family: 'Cinzel', serif; font-size: 36px; font-weight: 700; color: #043E52; margin: 0; padding: 0 40px; }
+                .course-name { font-family: 'Cinzel', serif; font-size: 36px; font-weight: 700; color: #016A6D; margin: 0; padding: 0 40px; }
                 
                 .footer { display: flex; justify-content: space-between; align-items: flex-end; position: absolute; bottom: 50px; left: 80px; right: 80px; width: calc(100% - 160px); }
                 
                 .signature-block, .date-block { text-align: center; }
-                .signature, .date { font-family: 'Cinzel', cursive; font-size: 24px; font-weight: 700; color: #043E52; border-bottom: 1px solid #cbd5e1; padding-bottom: 5px; margin-bottom: 8px; width: 250px; }
+                .signature, .date { font-family: 'Cinzel', cursive; font-size: 24px; font-weight: 700; color: #016A6D; border-bottom: 1px solid #cbd5e1; padding-bottom: 5px; margin-bottom: 8px; width: 250px; }
                 .date { font-family: 'Inter', sans-serif; font-size: 20px;}
                 .title-role { font-size: 11px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 1.5px; }
                 
@@ -314,7 +314,7 @@ export function Courses() {
   const isVerified = user?.verificationStatus === 'verified';
 
   if (loading) {
-    return <div className="p-12 text-center text-[#1C9290] font-bold flex flex-col items-center justify-center"><Loader2 className="h-8 w-8 animate-spin mb-4" /> Loading Course Catalog...</div>;
+    return <div className="p-12 text-center text-role-accent-teal font-bold flex flex-col items-center justify-center"><Loader2 className="h-8 w-8 animate-spin mb-4" /> Loading Course Catalog...</div>;
   }
 
   return (
@@ -322,7 +322,7 @@ export function Courses() {
       {/* Header */}
       <div className="flex flex-col gap-1 border-b border-slate-200 pb-4">
         <div className="flex items-center gap-3">
-          <h1 className="text-[#016A6D] font-bold text-3xl tracking-tight">Courses & Certification</h1>
+          <h1 className="text-slate-900 font-bold text-3xl tracking-tight">Courses & Certification</h1>
         </div>
         <p className="text-slate-500 text-sm font-medium">
           Enhance your skills, earn official certifications, and prepare for field deployment.
@@ -343,10 +343,10 @@ export function Courses() {
 
       {/* --- MY LEARNING SECTION --- */}
       <Card className="border-slate-200 shadow-sm bg-white overflow-hidden">
-        <div className="h-1.5 w-full bg-[#E16A3D]" />
+        <div className="h-1.5 w-full bg-brand-cta" />
         <CardHeader className="pb-4 border-b border-slate-100">
-          <CardTitle className="text-[#016A6D] text-xl flex items-center gap-2">
-            <BookOpen className="h-5 w-5 text-[#E16A3D]" /> My Learning
+          <CardTitle className="text-slate-900 text-xl flex items-center gap-2">
+            <BookOpen className="h-5 w-5 text-brand-cta" /> My Learning
           </CardTitle>
           <CardDescription className="font-semibold text-xs text-slate-500">Continue where you left off to earn your certificates.</CardDescription>
         </CardHeader>
@@ -371,7 +371,7 @@ export function Courses() {
                   <div className="flex-1 flex flex-col justify-between">
                     <div>
                       <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
-                        <h3 className="text-[#016A6D] font-black text-lg leading-tight">{course.title}</h3>
+                        <h3 className="text-slate-900 font-black text-lg leading-tight">{course.title}</h3>
                         <Badge variant="outline" className="bg-white border-slate-200 text-slate-600 font-bold text-[10px] uppercase tracking-wider">{course.category}</Badge>
                       </div>
                       <p className="text-sm font-medium text-slate-500 mb-4">{course.description}</p>
@@ -380,11 +380,11 @@ export function Courses() {
                     <div className="space-y-4">
                       <div className="flex flex-wrap items-center gap-4 text-xs font-bold text-slate-500 uppercase tracking-widest">
                         <div className="flex items-center gap-1.5">
-                          <BookOpen className="h-3.5 w-3.5 text-[#1C9290]" />
+                          <BookOpen className="h-3.5 w-3.5 text-role-accent-teal" />
                           <span>{course.completedLessons}/{course.totalLessons} Modules</span>
                         </div>
                         <div className="flex items-center gap-1.5">
-                          <Clock className="h-3.5 w-3.5 text-[#E16A3D]" />
+                          <Clock className="h-3.5 w-3.5 text-brand-cta" />
                           <span>{course.duration}</span>
                         </div>
                       </div>
@@ -393,14 +393,14 @@ export function Courses() {
                         <div className="flex-1 w-full space-y-2">
                           <div className="flex items-center justify-between text-xs font-bold">
                             <span className="text-slate-500">Course Progress</span>
-                            <span className="text-[#1C9290]">{course.progress}%</span>
+                            <span className="text-role-accent-teal">{course.progress}%</span>
                           </div>
-                          <Progress value={course.progress} className="h-2.5 bg-slate-200 [&>div]:bg-[#1C9290]" />
+                          <Progress value={course.progress} className="h-2.5 bg-slate-200 [&>div]:bg-role-accent-teal" />
                         </div>
                         <Button 
                           onClick={() => handleContinueLearning(course.id, course.completedLessons, course.totalLessons)}
                           disabled={processingId === course.id}
-                          className="w-full md:w-auto bg-[#1C9290] hover:bg-[#157a78] text-white font-bold text-xs uppercase tracking-wider h-10 shadow-sm shrink-0"
+                          className="w-full md:w-auto bg-role-accent-teal hover:bg-role-accent-teal/80 text-white font-bold text-xs uppercase tracking-wider h-10 shadow-sm shrink-0"
                         >
                           {processingId === course.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4 fill-current" />}
                           Complete Next Module
@@ -417,23 +417,23 @@ export function Courses() {
 
       {completedCourses.length > 0 && (
         <Card className="border-slate-200 shadow-sm bg-white">
-          <div className="h-1.5 w-full bg-[#006D5B]" />
+          <div className="h-1.5 w-full bg-role-volunteer" />
           <CardHeader className="pb-4 border-b border-slate-100">
-            <CardTitle className="text-[#016A6D] text-xl flex items-center gap-2">
-              <Award className="h-5 w-5 text-[#006D5B]" /> Completed Certifications
+            <CardTitle className="text-slate-900 text-xl flex items-center gap-2">
+              <Award className="h-5 w-5 text-role-volunteer" /> Completed Certifications
             </CardTitle>
             <CardDescription className="font-semibold text-xs text-slate-500">Your verified achievements. Download your official PDF certificates below.</CardDescription>
           </CardHeader>
           <CardContent className="p-6">
             <div className="grid grid-cols-1 gap-4">
               {completedCourses.map((course) => (
-                <div key={course.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 border border-[#006D5B]/30 bg-[#006D5B]/5 rounded-2xl hover:shadow-md transition-shadow">
+                <div key={course.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 border border-role-volunteer/30 bg-role-volunteer/5 rounded-2xl hover:shadow-md transition-shadow">
                   <div className="flex items-center gap-4">
-                    <div className="bg-[#006D5B] p-3 rounded-full shadow-sm shrink-0">
+                    <div className="bg-role-volunteer p-3 rounded-full shadow-sm shrink-0">
                       <CheckCircle className="h-6 w-6 text-white" />
                     </div>
                     <div>
-                      <h4 className="text-[#016A6D] font-black text-lg">{course.title}</h4>
+                      <h4 className="text-slate-900 font-black text-lg">{course.title}</h4>
                       <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mt-1">Awarded: {course.completedDate}</p>
                     </div>
                   </div>
@@ -441,7 +441,7 @@ export function Courses() {
                   <Button
                     onClick={() => handleDownloadCertificate(course.id, course.title, course.completedDate)}
                     disabled={isGeneratingCert === course.id}
-                    className="w-full sm:w-auto bg-white border-2 border-[#006D5B] text-[#006D5B] hover:bg-[#006D5B]/10 hover:text-[#006D5B] font-black text-xs uppercase tracking-wider h-11 px-6 shadow-sm"
+                    className="w-full sm:w-auto bg-white border-2 border-role-volunteer text-role-volunteer hover:bg-role-volunteer/10 hover:text-role-volunteer font-black text-xs uppercase tracking-wider h-11 px-6 shadow-sm"
                   >
                     {isGeneratingCert === course.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
                     {isGeneratingCert === course.id ? 'Generating PDF...' : 'Download Certificate'}
@@ -456,7 +456,7 @@ export function Courses() {
       {/* --- AVAILABLE COURSES CATALOG --- */}
       <div>
         <div className="flex items-center gap-2 mb-6 mt-10">
-          <h2 className="text-[#016A6D] font-bold text-2xl tracking-tight">Explore the Catalog</h2>
+          <h2 className="text-slate-900 font-bold text-2xl tracking-tight">Explore the Catalog</h2>
           <Badge className="bg-slate-100 text-slate-600 border-none font-bold text-[10px] uppercase tracking-widest">{availableCourses.length} Available</Badge>
         </div>
         
@@ -470,24 +470,24 @@ export function Courses() {
                   alt={course.title}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
-                <Badge className="absolute top-4 right-4 z-20 bg-white/90 text-[#016A6D] border-none font-black text-[10px] uppercase tracking-widest backdrop-blur-sm">
+                <Badge className="absolute top-4 right-4 z-20 bg-white/90 text-role-volunteer border-none font-black text-[10px] uppercase tracking-widest backdrop-blur-sm">
                   {course.category}
                 </Badge>
               </div>
               <CardHeader className="pb-3 flex-1">
-                <CardTitle className="text-lg font-black text-[#016A6D] leading-tight mb-2 group-hover:text-[#1C9290] transition-colors">{course.title}</CardTitle>
+                <CardTitle className="text-lg font-black text-slate-900 leading-tight mb-2 group-hover:text-role-accent-teal transition-colors">{course.title}</CardTitle>
                 <CardDescription className="text-xs font-medium text-slate-500 line-clamp-2">{course.description}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4 pt-0 shrink-0">
                 <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-100">
-                  <p className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Instructor: <span className="text-[#016A6D]">{course.instructor}</span></p>
+                  <p className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Instructor: <span className="text-role-volunteer">{course.instructor}</span></p>
                   <div className="flex items-center justify-between text-[11px] font-bold text-slate-500 uppercase tracking-widest">
                     <div className="flex items-center gap-1.5">
-                      <BookOpen className="h-3.5 w-3.5 text-[#1C9290]" />
+                      <BookOpen className="h-3.5 w-3.5 text-role-accent-teal" />
                       <span>{course.totalLessons} Modules</span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <Clock className="h-3.5 w-3.5 text-[#E16A3D]" />
+                      <Clock className="h-3.5 w-3.5 text-brand-cta" />
                       <span>{course.duration}</span>
                     </div>
                   </div>
@@ -505,7 +505,7 @@ export function Courses() {
                   <Button 
                     onClick={() => handleEnroll(course.id)}
                     disabled={processingId === course.id}
-                    className="w-full bg-[#016A6D] hover:bg-[#125d56] text-white font-bold text-xs uppercase tracking-wider h-11 shadow-sm"
+                    className="w-full bg-role-volunteer hover:bg-role-volunteer-dark text-white font-bold text-xs uppercase tracking-wider h-11 shadow-sm"
                   >
                     {processingId === course.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlusCircle className="mr-2 h-4 w-4" />}
                     Enroll in Course
