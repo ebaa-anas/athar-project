@@ -112,10 +112,10 @@ export function Events() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-[#043E52] text-2xl font-bold">Events</h1>
+          <h1 className="text-slate-900 text-2xl font-bold">Events</h1>
           <p className="text-slate-500 mt-1">Create and manage your organization's events</p>
         </div>
-        <Button className="bg-[#043E52] hover:bg-[#033040] text-white shadow-sm">
+        <Button className="bg-role-org hover:bg-role-org-dark text-white shadow-sm">
           <Plus className="mr-2 h-4 w-4" />
           Create New Event
         </Button>
@@ -128,10 +128,10 @@ export function Events() {
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-500">Total Events</p>
-                <p className="text-[#043E52] text-2xl font-bold mt-2">{events.length}</p>
+                <p className="text-role-org text-2xl font-bold mt-2">{events.length}</p>
               </div>
-              <div className="bg-[#043E52]/10 p-3 rounded-lg">
-                <Calendar className="h-5 w-5 text-[#043E52]" />
+              <div className="bg-role-org/10 p-3 rounded-lg">
+                <Calendar className="h-5 w-5 text-role-org" />
               </div>
             </div>
           </CardContent>
@@ -141,10 +141,10 @@ export function Events() {
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-500">Upcoming</p>
-                <p className="text-[#043E52] text-2xl font-bold mt-2">{upcomingEvents.length}</p>
+                <p className="text-role-org text-2xl font-bold mt-2">{upcomingEvents.length}</p>
               </div>
-              <div className="bg-[#043E52]/10 p-3 rounded-lg">
-                <Clock className="h-5 w-5 text-[#043E52]" />
+              <div className="bg-role-org/10 p-3 rounded-lg">
+                <Clock className="h-5 w-5 text-role-org" />
               </div>
             </div>
           </CardContent>
@@ -154,12 +154,12 @@ export function Events() {
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-500">Total Volunteers</p>
-                <p className="text-[#043E52] text-2xl font-bold mt-2">
+                <p className="text-role-org text-2xl font-bold mt-2">
                   {events.reduce((sum, e) => sum + e.volunteersRegistered, 0)}
                 </p>
               </div>
-              <div className="bg-[#1C9290]/10 p-3 rounded-lg">
-                <Users className="h-5 w-5 text-[#1C9290]" />
+              <div className="bg-role-accent-teal/10 p-3 rounded-lg">
+                <Users className="h-5 w-5 text-role-accent-teal" />
               </div>
             </div>
           </CardContent>
@@ -169,10 +169,10 @@ export function Events() {
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-500">Completed</p>
-                <p className="text-[#043E52] text-2xl font-bold mt-2">{completedEvents.length}</p>
+                <p className="text-role-org text-2xl font-bold mt-2">{completedEvents.length}</p>
               </div>
-              <div className="bg-[#1C9290]/10 p-3 rounded-lg">
-                <CheckCircle className="h-5 w-5 text-[#1C9290]" />
+              <div className="bg-role-accent-teal/10 p-3 rounded-lg">
+                <CheckCircle className="h-5 w-5 text-role-accent-teal" />
               </div>
             </div>
           </CardContent>
@@ -187,14 +187,14 @@ export function Events() {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
               <Input 
                 placeholder="Search events..." 
-                className="pl-10 border-slate-200 focus:border-[#043E52] focus:ring-[#043E52]" 
+                className="pl-10 border-slate-200 focus:border-role-org focus:ring-role-org" 
               />
             </div>
-            <Button variant="outline" className="border-slate-200 text-slate-600 hover:text-[#043E52] hover:bg-slate-50">
+            <Button variant="outline" className="border-slate-200 text-slate-600 hover:text-role-org hover:bg-slate-50">
               <Filter className="mr-2 h-4 w-4" />
               Filter by Category
             </Button>
-            <Button variant="outline" className="border-slate-200 text-slate-600 hover:text-[#043E52] hover:bg-slate-50">
+            <Button variant="outline" className="border-slate-200 text-slate-600 hover:text-role-org hover:bg-slate-50">
               Filter by Date
             </Button>
           </div>
@@ -204,8 +204,8 @@ export function Events() {
       {/* Events Tabs */}
       <Tabs defaultValue="upcoming" className="w-full">
         <TabsList className="bg-slate-100 text-slate-500">
-          <TabsTrigger value="upcoming" className="data-[state=active]:bg-white data-[state=active]:text-[#043E52] data-[state=active]:shadow-sm">Upcoming ({upcomingEvents.length})</TabsTrigger>
-          <TabsTrigger value="completed" className="data-[state=active]:bg-white data-[state=active]:text-[#1C9290] data-[state=active]:shadow-sm">Completed ({completedEvents.length})</TabsTrigger>
+          <TabsTrigger value="upcoming" className="data-[state=active]:bg-white data-[state=active]:text-role-org data-[state=active]:shadow-sm">Upcoming ({upcomingEvents.length})</TabsTrigger>
+          <TabsTrigger value="completed" className="data-[state=active]:bg-white data-[state=active]:text-role-accent-teal data-[state=active]:shadow-sm">Completed ({completedEvents.length})</TabsTrigger>
           <TabsTrigger value="all" className="data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm">All Events</TabsTrigger>
         </TabsList>
 
@@ -225,28 +225,28 @@ export function Events() {
                     <div className="flex items-start justify-between mb-4">
                       <div>
                         <div className="flex items-center gap-3 mb-2">
-                          <h3 className="text-[#043E52] font-bold text-lg">{event.title}</h3>
+                          <h3 className="text-slate-900 font-bold text-lg">{event.title}</h3>
                           <Badge variant="outline" className="border-slate-200 text-slate-600">{event.category}</Badge>
                           <Badge variant="outline" className="text-xs border-slate-200 text-slate-500">{event.recurring}</Badge>
                         </div>
                         <p className="text-sm text-slate-600">{event.description}</p>
                       </div>
-                      <Button variant="ghost" size="sm" className="text-slate-400 hover:text-[#043E52]">
+                      <Button variant="ghost" size="sm" className="text-slate-400 hover:text-role-org">
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 text-sm">
                       <div className="flex items-center gap-2 text-slate-500">
-                        <Calendar className="h-4 w-4 text-[#1C9290]" />
+                        <Calendar className="h-4 w-4 text-role-accent-teal" />
                         <span>{event.date}</span>
                       </div>
                       <div className="flex items-center gap-2 text-slate-500">
-                        <Clock className="h-4 w-4 text-[#1C9290]" />
+                        <Clock className="h-4 w-4 text-role-accent-teal" />
                         <span>{event.startTime} - {event.endTime}</span>
                       </div>
                       <div className="flex items-center gap-2 text-slate-500">
-                        <MapPin className="h-4 w-4 text-[#1C9290]" />
+                        <MapPin className="h-4 w-4 text-role-accent-teal" />
                         <span>{event.location}</span>
                       </div>
                     </div>
@@ -254,10 +254,10 @@ export function Events() {
                     <div className="mb-4">
                       <div className="flex items-center justify-between text-sm mb-2">
                         <span className="text-slate-600">
-                          <Users className="inline h-4 w-4 mr-1 text-[#043E52]" />
+                          <Users className="inline h-4 w-4 mr-1 text-role-org" />
                           {event.volunteersRegistered}/{event.volunteersNeeded} volunteers registered
                         </span>
-                        <span className="text-[#043E52] font-bold">
+                        <span className="text-role-org font-bold">
                           {Math.round((event.volunteersRegistered / event.volunteersNeeded) * 100)}%
                         </span>
                       </div>
@@ -268,8 +268,8 @@ export function Events() {
                     </div>
 
                     {event.volunteersRegistered < event.volunteersNeeded && (
-                      <div className="bg-[#E16A3D]/10 border border-[#E16A3D]/20 rounded-lg p-3 mb-4">
-                        <div className="flex items-center gap-2 text-sm text-[#E16A3D]">
+                      <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
+                        <div className="flex items-center gap-2 text-sm text-amber-700">
                           <AlertCircle className="h-4 w-4" />
                           <span>Need {event.volunteersNeeded - event.volunteersRegistered} more volunteers</span>
                         </div>
@@ -277,22 +277,22 @@ export function Events() {
                     )}
 
                     <div className="flex gap-2">
-                      <Button className="bg-[#043E52] hover:bg-[#033040] text-white shadow-sm">
+                      <Button className="bg-role-org hover:bg-role-org-dark text-white shadow-sm">
                         Manage Event
                       </Button>
-                      <Button variant="outline" className="border-slate-200 text-slate-600 hover:text-[#043E52] hover:bg-slate-50">
+                      <Button variant="outline" className="border-slate-200 text-slate-600 hover:text-role-org hover:bg-slate-50">
                         <Users className="mr-2 h-4 w-4" />
                         View Volunteers
                       </Button>
-                      <Button variant="outline" className="border-slate-200 text-slate-600 hover:text-[#043E52] hover:bg-slate-50">
+                      <Button variant="outline" className="border-slate-200 text-slate-600 hover:text-role-org hover:bg-slate-50">
                         <Edit className="mr-2 h-4 w-4" />
                         Edit
                       </Button>
-                      <Button variant="outline" className="border-slate-200 text-slate-600 hover:text-[#043E52] hover:bg-slate-50">
+                      <Button variant="outline" className="border-slate-200 text-slate-600 hover:text-role-org hover:bg-slate-50">
                         <Share2 className="mr-2 h-4 w-4" />
                         Share
                       </Button>
-                      <Button variant="outline" className="border-slate-200 text-slate-600 hover:text-[#043E52] hover:bg-slate-50">
+                      <Button variant="outline" className="border-slate-200 text-slate-600 hover:text-role-org hover:bg-slate-50">
                         <Copy className="mr-2 h-4 w-4" />
                         Duplicate
                       </Button>
@@ -315,23 +315,23 @@ export function Events() {
                       alt={event.title}
                       className="w-full h-full object-cover opacity-75"
                     />
-                    <Badge className="absolute top-4 right-4 bg-[#1C9290] hover:bg-[#157a78]">
+                    <Badge className="absolute top-4 right-4 bg-role-accent-teal hover:bg-role-accent-teal/80">
                       <CheckCircle className="mr-1 h-3 w-3" />
                       Completed
                     </Badge>
                   </div>
                   <div className="flex-1 p-6">
-                    <h3 className="text-[#043E52] font-bold text-lg mb-2">{event.title}</h3>
+                    <h3 className="text-slate-900 font-bold text-lg mb-2">{event.title}</h3>
                     <p className="text-sm text-slate-600 mb-4">{event.description}</p>
                     <div className="grid grid-cols-2 gap-4 text-sm text-slate-600 mb-4">
                       <div>Date: {event.date}</div>
                       <div>Volunteers: {event.volunteersRegistered}/{event.volunteersNeeded}</div>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm" className="border-slate-200 text-slate-600 hover:text-[#043E52] hover:bg-slate-50">
+                      <Button variant="outline" size="sm" className="border-slate-200 text-slate-600 hover:text-role-org hover:bg-slate-50">
                         View Report
                       </Button>
-                      <Button variant="outline" size="sm" className="border-slate-200 text-slate-600 hover:text-[#043E52] hover:bg-slate-50">
+                      <Button variant="outline" size="sm" className="border-slate-200 text-slate-600 hover:text-role-org hover:bg-slate-50">
                         <Copy className="mr-2 h-3 w-3" />
                         Create Similar Event
                       </Button>
@@ -356,31 +356,31 @@ export function Events() {
                   <Badge 
                     className={`absolute top-3 right-3 ${
                       event.status === 'completed' 
-                        ? 'bg-[#1C9290] hover:bg-[#157a78]' 
-                        : 'bg-[#043E52] hover:bg-[#033040]'
+                        ? 'bg-role-accent-teal hover:bg-role-accent-teal/80' 
+                        : 'bg-role-org hover:bg-role-org-dark'
                     }`}
                   >
                     {event.status === 'completed' ? 'Completed' : 'Upcoming'}
                   </Badge>
                 </div>
                 <CardHeader>
-                  <CardTitle className="text-base text-[#043E52]">{event.title}</CardTitle>
+                  <CardTitle className="text-base text-slate-900">{event.title}</CardTitle>
                   <CardDescription className="line-clamp-2">{event.description}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex items-center gap-2 text-sm text-slate-600">
-                    <Calendar className="h-4 w-4 text-[#1C9290]" />
+                    <Calendar className="h-4 w-4 text-role-accent-teal" />
                     <span>{event.date}</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-slate-600">
-                    <MapPin className="h-4 w-4 text-[#1C9290]" />
+                    <MapPin className="h-4 w-4 text-role-accent-teal" />
                     <span>{event.location}</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-slate-600">
-                    <Users className="h-4 w-4 text-[#043E52]" />
+                    <Users className="h-4 w-4 text-role-org" />
                     <span>{event.volunteersRegistered}/{event.volunteersNeeded} volunteers</span>
                   </div>
-                  <Button className="w-full bg-[#043E52] hover:bg-[#033040] text-white shadow-sm" size="sm">
+                  <Button className="w-full bg-role-org hover:bg-role-org-dark text-white shadow-sm" size="sm">
                     Manage
                   </Button>
                 </CardContent>
