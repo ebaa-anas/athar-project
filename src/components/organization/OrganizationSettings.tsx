@@ -204,31 +204,31 @@ export function OrganizationSettings() {
     alert(`Generating PDF for ${invoiceId}... The download will begin shortly.`);
   };
 
-  if (loading) return <div className="p-12 text-center text-[#043E52] font-bold flex flex-col items-center justify-center"><Loader2 className="h-8 w-8 animate-spin mb-4" /> Loading Configuration...</div>;
+  if (loading) return <div className="p-12 text-center text-role-org font-bold flex flex-col items-center justify-center"><Loader2 className="h-8 w-8 animate-spin mb-4" /> Loading Configuration...</div>;
 
   return (
     <div className="space-y-8 pb-12">
       {/* Header */}
       <div className="border-b border-slate-200 pb-5">
-        <h1 className="text-2xl font-bold text-[#043E52] uppercase tracking-tight">System Settings</h1>
+        <h1 className="text-2xl font-bold text-slate-900 uppercase tracking-tight">System Settings</h1>
         <p className="text-slate-500 mt-1 text-sm font-semibold">Manage your organizational configuration and access</p>
       </div>
 
       {/* Settings Tabs */}
       <Tabs defaultValue="general" className="w-full">
         <TabsList className="bg-slate-100 p-1 rounded-xl w-full md:w-auto flex justify-start mb-6">
-          <TabsTrigger value="general" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#043E52] data-[state=active]:shadow-sm px-5 font-bold text-xs uppercase tracking-wider">General</TabsTrigger>
-          <TabsTrigger value="team" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#043E52] data-[state=active]:shadow-sm px-5 font-bold text-xs uppercase tracking-wider">Team</TabsTrigger>
-          <TabsTrigger value="security" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#043E52] data-[state=active]:shadow-sm px-5 font-bold text-xs uppercase tracking-wider">Security</TabsTrigger>
-          <TabsTrigger value="notifications" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#043E52] data-[state=active]:shadow-sm px-5 font-bold text-xs uppercase tracking-wider">Notifications</TabsTrigger>
-          <TabsTrigger value="billing" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#043E52] data-[state=active]:shadow-sm px-5 font-bold text-xs uppercase tracking-wider">Billing</TabsTrigger>
+          <TabsTrigger value="general" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-role-org data-[state=active]:shadow-sm px-5 font-bold text-xs uppercase tracking-wider">General</TabsTrigger>
+          <TabsTrigger value="team" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-role-org data-[state=active]:shadow-sm px-5 font-bold text-xs uppercase tracking-wider">Team</TabsTrigger>
+          <TabsTrigger value="security" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-role-org data-[state=active]:shadow-sm px-5 font-bold text-xs uppercase tracking-wider">Security</TabsTrigger>
+          <TabsTrigger value="notifications" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-role-org data-[state=active]:shadow-sm px-5 font-bold text-xs uppercase tracking-wider">Notifications</TabsTrigger>
+          <TabsTrigger value="billing" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-role-org data-[state=active]:shadow-sm px-5 font-bold text-xs uppercase tracking-wider">Billing</TabsTrigger>
         </TabsList>
 
         {/* GENERAL SETTINGS */}
         <TabsContent value="general" className="space-y-6 animate-in fade-in-50 duration-500">
           <Card className="border-slate-200 shadow-sm">
             <CardHeader className="pb-4 border-b border-slate-50">
-              <CardTitle className="text-base font-bold text-[#043E52] uppercase">Organization Information</CardTitle>
+              <CardTitle className="text-base font-bold text-slate-900 uppercase">Organization Information</CardTitle>
               <CardDescription className="text-xs font-semibold mt-1">Update your organization's public directory data</CardDescription>
             </CardHeader>
             <CardContent className="space-y-5 pt-5">
@@ -237,7 +237,7 @@ export function OrganizationSettings() {
                 <Input 
                   value={orgData.name} 
                   onChange={e => setOrgData({...orgData, name: e.target.value})} 
-                  className="border-slate-200 focus:border-[#043E52] focus:ring-[#043E52] h-11" 
+                  className="border-slate-200 focus:border-role-org focus:ring-role-org h-11" 
                 />
               </div>
               <div className="space-y-2">
@@ -246,7 +246,7 @@ export function OrganizationSettings() {
                   type="email" 
                   value={orgData.email} 
                   onChange={e => setOrgData({...orgData, email: e.target.value})} 
-                  className="border-slate-200 focus:border-[#043E52] focus:ring-[#043E52] h-11" 
+                  className="border-slate-200 focus:border-role-org focus:ring-role-org h-11" 
                 />
               </div>
               <div className="space-y-2">
@@ -254,7 +254,7 @@ export function OrganizationSettings() {
                 <Input 
                   value={orgData.phone} 
                   onChange={e => setOrgData({...orgData, phone: e.target.value})} 
-                  className="border-slate-200 focus:border-[#043E52] focus:ring-[#043E52] h-11" 
+                  className="border-slate-200 focus:border-role-org focus:ring-role-org h-11" 
                 />
               </div>
               <div className="space-y-2">
@@ -262,11 +262,11 @@ export function OrganizationSettings() {
                 <Input 
                   value={orgData.website} 
                   onChange={e => setOrgData({...orgData, website: e.target.value})} 
-                  className="border-slate-200 focus:border-[#043E52] focus:ring-[#043E52] h-11" 
+                  className="border-slate-200 focus:border-role-org focus:ring-role-org h-11" 
                 />
               </div>
               <div className="pt-4 border-t border-slate-100">
-                <Button onClick={handleUpdateProfile} disabled={isSaving} className="bg-[#043E52] hover:bg-[#033040] text-white shadow-md font-bold h-11 px-8 text-xs uppercase tracking-wider">
+                <Button onClick={handleUpdateProfile} disabled={isSaving} className="bg-role-org hover:bg-role-org-dark text-white shadow-md font-bold h-11 px-8 text-xs uppercase tracking-wider">
                   {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />} Save Changes
                 </Button>
               </div>
@@ -275,7 +275,7 @@ export function OrganizationSettings() {
 
           <Card className="border-slate-200 shadow-sm">
             <CardHeader className="pb-4 border-b border-slate-50">
-              <CardTitle className="text-base font-bold text-[#043E52] uppercase">System Preferences</CardTitle>
+              <CardTitle className="text-base font-bold text-slate-900 uppercase">System Preferences</CardTitle>
             </CardHeader>
             <CardContent className="space-y-5 pt-5">
               <div className="flex items-center justify-between p-2">
@@ -312,7 +312,7 @@ export function OrganizationSettings() {
                 />
               </div>
               <div className="pt-4 border-t border-slate-100">
-                <Button onClick={handleUpdateProfile} disabled={isSaving} className="bg-[#043E52] hover:bg-[#033040] text-white shadow-md font-bold h-11 px-8 text-xs uppercase tracking-wider">
+                <Button onClick={handleUpdateProfile} disabled={isSaving} className="bg-role-org hover:bg-role-org-dark text-white shadow-md font-bold h-11 px-8 text-xs uppercase tracking-wider">
                   {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />} Save Preferences
                 </Button>
               </div>
@@ -326,20 +326,20 @@ export function OrganizationSettings() {
             <CardHeader className="pb-4 border-b border-slate-50">
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-base font-bold text-[#043E52] uppercase">Command Staff</CardTitle>
+                  <CardTitle className="text-base font-bold text-slate-900 uppercase">Command Staff</CardTitle>
                   <CardDescription className="text-xs font-semibold mt-1">Manage personnel access levels</CardDescription>
                 </div>
                 
                 {/* Invite modal */}
                 <Dialog open={isInviteModalOpen} onOpenChange={setIsInviteModalOpen}>
                   <DialogTrigger asChild>
-                    <Button className="bg-[#1C9290] hover:bg-[#157a78] text-white shadow-md font-bold h-10 px-5 text-[10px] uppercase tracking-widest">
+                    <Button className="bg-role-accent-teal hover:bg-role-accent-teal/80 text-white shadow-md font-bold h-10 px-5 text-[10px] uppercase tracking-widest">
                       <Plus className="mr-2 h-3.5 w-3.5" /> Invite Staff
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="border-none rounded-2xl shadow-2xl p-8">
                     <DialogHeader>
-                      <DialogTitle className="text-xl font-bold text-[#043E52] uppercase tracking-tight">Invite Team Member</DialogTitle>
+                      <DialogTitle className="text-xl font-bold text-role-org uppercase tracking-tight">Invite Team Member</DialogTitle>
                     </DialogHeader>
                     <form onSubmit={handleInviteStaff} className="space-y-5 pt-4">
                       <div className="space-y-2">
@@ -352,13 +352,13 @@ export function OrganizationSettings() {
                       </div>
                       <div className="space-y-2">
                         <Label className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">Access Role</Label>
-                        <select value={inviteData.role} onChange={e => setInviteData({...inviteData, role: e.target.value})} className="w-full h-11 px-3 border border-slate-200 rounded-md text-sm font-semibold text-[#043E52]">
+                        <select value={inviteData.role} onChange={e => setInviteData({...inviteData, role: e.target.value})} className="w-full h-11 px-3 border border-slate-200 rounded-md text-sm font-semibold text-role-org">
                           <option>Administrator</option>
                           <option>Manager</option>
                           <option>Coordinator</option>
                         </select>
                       </div>
-                      <Button type="submit" disabled={isSaving} className="w-full bg-[#043E52] hover:bg-[#033040] text-white font-bold h-11 uppercase tracking-wider text-xs">
+                      <Button type="submit" disabled={isSaving} className="w-full bg-role-org hover:bg-role-org-dark text-white font-bold h-11 uppercase tracking-wider text-xs">
                         {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Send Invitation"}
                       </Button>
                     </form>
@@ -375,12 +375,12 @@ export function OrganizationSettings() {
                     <div className="flex items-center gap-4">
                       <Avatar className="w-12 h-12 border border-slate-200 shadow-sm">
                         <AvatarImage src={member.avatar} />
-                        <AvatarFallback className="bg-[#043E52] text-white font-bold">{member.name.charAt(0)}</AvatarFallback>
+                        <AvatarFallback className="bg-role-org text-white font-bold">{member.name.charAt(0)}</AvatarFallback>
                       </Avatar>
                       <div>
                         <div className="flex items-center gap-2">
-                           <h4 className="text-sm font-bold text-[#043E52]">{member.name}</h4>
-                           {member.status === 'pending' && <Badge className="bg-orange-100 text-orange-800 border-none text-[8px] uppercase tracking-wider px-1.5 py-0">Pending</Badge>}
+                           <h4 className="text-sm font-bold text-slate-900">{member.name}</h4>
+                           {member.status === 'pending' && <Badge className="bg-amber-100 text-amber-800 border-none text-[8px] uppercase tracking-wider px-1.5 py-0">Pending</Badge>}
                         </div>
                         <p className="text-xs text-slate-500 mt-0.5">{member.email}</p>
                       </div>
@@ -392,22 +392,22 @@ export function OrganizationSettings() {
                         {/* Edit role modal */}
                         <Dialog open={isEditModalOpen && editData?.id === member.id} onOpenChange={(open) => { setIsEditModalOpen(open); if(open) setEditData(member); else setEditData(null); }}>
                           <DialogTrigger asChild>
-                             <Button variant="outline" size="sm" className="border-slate-200 text-slate-600 hover:text-[#043E52] font-bold h-8 text-[10px] uppercase">Edit</Button>
+                             <Button variant="outline" size="sm" className="border-slate-200 text-slate-600 hover:text-role-org font-bold h-8 text-[10px] uppercase">Edit</Button>
                           </DialogTrigger>
                           <DialogContent className="border-none rounded-2xl shadow-2xl p-8">
                             <DialogHeader>
-                              <DialogTitle className="text-xl font-bold text-[#043E52] uppercase tracking-tight">Update Access Role</DialogTitle>
+                              <DialogTitle className="text-xl font-bold text-role-org uppercase tracking-tight">Update Access Role</DialogTitle>
                             </DialogHeader>
                             <form onSubmit={handleEditRole} className="space-y-5 pt-4">
                               <div className="space-y-2">
                                 <Label className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">Access Role for {member.name}</Label>
-                                <select value={editData?.role || ''} onChange={e => setEditData({...editData, role: e.target.value})} className="w-full h-11 px-3 border border-slate-200 rounded-md text-sm font-semibold text-[#043E52]">
+                                <select value={editData?.role || ''} onChange={e => setEditData({...editData, role: e.target.value})} className="w-full h-11 px-3 border border-slate-200 rounded-md text-sm font-semibold text-role-org">
                                   <option>Administrator</option>
                                   <option>Manager</option>
                                   <option>Coordinator</option>
                                 </select>
                               </div>
-                              <Button type="submit" disabled={isSaving} className="w-full bg-[#1C9290] hover:bg-[#157a78] text-white font-bold h-11 uppercase tracking-wider text-xs">
+                              <Button type="submit" disabled={isSaving} className="w-full bg-role-accent-teal hover:bg-role-accent-teal/80 text-white font-bold h-11 uppercase tracking-wider text-xs">
                                 {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Update Role"}
                               </Button>
                             </form>
@@ -427,12 +427,12 @@ export function OrganizationSettings() {
 
           <Card className="border-slate-200 shadow-sm">
             <CardHeader className="pb-4 border-b border-slate-50">
-              <CardTitle className="text-base font-bold text-[#043E52] uppercase">Access Matrices</CardTitle>
+              <CardTitle className="text-base font-bold text-slate-900 uppercase">Access Matrices</CardTitle>
             </CardHeader>
             <CardContent className="pt-5">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="p-5 border border-slate-100 rounded-xl bg-slate-50/50">
-                  <h4 className="text-sm font-bold text-[#043E52] mb-1.5 uppercase">Administrator</h4>
+                  <h4 className="text-sm font-bold text-slate-900 mb-1.5 uppercase">Administrator</h4>
                   <p className="text-[10px] text-slate-500 mb-4 font-semibold uppercase tracking-wide">Full System Access</p>
                   <div className="flex flex-col gap-2">
                     <Badge variant="secondary" className="bg-white border border-slate-200 text-[10px] text-slate-600 font-bold py-1 w-full justify-center">Manage Team & Billing</Badge>
@@ -440,7 +440,7 @@ export function OrganizationSettings() {
                   </div>
                 </div>
                 <div className="p-5 border border-slate-100 rounded-xl bg-slate-50/50">
-                  <h4 className="text-sm font-bold text-[#043E52] mb-1.5 uppercase">Manager</h4>
+                  <h4 className="text-sm font-bold text-slate-900 mb-1.5 uppercase">Manager</h4>
                   <p className="text-[10px] text-slate-500 mb-4 font-semibold uppercase tracking-wide">Operations Focus</p>
                   <div className="flex flex-col gap-2">
                     <Badge variant="secondary" className="bg-white border border-slate-200 text-[10px] text-slate-600 font-bold py-1 w-full justify-center">Post Opportunities</Badge>
@@ -448,7 +448,7 @@ export function OrganizationSettings() {
                   </div>
                 </div>
                 <div className="p-5 border border-slate-100 rounded-xl bg-slate-50/50">
-                  <h4 className="text-sm font-bold text-[#043E52] mb-1.5 uppercase">Coordinator</h4>
+                  <h4 className="text-sm font-bold text-slate-900 mb-1.5 uppercase">Coordinator</h4>
                   <p className="text-[10px] text-slate-500 mb-4 font-semibold uppercase tracking-wide">Field Focus</p>
                   <div className="flex flex-col gap-2">
                     <Badge variant="secondary" className="bg-white border border-slate-200 text-[10px] text-slate-600 font-bold py-1 w-full justify-center">Manage Live Events</Badge>
@@ -464,7 +464,7 @@ export function OrganizationSettings() {
         <TabsContent value="security" className="space-y-6 animate-in fade-in-50 duration-500">
           <Card className="border-slate-200 shadow-sm">
             <CardHeader className="pb-4 border-b border-slate-50">
-              <CardTitle className="text-base font-bold text-[#043E52] uppercase">Credential Management</CardTitle>
+              <CardTitle className="text-base font-bold text-slate-900 uppercase">Credential Management</CardTitle>
               <CardDescription className="text-xs font-semibold mt-1">Securely update your login password</CardDescription>
             </CardHeader>
             <CardContent className="space-y-5 pt-5">
@@ -475,10 +475,10 @@ export function OrganizationSettings() {
                     type={showPassword ? "text" : "password"} 
                     value={securityData.newPassword}
                     onChange={(e) => setSecurityData({...securityData, newPassword: e.target.value})}
-                    className="border-slate-200 focus:border-[#043E52] h-11 pr-10" 
+                    className="border-slate-200 focus:border-role-org h-11 pr-10" 
                     placeholder="Must be at least 6 characters"
                   />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#043E52]">
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-role-org">
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
@@ -489,25 +489,25 @@ export function OrganizationSettings() {
                   type="password" 
                   value={securityData.confirmPassword}
                   onChange={(e) => setSecurityData({...securityData, confirmPassword: e.target.value})}
-                  className="border-slate-200 focus:border-[#043E52] h-11" 
+                  className="border-slate-200 focus:border-role-org h-11" 
                   placeholder="Retype new password"
                 />
               </div>
               <div className="pt-2">
-                <Button onClick={handleUpdatePassword} disabled={isSaving} className="bg-[#043E52] hover:bg-[#033040] text-white shadow-md font-bold h-11 px-8 text-xs uppercase tracking-wider">
+                <Button onClick={handleUpdatePassword} disabled={isSaving} className="bg-role-org hover:bg-role-org-dark text-white shadow-md font-bold h-11 px-8 text-xs uppercase tracking-wider">
                    {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Shield className="mr-2 h-4 w-4" />} Update Security
                 </Button>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-rose-200 shadow-sm overflow-hidden">
-             <div className="bg-rose-50 p-5 border-b border-rose-100 flex items-center justify-between">
+          <Card className="border-red-200 shadow-sm overflow-hidden">
+             <div className="bg-red-50 p-5 border-b border-red-100 flex items-center justify-between">
                 <div>
-                  <h4 className="text-sm font-bold text-rose-800 uppercase tracking-tight">Active Sessions</h4>
-                  <p className="text-xs text-rose-600/80 font-medium mt-1">Review where your account is currently logged in</p>
+                  <h4 className="text-sm font-bold text-red-800 uppercase tracking-tight">Active Sessions</h4>
+                  <p className="text-xs text-red-600/80 font-medium mt-1">Review where your account is currently logged in</p>
                 </div>
-                <Button onClick={handleRevokeAccess} variant="outline" className="border-rose-200 text-rose-700 hover:bg-rose-100 font-bold text-[10px] uppercase tracking-wider h-9 shadow-sm">
+                <Button onClick={handleRevokeAccess} variant="outline" className="border-red-200 text-red-700 hover:bg-red-100 font-bold text-[10px] uppercase tracking-wider h-9 shadow-sm">
                   Revoke All Access
                 </Button>
              </div>
@@ -530,7 +530,7 @@ export function OrganizationSettings() {
         <TabsContent value="notifications" className="space-y-6 animate-in fade-in-50 duration-500">
           <Card className="border-slate-200 shadow-sm">
             <CardHeader className="pb-4 border-b border-slate-50">
-              <CardTitle className="text-base font-bold text-[#043E52] uppercase">Communication Triggers</CardTitle>
+              <CardTitle className="text-base font-bold text-slate-900 uppercase">Communication Triggers</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 pt-5">
               <div className="flex items-center justify-between p-3 border border-slate-100 rounded-xl bg-slate-50/50">
@@ -567,7 +567,7 @@ export function OrganizationSettings() {
                 />
               </div>
               <div className="pt-4 border-t border-slate-100">
-                <Button onClick={handleUpdateProfile} disabled={isSaving} className="bg-[#043E52] hover:bg-[#033040] text-white shadow-md font-bold h-11 px-8 text-xs uppercase tracking-wider">
+                <Button onClick={handleUpdateProfile} disabled={isSaving} className="bg-role-org hover:bg-role-org-dark text-white shadow-md font-bold h-11 px-8 text-xs uppercase tracking-wider">
                   {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />} Save Notification Rules
                 </Button>
               </div>
@@ -578,7 +578,7 @@ export function OrganizationSettings() {
         {/* BILLING TAB */}
         <TabsContent value="billing" className="space-y-6 animate-in fade-in-50 duration-500">
           <Card className="border-slate-200 shadow-sm overflow-hidden">
-            <div className="bg-gradient-to-r from-[#043E52] to-[#1C9290] p-8 text-white relative">
+            <div className="bg-gradient-to-r from-role-org to-role-accent-teal p-8 text-white relative">
                <Shield className="absolute right-8 top-1/2 -translate-y-1/2 h-32 w-32 text-white/10" />
                <Badge className="bg-white/20 text-white border-none font-bold text-[10px] uppercase tracking-widest mb-3">Athar Enterprise</Badge>
                <h3 className="text-3xl font-black mb-1">Professional Tier</h3>
@@ -586,17 +586,17 @@ export function OrganizationSettings() {
             </div>
             <CardContent className="p-0">
                <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-y md:divide-y-0 divide-slate-100">
-                  <div className="p-5 text-center bg-white"><Settings className="h-5 w-5 text-[#1C9290] mx-auto mb-2" /><p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Unlimited Missions</p></div>
-                  <div className="p-5 text-center bg-white"><Users className="h-5 w-5 text-[#1C9290] mx-auto mb-2" /><p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">5 Admin Seats</p></div>
-                  <div className="p-5 text-center bg-white"><Activity className="h-5 w-5 text-[#1C9290] mx-auto mb-2" /><p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Advanced Analytics</p></div>
-                  <div className="p-5 text-center bg-white"><Radio className="h-5 w-5 text-[#E16A3D] mx-auto mb-2" /><p className="text-[10px] font-bold text-[#E16A3D] uppercase tracking-widest">SOS Protocol Enabled</p></div>
+                  <div className="p-5 text-center bg-white"><Settings className="h-5 w-5 text-role-accent-teal mx-auto mb-2" /><p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Unlimited Missions</p></div>
+                  <div className="p-5 text-center bg-white"><Users className="h-5 w-5 text-role-accent-teal mx-auto mb-2" /><p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">5 Admin Seats</p></div>
+                  <div className="p-5 text-center bg-white"><Activity className="h-5 w-5 text-role-accent-teal mx-auto mb-2" /><p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Advanced Analytics</p></div>
+                  <div className="p-5 text-center bg-white"><Radio className="h-5 w-5 text-brand-cta mx-auto mb-2" /><p className="text-[10px] font-bold text-brand-cta uppercase tracking-widest">SOS Protocol Enabled</p></div>
                </div>
             </CardContent>
           </Card>
 
           <Card className="border-slate-200 shadow-sm">
             <CardHeader className="pb-4 border-b border-slate-50">
-              <CardTitle className="text-base font-bold text-[#043E52] uppercase">Ledger History</CardTitle>
+              <CardTitle className="text-base font-bold text-slate-900 uppercase">Ledger History</CardTitle>
             </CardHeader>
             <CardContent className="pt-5">
               <div className="space-y-3">
@@ -614,9 +614,9 @@ export function OrganizationSettings() {
                       </div>
                     </div>
                     <div className="flex items-center gap-4">
-                      <span className="font-black text-[#043E52]">{item.amount}</span>
+                      <span className="font-black text-role-org">{item.amount}</span>
                       
-                      <Button onClick={() => handleDownloadInvoice(item.invoice)} variant="ghost" size="sm" className="text-[#1C9290] hover:bg-teal-50 font-bold text-[10px] uppercase h-8 px-3">
+                      <Button onClick={() => handleDownloadInvoice(item.invoice)} variant="ghost" size="sm" className="text-role-accent-teal hover:bg-teal-50 font-bold text-[10px] uppercase h-8 px-3">
                         Download
                       </Button>
                     </div>
