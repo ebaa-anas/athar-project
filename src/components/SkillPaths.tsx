@@ -388,7 +388,7 @@ export function SkillPaths() {
   const isVerified = user?.verificationStatus === 'verified';
 
   if (loading) {
-    return <div className="p-12 text-center text-[#1C9290] font-bold flex flex-col items-center justify-center"><Loader2 className="h-8 w-8 animate-spin mb-4" /> Loading Secure Curriculum...</div>;
+    return <div className="p-12 text-center text-role-accent-teal font-bold flex flex-col items-center justify-center"><Loader2 className="h-8 w-8 animate-spin mb-4" /> Loading Secure Curriculum...</div>;
   }
 
   return (
@@ -396,8 +396,8 @@ export function SkillPaths() {
       {/* Header - Refined Typography */}
       <div className="flex flex-col gap-1 border-b border-slate-200 pb-4">
         <div className="flex items-center gap-3">
-          <h1 className="text-[#016A6D] font-bold text-2xl tracking-tight">Athar Training Academy</h1>
-          <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-100 border-none shadow-sm uppercase tracking-wider text-[10px] font-bold px-2 py-0.5">Gov Approved</Badge>
+          <h1 className="text-slate-900 font-bold text-2xl tracking-tight">Athar Training Academy</h1>
+          <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 border-none shadow-sm uppercase tracking-wider text-[10px] font-bold px-2 py-0.5">Gov Approved</Badge>
         </div>
         <p className="text-slate-500 text-sm">
           Build verified skills through official curriculums. Complete modules to secure your clearance in the Athar Volunteer Reserve (AVR).
@@ -418,15 +418,15 @@ export function SkillPaths() {
 
       {/* Stats Cards - Cleaner, smaller fonts */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="border-slate-200 shadow-sm bg-white border-l-4 border-l-[#1C9290]">
+        <Card className="border-slate-200 shadow-sm bg-white border-l-4 border-l-role-accent-teal">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">Impact Points</p>
-                <p className="text-2xl font-bold text-[#1C9290]">{totalImpactPoints}</p>
+                <p className="text-2xl font-bold text-role-accent-teal">{totalImpactPoints}</p>
               </div>
               <div className="bg-teal-50 p-2.5 rounded-lg">
-                <Star className="h-5 w-5 text-[#1C9290]" />
+                <Star className="h-5 w-5 text-role-accent-teal" />
               </div>
             </div>
           </CardContent>
@@ -462,16 +462,16 @@ export function SkillPaths() {
           </CardContent>
         </Card>
 
-        <Card className="border-slate-200 shadow-sm bg-white border-l-4 border-l-[#016A6D]">
+        <Card className="border-slate-200 shadow-sm bg-white border-l-4 border-l-role-volunteer">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">Clearance Level</p>
-                <p className="text-lg font-bold text-[#016A6D] mt-1 leading-none uppercase">Tier 2</p>
+                <p className="text-lg font-bold text-role-volunteer mt-1 leading-none uppercase">Tier 2</p>
                 <p className="text-xs text-slate-500 mt-1">Intermediate</p>
               </div>
-              <div className="bg-[#016A6D]/10 p-2.5 rounded-lg">
-                <TrendingUp className="h-5 w-5 text-[#016A6D]" />
+              <div className="bg-role-volunteer/10 p-2.5 rounded-lg">
+                <TrendingUp className="h-5 w-5 text-role-volunteer" />
               </div>
             </div>
           </CardContent>
@@ -483,17 +483,17 @@ export function SkillPaths() {
         <Card className="border border-teal-200 shadow-sm bg-teal-50">
           <CardContent className="p-5">
             <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
-              <div className="bg-[#1C9290] text-white p-3 rounded-xl shrink-0">
+              <div className="bg-role-accent-teal text-white p-3 rounded-xl shrink-0">
                 <Zap className="h-6 w-6" />
               </div>
               <div className="flex-1">
-                <h3 className="text-[#043E52] text-lg font-bold mb-1">Official AVR Status: Active</h3>
+                <h3 className="text-slate-900 text-lg font-bold mb-1">Official AVR Status: Active</h3>
                 <p className="text-slate-600 text-sm mb-3">
                   You have been cleared for deployment. Verified partners can now activate you for field operations.
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {reserveSkills.map(skill => (
-                    <Badge key={skill.id} className="bg-[#1C9290] text-white hover:bg-[#157a78] border-none px-2.5 py-0.5 font-semibold text-xs">
+                    <Badge key={skill.id} className="bg-role-accent-teal text-white hover:bg-role-accent-teal/80 border-none px-2.5 py-0.5 font-semibold text-xs">
                       <CheckCircle className="h-3 w-3 mr-1.5" />
                       {skill.title}
                     </Badge>
@@ -508,9 +508,9 @@ export function SkillPaths() {
       {/* Skill Paths Tabs */}
       <Tabs defaultValue="all" className="w-full">
         <TabsList className="bg-slate-100 p-1 rounded-lg w-full md:w-auto flex flex-wrap justify-start mb-6">
-          <TabsTrigger value="all" className="rounded-md data-[state=active]:bg-white data-[state=active]:text-[#1C9290] data-[state=active]:shadow-sm px-4 py-2 font-bold text-xs">All Paths ({activePaths.length})</TabsTrigger>
-          <TabsTrigger value="in-progress" className="rounded-md data-[state=active]:bg-white data-[state=active]:text-[#1C9290] data-[state=active]:shadow-sm px-4 py-2 font-bold text-xs">In Progress ({activePaths.filter(p => p.progress > 0 && !p.isCompleted).length})</TabsTrigger>
-          <TabsTrigger value="completed" className="rounded-md data-[state=active]:bg-white data-[state=active]:text-[#1C9290] data-[state=active]:shadow-sm px-4 py-2 font-bold text-xs">Completed ({completedPaths.length})</TabsTrigger>
+          <TabsTrigger value="all" className="rounded-md data-[state=active]:bg-white data-[state=active]:text-role-accent-teal data-[state=active]:shadow-sm px-4 py-2 font-bold text-xs">All Paths ({activePaths.length})</TabsTrigger>
+          <TabsTrigger value="in-progress" className="rounded-md data-[state=active]:bg-white data-[state=active]:text-role-accent-teal data-[state=active]:shadow-sm px-4 py-2 font-bold text-xs">In Progress ({activePaths.filter(p => p.progress > 0 && !p.isCompleted).length})</TabsTrigger>
+          <TabsTrigger value="completed" className="rounded-md data-[state=active]:bg-white data-[state=active]:text-role-accent-teal data-[state=active]:shadow-sm px-4 py-2 font-bold text-xs">Completed ({completedPaths.length})</TabsTrigger>
         </TabsList>
 
         <TabsContent value="all" className="space-y-4">
@@ -550,7 +550,7 @@ function SkillPathCard({ path, onComplete, isProcessing, onDownloadCert, isGener
     <Card className={`overflow-hidden transition-all border ${
         isComplete ? 'border-emerald-200 bg-emerald-50/50' : 
         (path.isLocked || !isVerified) ? 'border-slate-200 bg-slate-50 opacity-80' : 
-        'border-slate-200 bg-white hover:border-[#1C9290]/40'
+        'border-slate-200 bg-white hover:border-role-accent-teal/40'
     }`}>
       <CardContent className="p-0">
         <div className="flex flex-col md:flex-row items-stretch">
@@ -565,7 +565,7 @@ function SkillPathCard({ path, onComplete, isProcessing, onDownloadCert, isGener
             ) : (path.isLocked || !isVerified) ? (
               <Lock className="h-8 w-8 text-slate-400" />
             ) : (
-              <Icon className="h-8 w-8 text-[#043E52]" />
+              <Icon className="h-8 w-8 text-role-volunteer-dark" />
             )}
           </div>
 
@@ -574,7 +574,7 @@ function SkillPathCard({ path, onComplete, isProcessing, onDownloadCert, isGener
               
               <div className="flex-1 space-y-2">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h3 className={`font-bold text-lg ${(path.isLocked || !isVerified) && !isComplete ? 'text-slate-500' : 'text-[#043E52]'}`}>{path.title}</h3>
+                  <h3 className={`font-bold text-lg ${(path.isLocked || !isVerified) && !isComplete ? 'text-slate-500' : 'text-slate-900'}`}>{path.title}</h3>
                   {path.qualifiesForAVR && !isComplete && (
                     <Badge variant="outline" className="bg-teal-50 text-teal-700 border-teal-200 font-bold text-[10px] uppercase tracking-wider px-2 py-0.5">AVR Eligible</Badge>
                   )}
@@ -588,7 +588,7 @@ function SkillPathCard({ path, onComplete, isProcessing, onDownloadCert, isGener
                 <div className="flex flex-wrap gap-2 pt-2">
                   <Badge variant="outline" className="bg-white text-slate-500 border-slate-200 font-semibold text-[10px] uppercase tracking-wider">{path.category}</Badge>
                   <Badge variant="outline" className="bg-white text-slate-500 border-slate-200 font-semibold text-[10px] uppercase tracking-wider">{path.level}</Badge>
-                  <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200 font-semibold text-[10px] uppercase tracking-wider">
+                  <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 font-semibold text-[10px] uppercase tracking-wider">
                     <Star className="h-3 w-3 mr-1" /> {path.impactPoints} points
                   </Badge>
                   <Badge variant="outline" className="bg-slate-50 text-slate-500 border-slate-200 font-semibold text-[10px] uppercase tracking-wider">
@@ -603,9 +603,9 @@ function SkillPathCard({ path, onComplete, isProcessing, onDownloadCert, isGener
                   <div className="w-full space-y-1.5 mb-3">
                     <div className="flex items-center justify-between text-xs font-bold text-slate-500">
                       <span>Module {path.completedModules}/{path.totalModules}</span>
-                      <span className="text-[#1C9290]">{path.progress}%</span>
+                      <span className="text-role-accent-teal">{path.progress}%</span>
                     </div>
-                    <Progress value={path.progress} className="h-2 bg-slate-100 [&>div]:bg-[#1C9290]" />
+                    <Progress value={path.progress} className="h-2 bg-slate-100 [&>div]:bg-role-accent-teal" />
                   </div>
                 )}
 
@@ -638,7 +638,7 @@ function SkillPathCard({ path, onComplete, isProcessing, onDownloadCert, isGener
                   <Button 
                     onClick={() => onComplete(path.id)}
                     disabled={isProcessing}
-                    className="w-full bg-[#1C9290] hover:bg-[#157a78] text-white font-bold text-xs h-10 transition-colors"
+                    className="w-full bg-role-accent-teal hover:bg-role-accent-teal/80 text-white font-bold text-xs h-10 transition-colors"
                   >
                     {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <BookOpen className="mr-2 h-4 w-4" />}
                     {path.progress === 0 ? 'Start Course' : 'Complete Module'}
