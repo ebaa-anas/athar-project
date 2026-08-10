@@ -67,6 +67,7 @@
   --role-admin-accent-dark: var(--brand-amber-600);
   --brand-cta: #E16A3D;
   --brand-cta-dark: #c2562d;
+  --brand-cta-light: #FFA45D;
 
   /* Base Theme - Light Mode (Development Hub) */
   --background: #ffffff;
@@ -234,6 +235,7 @@
   --color-role-admin-accent-dark: var(--role-admin-accent-dark);
   --color-brand-cta: var(--brand-cta);
   --color-brand-cta-dark: var(--brand-cta-dark);
+  --color-brand-cta-light: var(--brand-cta-light);
 }
 
 @layer base {

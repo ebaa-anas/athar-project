@@ -78,7 +78,7 @@ export function LandingPage({
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans selection:bg-[#1C9290] selection:text-white overflow-x-hidden">
+    <div className="min-h-screen bg-slate-50 font-sans selection:bg-role-accent-teal selection:text-white overflow-x-hidden">
       
       {/* --- HEADER --- */}
       <header 
@@ -98,7 +98,7 @@ export function LandingPage({
               alt="Athar" 
               className={`w-9 h-9 transition-all duration-300 group-hover:scale-105 ${!scrolled ? 'brightness-0 invert' : ''}`} 
             />
-            <span className={`text-xl font-bold tracking-tight transition-colors duration-300 ${!scrolled ? 'text-white' : 'text-[#043E52]'}`}>
+            <span className={`text-xl font-bold tracking-tight transition-colors duration-300 ${!scrolled ? 'text-white' : 'text-role-org'}`}>
               Athar
             </span>
           </div>
@@ -111,7 +111,7 @@ export function LandingPage({
                 className={`font-medium text-sm transition-colors duration-300 h-9 px-4 ${
                     !scrolled 
                     ? 'text-white hover:bg-white/10 hover:text-white' 
-                    : 'text-[#043E52] hover:text-[#1C9290] hover:bg-[#1C9290]/5'
+                    : 'text-role-org hover:text-role-accent-teal hover:bg-role-accent-teal/5'
                 }`}
                 >
                 {item}
@@ -123,8 +123,8 @@ export function LandingPage({
               onClick={() => onSelectUserType("admin")}
               className={`ml-2 font-medium text-xs border h-9 px-4 transition-all duration-300 ${
                   !scrolled 
-                  ? 'border-white text-white hover:bg-white hover:text-[#043E52]' 
-                  : 'border-[#043E52] text-[#043E52] hover:bg-[#043E52] hover:text-white'
+                  ? 'border-white text-white hover:bg-white hover:text-role-org' 
+                  : 'border-role-org text-role-org hover:bg-role-org hover:text-white'
               }`}
             >
               Admin Portal
@@ -134,7 +134,7 @@ export function LandingPage({
       </header>
 
       {/* --- HERO SECTION --- */}
-      <section id="home" className="relative w-full h-screen min-h-[800px] flex flex-col justify-center items-center overflow-hidden rounded-b-[50%_60px] shadow-2xl bg-[#043E52]">
+      <section id="home" className="relative w-full h-screen min-h-[800px] flex flex-col justify-center items-center overflow-hidden rounded-b-[50%_60px] shadow-2xl bg-role-org">
         
         {/* Background Image */}
         <img 
@@ -144,7 +144,7 @@ export function LandingPage({
         />
 
         {/* Brand Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#043E52]/90 via-[#043E52]/70 to-[#043E52]/95" />
+        <div className="absolute inset-0 bg-gradient-to-b from-role-org/90 via-role-org/70 to-role-org/95" />
         
         {/* Digital Pattern Overlay */}
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/pixels.png')] opacity-20 mix-blend-overlay"></div>
@@ -152,7 +152,7 @@ export function LandingPage({
         {/* Floating "Live" Cards */}
         <div className="absolute left-[5%] top-[25%] hidden xl:block animate-bounce-slow">
             <div className="bg-white/10 backdrop-blur-md border border-white/20 p-3 rounded-xl shadow-xl flex items-center gap-3">
-                <div className="bg-[#1C9290] p-2 rounded-lg">
+                <div className="bg-role-accent-teal p-2 rounded-lg">
                     <BrainCircuit className="h-5 w-5 text-white" />
                 </div>
                 <div>
@@ -164,7 +164,7 @@ export function LandingPage({
 
         <div className="absolute right-[5%] bottom-[35%] hidden xl:block animate-bounce-delayed">
             <div className="bg-white/10 backdrop-blur-md border border-white/20 p-3 rounded-xl shadow-xl flex items-center gap-3">
-                <div className="bg-[#E16A3D] p-2 rounded-lg">
+                <div className="bg-brand-cta p-2 rounded-lg">
                     <MapPin className="h-5 w-5 text-white" />
                 </div>
                 <div>
@@ -178,14 +178,14 @@ export function LandingPage({
         <div className="relative z-10 max-w-4xl px-6 text-center text-white mt-10">
             
             <div className="flex justify-center mb-8">
-                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#1C9290]/20 backdrop-blur-md border border-[#1C9290]/50 shadow-lg animate-in fade-in slide-in-from-bottom-4 duration-700">
-                    <Activity className="h-3 w-3 text-[#1C9290]" />
-                    <span className="text-[10px] font-bold tracking-widest text-[#1C9290] uppercase">Live Crisis Ecosystem</span>
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-role-accent-teal/20 backdrop-blur-md border border-role-accent-teal/50 shadow-lg animate-in fade-in slide-in-from-bottom-4 duration-700">
+                    <Activity className="h-3 w-3 text-role-accent-teal" />
+                    <span className="text-[10px] font-bold tracking-widest text-role-accent-teal uppercase">Live Crisis Ecosystem</span>
                 </div>
             </div>
 
             <h1 className="text-5xl md:text-7xl font-bold mb-6 tracking-tight leading-tight drop-shadow-2xl">
-                Mobilizing <span className="text-[#1C9290]">Compassion</span> with <br/>
+                Mobilizing <span className="text-role-accent-teal">Compassion</span> with <br/>
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-200 to-slate-400">
                     Intelligent Action.
                 </span>
@@ -199,13 +199,13 @@ export function LandingPage({
             <div className="flex flex-col sm:flex-row gap-4 w-full max-w-sm mx-auto mb-20">
                 <Button 
                     onClick={() => onSelectUserType("volunteer")}
-                    className="h-12 flex-1 text-sm font-bold bg-[#1C9290] hover:bg-[#016A6D] text-white border-0 shadow-lg shadow-[#1C9290]/20 transition-transform hover:scale-105 rounded-lg"
+                    className="h-12 flex-1 text-sm font-bold bg-role-accent-teal hover:bg-role-volunteer text-white border-0 shadow-lg shadow-role-accent-teal/20 transition-transform hover:scale-105 rounded-lg"
                 >
                     Join as Volunteer
                 </Button>
                 <Button 
                     onClick={() => onSelectUserType("organization")}
-                    className="h-12 flex-1 text-sm font-bold bg-white text-[#043E52] hover:bg-slate-50 border-0 shadow-lg transition-transform hover:scale-105 rounded-lg"
+                    className="h-12 flex-1 text-sm font-bold bg-white text-role-org hover:bg-slate-50 border-0 shadow-lg transition-transform hover:scale-105 rounded-lg"
                 >
                     Register Organization
                 </Button>
@@ -223,7 +223,7 @@ export function LandingPage({
                        <p className="text-3xl md:text-4xl font-light text-white tracking-tight mb-1">
                          <AnimatedCounter end={stat.value} suffix={stat.suffix} />
                        </p>
-                       <p className="text-[10px] font-bold text-[#1C9290] uppercase tracking-widest">{stat.label}</p>
+                       <p className="text-[10px] font-bold text-role-accent-teal uppercase tracking-widest">{stat.label}</p>
                    </div>
                ))}
             </div>
@@ -234,20 +234,20 @@ export function LandingPage({
       <section className="py-24 bg-slate-50">
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-[#043E52] mb-3">Focus Areas</h2>
+            <h2 className="text-3xl font-bold text-role-org mb-3">Focus Areas</h2>
             <p className="text-base text-slate-500 font-medium">Where our ecosystem makes the most impact.</p>
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
              {[
-                { icon: BookOpen, label: "Education", color: "bg-[#043E52]" },
-                { icon: Stethoscope, label: "Health", color: "bg-[#1C9290]" },
-                { icon: ShieldAlert, label: "Crisis Relief", color: "bg-[#E16A3D]" },
-                { icon: Leaf, label: "Environment", color: "bg-[#016A6D]" },
-                { icon: Dog, label: "Animal Welfare", color: "bg-[#FFA45D]" },
-                { icon: Baby, label: "Child Care", color: "bg-[#1C9290]" },
-                { icon: User, label: "Elderly Care", color: "bg-[#043E52]" },
-                { icon: Home, label: "Community", color: "bg-[#016A6D]" },
+                { icon: BookOpen, label: "Education", color: "bg-role-org" },
+                { icon: Stethoscope, label: "Health", color: "bg-role-accent-teal" },
+                { icon: ShieldAlert, label: "Crisis Relief", color: "bg-brand-cta" },
+                { icon: Leaf, label: "Environment", color: "bg-role-volunteer" },
+                { icon: Dog, label: "Animal Welfare", color: "bg-brand-cta-light" },
+                { icon: Baby, label: "Child Care", color: "bg-role-accent-teal" },
+                { icon: User, label: "Elderly Care", color: "bg-role-org" },
+                { icon: Home, label: "Community", color: "bg-role-volunteer" },
               ].map((cause, i) => {
                 const Icon = cause.icon;
                 return (
@@ -255,7 +255,7 @@ export function LandingPage({
                     <div className={`${cause.color} p-4 rounded-xl text-white mb-4 shadow-md transition-transform group-hover:scale-110`}>
                       <Icon className="h-6 w-6" />
                     </div>
-                    <span className="font-bold text-[#043E52] text-sm group-hover:text-[#1C9290] transition-colors">{cause.label}</span>
+                    <span className="font-bold text-role-org text-sm group-hover:text-role-accent-teal transition-colors">{cause.label}</span>
                   </div>
                 )
               })}
@@ -264,7 +264,7 @@ export function LandingPage({
       </section>
 
       {/* --- WHY CHOOSE ATHAR --- */}
-      <section id="how-it-works" className="py-24 bg-[#E16A3D] rounded-[3rem] mx-4 md:mx-10 relative overflow-hidden shadow-2xl">
+      <section id="how-it-works" className="py-24 bg-brand-cta rounded-[3rem] mx-4 md:mx-10 relative overflow-hidden shadow-2xl">
         <div className="max-w-6xl mx-auto px-6 relative z-10">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-4">Why Choose Athar?</h2>
@@ -273,30 +273,30 @@ export function LandingPage({
 
           <div className="grid md:grid-cols-3 gap-8">
             <div className="bg-white rounded-2xl p-8 shadow-xl hover:translate-y-[-5px] transition-transform duration-300">
-                <div className="bg-[#1C9290]/10 w-14 h-14 rounded-xl flex items-center justify-center mb-6">
-                  <Users className="h-7 w-7 text-[#1C9290]" />
+                <div className="bg-role-accent-teal/10 w-14 h-14 rounded-xl flex items-center justify-center mb-6">
+                  <Users className="h-7 w-7 text-role-accent-teal" />
                 </div>
-                <h3 className="text-xl font-bold text-[#043E52] mb-3">Easy Matching</h3>
+                <h3 className="text-xl font-bold text-role-org mb-3">Easy Matching</h3>
                 <p className="text-slate-600 leading-relaxed text-sm">
                   Smart algorithms connect volunteers with opportunities that match their skills and interests instantly.
                 </p>
             </div>
 
             <div className="bg-white rounded-2xl p-8 shadow-xl hover:translate-y-[-5px] transition-transform duration-300">
-                <div className="bg-[#043E52]/10 w-14 h-14 rounded-xl flex items-center justify-center mb-6">
-                  <TrendingUp className="h-7 w-7 text-[#043E52]" />
+                <div className="bg-role-org/10 w-14 h-14 rounded-xl flex items-center justify-center mb-6">
+                  <TrendingUp className="h-7 w-7 text-role-org" />
                 </div>
-                <h3 className="text-xl font-bold text-[#043E52] mb-3">Track Impact</h3>
+                <h3 className="text-xl font-bold text-role-org mb-3">Track Impact</h3>
                 <p className="text-slate-600 leading-relaxed text-sm">
                   Comprehensive analytics and reporting to measure and showcase your real-world contribution.
                 </p>
             </div>
 
             <div className="bg-white rounded-2xl p-8 shadow-xl hover:translate-y-[-5px] transition-transform duration-300">
-                <div className="bg-[#E16A3D]/10 w-14 h-14 rounded-xl flex items-center justify-center mb-6">
-                  <ShieldCheck className="h-7 w-7 text-[#E16A3D]" />
+                <div className="bg-brand-cta/10 w-14 h-14 rounded-xl flex items-center justify-center mb-6">
+                  <ShieldCheck className="h-7 w-7 text-brand-cta" />
                 </div>
-                <h3 className="text-xl font-bold text-[#043E52] mb-3">Verified Trust</h3>
+                <h3 className="text-xl font-bold text-role-org mb-3">Verified Trust</h3>
                 <p className="text-slate-600 leading-relaxed text-sm">
                   All organizations and volunteers are verified to ensure safe and meaningful experiences.
                 </p>
@@ -312,7 +312,7 @@ export function LandingPage({
       <section className="py-24 bg-slate-50">
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-[#043E52] mb-3">Choose Your Impact</h2>
+            <h2 className="text-3xl font-bold text-role-org mb-3">Choose Your Impact</h2>
             <p className="text-base text-slate-600">How do you want to contribute to the ecosystem?</p>
           </div>
 
@@ -323,13 +323,13 @@ export function LandingPage({
               onClick={() => onSelectUserType("volunteer")}
               className="group relative bg-white rounded-2xl p-8 shadow-lg border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer overflow-hidden"
             >
-              <div className="absolute top-0 left-0 w-1.5 h-full bg-[#1C9290]"></div>
+              <div className="absolute top-0 left-0 w-1.5 h-full bg-role-accent-teal"></div>
               <div className="relative z-10">
                 <div className="flex items-center gap-4 mb-4">
-                    <div className="w-12 h-12 bg-[#1C9290]/10 rounded-lg flex items-center justify-center">
-                        <Heart className="h-6 w-6 text-[#1C9290]" />
+                    <div className="w-12 h-12 bg-role-accent-teal/10 rounded-lg flex items-center justify-center">
+                        <Heart className="h-6 w-6 text-role-accent-teal" />
                     </div>
-                    <h3 className="text-xl font-bold text-[#043E52]">Development Hub</h3>
+                    <h3 className="text-xl font-bold text-role-org">Development Hub</h3>
                 </div>
                 <p className="text-sm text-slate-600 mb-6">
                   Join the AI-powered training ecosystem. Get verified skills and join the Athar Volunteer Reserve.
@@ -337,12 +337,12 @@ export function LandingPage({
                 <div className="space-y-3 mb-6">
                   {['Skill Paths', 'AI Simulator', 'Verified Certificates'].map((item) => (
                     <div key={item} className="flex items-center gap-2 text-slate-700 font-medium text-xs">
-                      <CheckCircle className="h-4 w-4 text-[#1C9290]" />
+                      <CheckCircle className="h-4 w-4 text-role-accent-teal" />
                       {item}
                     </div>
                   ))}
                 </div>
-                <span className="inline-flex items-center text-[#1C9290] font-bold text-sm group-hover:gap-2 transition-all">
+                <span className="inline-flex items-center text-role-accent-teal font-bold text-sm group-hover:gap-2 transition-all">
                     Start Volunteering <ArrowRight className="ml-1 h-4 w-4" />
                 </span>
               </div>
@@ -351,9 +351,9 @@ export function LandingPage({
             {/* Organization Card */}
             <div 
               onClick={() => onSelectUserType("organization")}
-              className="group relative bg-[#043E52] rounded-2xl p-8 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer overflow-hidden"
+              className="group relative bg-role-org rounded-2xl p-8 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer overflow-hidden"
             >
-              <div className="absolute top-0 left-0 w-1.5 h-full bg-[#E16A3D]"></div>
+              <div className="absolute top-0 left-0 w-1.5 h-full bg-brand-cta"></div>
               <div className="relative z-10">
                 <div className="flex items-center gap-4 mb-4">
                     <div className="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center">
@@ -367,7 +367,7 @@ export function LandingPage({
                 <div className="space-y-3 mb-6">
                   {['Rapid Mobilization', 'NLP Matching', 'Crisis Analytics'].map((item) => (
                     <div key={item} className="flex items-center gap-2 text-slate-200 font-medium text-xs">
-                      <CheckCircle className="h-4 w-4 text-[#E16A3D]" />
+                      <CheckCircle className="h-4 w-4 text-brand-cta" />
                       {item}
                     </div>
                   ))}
@@ -389,11 +389,11 @@ export function LandingPage({
             
             {/* Left Content */}
             <div>
-              <div className="inline-block px-3 py-1 bg-[#1C9290]/10 rounded-full text-[#1C9290] font-bold text-xs mb-6 tracking-wide">
+              <div className="inline-block px-3 py-1 bg-role-accent-teal/10 rounded-full text-role-accent-teal font-bold text-xs mb-6 tracking-wide">
                   ABOUT ATHAR
               </div>
-              <h2 className="text-3xl md:text-4xl font-extrabold text-[#043E52] mb-6 leading-tight">
-                Empowering communities through <span className="text-[#1C9290]">meaningful connections.</span>
+              <h2 className="text-3xl md:text-4xl font-extrabold text-role-org mb-6 leading-tight">
+                Empowering communities through <span className="text-role-accent-teal">meaningful connections.</span>
               </h2>
               <p className="text-base text-slate-600 mb-6 leading-relaxed">
                 Athar is dedicated to creating a seamless platform that connects passionate volunteers with non-profit organizations across Turkey and beyond. 
@@ -404,13 +404,13 @@ export function LandingPage({
               
               <div className="flex gap-10">
                 <div>
-                    <h4 className="text-3xl font-bold text-[#043E52] mb-1">
+                    <h4 className="text-3xl font-bold text-role-org mb-1">
                         <AnimatedCounter end={10} suffix="k+" duration={1500} />
                     </h4>
                     <p className="text-slate-500 font-medium text-xs uppercase tracking-wide">Lives Impacted</p>
                 </div>
                 <div>
-                    <h4 className="text-3xl font-bold text-[#043E52] mb-1">
+                    <h4 className="text-3xl font-bold text-role-org mb-1">
                         <AnimatedCounter end={50} suffix="+" duration={1500} />
                     </h4>
                     <p className="text-slate-500 font-medium text-xs uppercase tracking-wide">Cities Reached</p>
@@ -420,7 +420,7 @@ export function LandingPage({
             
             {/* Right Image (Organic Blob Shape) */}
             <div className="relative">
-                <div className="absolute inset-0 bg-[#E16A3D] rounded-[40%_60%_70%_30%/40%_50%_60%_50%] rotate-6 opacity-20 blur-2xl transform scale-110"></div>
+                <div className="absolute inset-0 bg-brand-cta rounded-[40%_60%_70%_30%/40%_50%_60%_50%] rotate-6 opacity-20 blur-2xl transform scale-110"></div>
                 <img 
                     src="https://images.unsplash.com/photo-1559027615-cd4628902d4a?auto=format&fit=crop&q=80&w=800" 
                     alt="Volunteers high-fiving" 
@@ -432,7 +432,7 @@ export function LandingPage({
       </section>
 
       {/* --- FOOTER --- */}
-      <footer id="contact" className="bg-[#043E52] text-white pt-16 pb-8 border-t-4 border-[#FFA45D]">
+      <footer id="contact" className="bg-role-org text-white pt-16 pb-8 border-t-4 border-brand-cta-light">
         <div className="max-w-6xl mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
             <div className="col-span-1 md:col-span-1">
@@ -445,17 +445,17 @@ export function LandingPage({
                 opportunities to create positive change in real-time.
               </p>
               <div className="flex gap-3">
-                  <div className="w-8 h-8 bg-[#016A6D] rounded-full flex items-center justify-center hover:bg-[#1C9290] transition-colors cursor-pointer">
+                  <div className="w-8 h-8 bg-role-volunteer rounded-full flex items-center justify-center hover:bg-role-accent-teal transition-colors cursor-pointer">
                     <Mail size={14} />
                   </div>
-                  <div className="w-8 h-8 bg-[#016A6D] rounded-full flex items-center justify-center hover:bg-[#1C9290] transition-colors cursor-pointer">
+                  <div className="w-8 h-8 bg-role-volunteer rounded-full flex items-center justify-center hover:bg-role-accent-teal transition-colors cursor-pointer">
                      <Globe size={14} />
                   </div>
               </div>
             </div>
             
             <div>
-              <h4 className="mb-4 font-bold text-sm text-[#FFA45D]">For Volunteers</h4>
+              <h4 className="mb-4 font-bold text-sm text-brand-cta-light">For Volunteers</h4>
               <ul className="space-y-2 text-slate-300 text-xs">
                 <li className="hover:text-white cursor-pointer transition-colors">Find Opportunities</li>
                 <li className="hover:text-white cursor-pointer transition-colors">How It Works</li>
@@ -463,7 +463,7 @@ export function LandingPage({
               </ul>
             </div>
             <div>
-              <h4 className="mb-4 font-bold text-sm text-[#FFA45D]">For Organizations</h4>
+              <h4 className="mb-4 font-bold text-sm text-brand-cta-light">For Organizations</h4>
               <ul className="space-y-2 text-slate-300 text-xs">
                 <li className="hover:text-white cursor-pointer transition-colors">Post Opportunities</li>
                 <li className="hover:text-white cursor-pointer transition-colors">Get Verified</li>
@@ -471,7 +471,7 @@ export function LandingPage({
               </ul>
             </div>
             <div>
-              <h4 className="mb-4 font-bold text-sm text-[#FFA45D]">Company</h4>
+              <h4 className="mb-4 font-bold text-sm text-brand-cta-light">Company</h4>
               <ul className="space-y-2 text-slate-300 text-xs">
                 <li className="hover:text-white cursor-pointer transition-colors">About Us</li>
                 <li className="hover:text-white cursor-pointer transition-colors">Contact</li>
@@ -480,7 +480,7 @@ export function LandingPage({
             </div>
           </div>
           
-          <div className="border-t border-[#016A6D] pt-6 text-center">
+          <div className="border-t border-role-volunteer pt-6 text-center">
             <p className="text-slate-400 font-medium text-xs">© 2026 Athar Platform. All rights reserved.</p>
              <p className="text-slate-400 font-medium text-xs">Built With Love.</p>
           </div>
