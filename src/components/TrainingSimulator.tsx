@@ -363,23 +363,23 @@ export function TrainingSimulator() {
   };
 
   if (loading) {
-    return <div className="p-12 text-center text-[#016A6D] font-bold flex flex-col items-center justify-center"><Loader2 className="h-8 w-8 animate-spin mb-4" /> Syncing User Training Data...</div>;
+    return <div className="p-12 text-center text-role-volunteer font-bold flex flex-col items-center justify-center"><Loader2 className="h-8 w-8 animate-spin mb-4" /> Syncing User Training Data...</div>;
   }
 
   // --- ACTIVE SIMULATION VIEW ---
   if (activeSimulation && simulationPhase === 'active') {
     return (
       <div className="space-y-6 max-w-5xl mx-auto animate-in fade-in duration-300 pb-12">
-        <Card className="border-t-4 border-t-[#1C9290] shadow-sm bg-white">
+        <Card className="border-t-4 border-t-role-accent-teal shadow-sm bg-white">
           <CardContent className="p-5">
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <div className="flex items-center gap-4">
-                <div className="bg-[#1C9290]/10 text-[#1C9290] p-3 rounded-xl">
+                <div className="bg-role-accent-teal/10 text-role-accent-teal p-3 rounded-xl">
                   <Brain className="h-6 w-6" />
                 </div>
                 <div>
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Live Simulation</p>
-                  <h3 className="text-[#016A6D] font-black text-xl leading-none mb-2">{activeSimulation.title}</h3>
+                  <h3 className="text-slate-900 font-black text-xl leading-none mb-2">{activeSimulation.title}</h3>
                   <div className="flex items-center gap-2">
                     <Badge variant="outline" className="bg-slate-50 text-slate-600 border-slate-200 font-bold text-[9px] uppercase tracking-wider">{activeSimulation.category}</Badge>
                     <Badge variant="outline" className="bg-slate-50 text-slate-600 border-slate-200 font-bold text-[9px] uppercase tracking-wider">{activeSimulation.difficulty}</Badge>
@@ -389,8 +389,8 @@ export function TrainingSimulator() {
               <div className="text-left md:text-right bg-slate-50 p-3 rounded-xl border border-slate-100 min-w-[150px]">
                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Performance Score</p>
                 <div className="flex items-center gap-3">
-                  <Progress value={score} className="h-2 flex-1 bg-slate-200 [&>div]:bg-[#1C9290]" />
-                  <p className={`font-black ${score >= 90 ? 'text-emerald-600' : score >= 60 ? 'text-[#1C9290]' : 'text-red-500'}`}>
+                  <Progress value={score} className="h-2 flex-1 bg-slate-200 [&>div]:bg-role-accent-teal" />
+                  <p className={`font-black ${score >= 90 ? 'text-emerald-600' : score >= 60 ? 'text-role-accent-teal' : 'text-red-500'}`}>
                     {score}
                   </p>
                 </div>
@@ -403,14 +403,14 @@ export function TrainingSimulator() {
           <CardHeader className="border-b border-slate-100 pb-4 shrink-0">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-[#016A6D] text-lg">Communication Terminal</CardTitle>
+                <CardTitle className="text-slate-900 text-lg">Communication Terminal</CardTitle>
                 <CardDescription className="text-xs font-semibold">Goal: Maintain 90+ Score to Master Scenario</CardDescription>
               </div>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={resetSimulation} disabled={isConcluding || isTyping} className="text-slate-500 hover:text-red-600 font-bold text-xs uppercase tracking-wider h-9">
                   <RotateCcw className="mr-2 h-3.5 w-3.5" /> Abort
                 </Button>
-                <Button size="sm" onClick={concludeSimulation} disabled={isConcluding || isTyping} className="bg-[#1C9290] hover:bg-[#157a78] text-white font-bold text-xs uppercase tracking-wider h-9 shadow-sm">
+                <Button size="sm" onClick={concludeSimulation} disabled={isConcluding || isTyping} className="bg-role-accent-teal hover:bg-role-accent-teal/80 text-white font-bold text-xs uppercase tracking-wider h-9 shadow-sm">
                   {isConcluding ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <CheckCircle className="mr-2 h-3.5 w-3.5" />}
                   {isConcluding ? 'Analyzing...' : 'Conclude'}
                 </Button>
@@ -426,14 +426,14 @@ export function TrainingSimulator() {
                     <div className={`flex items-end gap-3 max-w-[85%] ${message.sender === 'user' ? 'flex-row-reverse' : ''}`}>
                       <Avatar className="w-8 h-8 shadow-sm shrink-0">
                         {message.sender === 'ai' ? (
-                          <AvatarFallback className="bg-[#016A6D] text-white text-[10px] font-bold">AI</AvatarFallback>
+                          <AvatarFallback className="bg-role-volunteer text-white text-[10px] font-bold">AI</AvatarFallback>
                         ) : (
-                          <AvatarFallback className="bg-[#1C9290] text-white text-[10px] font-bold">YOU</AvatarFallback>
+                          <AvatarFallback className="bg-role-accent-teal text-white text-[10px] font-bold">YOU</AvatarFallback>
                         )}
                       </Avatar>
                       <div className={`rounded-2xl px-4 py-3 shadow-sm ${
                         message.sender === 'user' 
-                          ? 'bg-[#016A6D] text-white rounded-br-none' 
+                          ? 'bg-role-volunteer text-white rounded-br-none' 
                           : 'bg-white border border-slate-200 text-slate-700 rounded-bl-none'
                       }`}>
                         <p className="text-sm font-medium leading-relaxed">{message.text}</p>
@@ -466,7 +466,7 @@ export function TrainingSimulator() {
                 <div className="flex justify-start animate-in fade-in duration-300">
                   <div className="flex items-center gap-3 max-w-[80%]">
                     <Avatar className="w-8 h-8 shadow-sm">
-                      <AvatarFallback className="bg-[#016A6D] text-white text-[10px] font-bold">AI</AvatarFallback>
+                      <AvatarFallback className="bg-role-volunteer text-white text-[10px] font-bold">AI</AvatarFallback>
                     </Avatar>
                     <div className="bg-white border border-slate-200 rounded-2xl rounded-bl-none px-4 py-3 shadow-sm flex items-center gap-2">
                        <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
@@ -493,12 +493,12 @@ export function TrainingSimulator() {
                     }
                   }}
                   disabled={simulationPhase !== 'active' || isTyping || isConcluding}
-                  className="min-h-[60px] resize-none border-slate-200 focus:border-[#1C9290] shadow-sm rounded-xl text-sm"
+                  className="min-h-[60px] resize-none border-slate-200 focus:border-role-accent-teal shadow-sm rounded-xl text-sm"
                 />
                 <Button 
                   onClick={sendMessage} 
                   disabled={!currentInput.trim() || isTyping || isConcluding}
-                  className="bg-[#1C9290] hover:bg-[#157a78] text-white h-auto aspect-square rounded-xl shadow-sm"
+                  className="bg-role-accent-teal hover:bg-role-accent-teal/80 text-white h-auto aspect-square rounded-xl shadow-sm"
                 >
                   <Send className="h-5 w-5" />
                 </Button>
@@ -520,8 +520,8 @@ export function TrainingSimulator() {
 
     return (
       <div className="space-y-6 max-w-3xl mx-auto animate-in zoom-in-95 duration-500 pt-12">
-        <Card className={`border-2 shadow-xl overflow-hidden ${passed ? 'border-[#1C9290]/20 bg-white' : 'border-red-200 bg-white'}`}>
-          <div className={`h-2 ${passed ? 'bg-gradient-to-r from-[#016A6D] to-[#1C9290]' : 'bg-gradient-to-r from-red-500 to-orange-500'}`} />
+        <Card className={`border-2 shadow-xl overflow-hidden ${passed ? 'border-role-accent-teal/20 bg-white' : 'border-red-200 bg-white'}`}>
+          <div className={`h-2 ${passed ? 'bg-gradient-to-r from-role-volunteer to-role-accent-teal' : 'bg-gradient-to-r from-red-500 to-red-700'}`} />
           <CardContent className="p-10">
             <div className="text-center">
               <div className={`p-6 rounded-full w-24 h-24 mx-auto mb-6 flex items-center justify-center shadow-inner border ${
@@ -529,7 +529,7 @@ export function TrainingSimulator() {
               }`}>
                 {passed ? <Trophy className="h-12 w-12" /> : <XCircle className="h-12 w-12" />}
               </div>
-              <h3 className="text-[#016A6D] font-black text-3xl mb-2">
+              <h3 className="text-slate-900 font-black text-3xl mb-2">
                 {passed ? "Simulation Mastered" : "Simulation Failed"}
               </h3>
               <p className="text-slate-500 font-medium mb-8">
@@ -550,7 +550,7 @@ export function TrainingSimulator() {
                   passed ? 'bg-teal-50 border-teal-100' : 'bg-red-50 border-red-100'
                 }`}>
                   <h4 className={`text-sm font-bold uppercase tracking-widest mb-3 flex items-center gap-2 ${
-                    passed ? 'text-[#1C9290]' : 'text-red-600'
+                    passed ? 'text-role-accent-teal' : 'text-red-600'
                   }`}>
                     <Brain className="h-4 w-4" /> Instructor Debrief
                   </h4>
@@ -561,7 +561,7 @@ export function TrainingSimulator() {
               )}
 
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Button className="bg-[#016A6D] hover:bg-[#125d56] text-white font-bold h-12 px-8 uppercase tracking-wider text-xs shadow-md" onClick={resetSimulation}>
+                <Button className="bg-role-volunteer hover:bg-role-volunteer-dark text-white font-bold h-12 px-8 uppercase tracking-wider text-xs shadow-md" onClick={resetSimulation}>
                   Return to Academy Hub
                 </Button>
               </div>
@@ -577,8 +577,8 @@ export function TrainingSimulator() {
     <div className="space-y-8 animate-in fade-in duration-300 pb-12 max-w-7xl mx-auto">
       <div className="flex flex-col gap-1 border-b border-slate-200 pb-4">
         <div className="flex items-center gap-3">
-          <h1 className="text-[#016A6D] font-bold text-2xl tracking-tight">AI Training Simulator</h1>
-          <Badge className="bg-[#1C9290]/10 text-[#1C9290] border-none shadow-sm uppercase tracking-wider text-[10px] font-bold px-2 py-0.5">Gemini Powered</Badge>
+          <h1 className="text-slate-900 font-bold text-2xl tracking-tight">AI Training Simulator</h1>
+          <Badge className="bg-role-accent-teal/10 text-role-accent-teal border-none shadow-sm uppercase tracking-wider text-[10px] font-bold px-2 py-0.5">Gemini Powered</Badge>
         </div>
         <p className="text-slate-500 text-sm">
           Practice high-stakes crisis scenarios with conversational AI. Receive real-time feedback to develop your operational readiness. Minimum 90% required to pass.
@@ -586,14 +586,14 @@ export function TrainingSimulator() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="border-slate-200 shadow-sm bg-white border-l-4 border-l-[#016A6D]">
+        <Card className="border-slate-200 shadow-sm bg-white border-l-4 border-l-role-volunteer">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">Simulations</p>
-                <p className="text-2xl font-bold text-[#016A6D]">{completedScenarios.length}<span className="text-base text-slate-300">/{scenarios.length}</span></p>
+                <p className="text-2xl font-bold text-role-volunteer">{completedScenarios.length}<span className="text-base text-slate-300">/{scenarios.length}</span></p>
               </div>
-              <div className="bg-[#016A6D]/10 p-2.5 rounded-lg"><Brain className="h-5 w-5 text-[#016A6D]" /></div>
+              <div className="bg-role-volunteer/10 p-2.5 rounded-lg"><Brain className="h-5 w-5 text-role-volunteer" /></div>
             </div>
           </CardContent>
         </Card>
@@ -610,33 +610,33 @@ export function TrainingSimulator() {
           </CardContent>
         </Card>
 
-        <Card className="border-slate-200 shadow-sm bg-white border-l-4 border-l-[#1C9290]">
+        <Card className="border-slate-200 shadow-sm bg-white border-l-4 border-l-role-accent-teal">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">Time Practiced</p>
-                <p className="text-2xl font-bold text-[#1C9290]">{timePracticedStr}</p>
+                <p className="text-2xl font-bold text-role-accent-teal">{timePracticedStr}</p>
               </div>
-              <div className="bg-[#1C9290]/10 p-2.5 rounded-lg"><Clock className="h-5 w-5 text-[#1C9290]" /></div>
+              <div className="bg-role-accent-teal/10 p-2.5 rounded-lg"><Clock className="h-5 w-5 text-role-accent-teal" /></div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-slate-200 shadow-sm bg-white border-l-4 border-l-[#E16A3D]">
+        <Card className="border-slate-200 shadow-sm bg-white border-l-4 border-l-brand-cta">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">Skill Level</p>
-                <p className="text-lg font-bold text-[#E16A3D] mt-1 uppercase leading-none">Advanced</p>
+                <p className="text-lg font-bold text-brand-cta mt-1 uppercase leading-none">Advanced</p>
                 <p className="text-xs text-slate-400 mt-1">Tier 3 Clear</p>
               </div>
-              <div className="bg-[#E16A3D]/10 p-2.5 rounded-lg"><Activity className="h-5 w-5 text-[#E16A3D]" /></div>
+              <div className="bg-brand-cta/10 p-2.5 rounded-lg"><Activity className="h-5 w-5 text-brand-cta" /></div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      <Card className="border-none bg-[#016A6D] text-white shadow-lg overflow-hidden relative">
+      <Card className="border-none bg-role-volunteer text-white shadow-lg overflow-hidden relative">
         <div className="absolute right-0 top-0 opacity-10 pointer-events-none transform translate-x-1/4 -translate-y-1/4">
           <Brain className="w-64 h-64" />
         </div>
@@ -660,15 +660,15 @@ export function TrainingSimulator() {
         <Tabs defaultValue="all" className="w-full">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 w-full">
             <TabsList className="bg-slate-100 p-1 rounded-lg flex flex-wrap">
-              <TabsTrigger value="all" className="rounded-md data-[state=active]:bg-white data-[state=active]:text-[#016A6D] data-[state=active]:shadow-sm px-4 py-2 font-bold text-xs uppercase tracking-wider">All Scenarios ({scenarios.length})</TabsTrigger>
-              <TabsTrigger value="available" className="rounded-md data-[state=active]:bg-white data-[state=active]:text-[#016A6D] data-[state=active]:shadow-sm px-4 py-2 font-bold text-xs uppercase tracking-wider">Available ({scenarios.filter(s => !s.completed).length})</TabsTrigger>
-              <TabsTrigger value="completed" className="rounded-md data-[state=active]:bg-white data-[state=active]:text-[#016A6D] data-[state=active]:shadow-sm px-4 py-2 font-bold text-xs uppercase tracking-wider">Completed ({completedScenarios.length})</TabsTrigger>
+              <TabsTrigger value="all" className="rounded-md data-[state=active]:bg-white data-[state=active]:text-role-volunteer data-[state=active]:shadow-sm px-4 py-2 font-bold text-xs uppercase tracking-wider">All Scenarios ({scenarios.length})</TabsTrigger>
+              <TabsTrigger value="available" className="rounded-md data-[state=active]:bg-white data-[state=active]:text-role-volunteer data-[state=active]:shadow-sm px-4 py-2 font-bold text-xs uppercase tracking-wider">Available ({scenarios.filter(s => !s.completed).length})</TabsTrigger>
+              <TabsTrigger value="completed" className="rounded-md data-[state=active]:bg-white data-[state=active]:text-role-volunteer data-[state=active]:shadow-sm px-4 py-2 font-bold text-xs uppercase tracking-wider">Completed ({completedScenarios.length})</TabsTrigger>
             </TabsList>
             
             <Button
               onClick={generateNewScenario} 
               disabled={isGeneratingScenario}
-              className="bg-[#E16A3D] hover:bg-[#c2562d] text-white font-bold text-xs uppercase tracking-wider h-10 shadow-md shrink-0 transition-colors"
+              className="bg-brand-cta hover:bg-brand-cta-dark text-white font-bold text-xs uppercase tracking-wider h-10 shadow-md shrink-0 transition-colors"
             >
               {isGeneratingScenario ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
               {isGeneratingScenario ? 'Generating...' : 'Generate AI Scenario'}
@@ -709,7 +709,7 @@ function ScenarioCard({ scenario, onStart }: { scenario: Scenario; onStart: (s: 
   const Icon = MessageSquare; 
   
   return (
-    <Card className="border border-slate-200 bg-white hover:border-[#1C9290]/40 transition-colors shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <Card className="border border-slate-200 bg-white hover:border-role-accent-teal/40 transition-colors shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
       <CardContent className="p-0">
         <div className="flex flex-col md:flex-row items-stretch">
           
@@ -717,7 +717,7 @@ function ScenarioCard({ scenario, onStart }: { scenario: Scenario; onStart: (s: 
             {scenario.completed ? (
               <CheckCircle className="h-8 w-8 text-emerald-500" />
             ) : (
-              <Brain className="h-8 w-8 text-[#016A6D]" />
+              <Brain className="h-8 w-8 text-role-volunteer" />
             )}
           </div>
 
@@ -726,14 +726,14 @@ function ScenarioCard({ scenario, onStart }: { scenario: Scenario; onStart: (s: 
               
               <div className="flex-1 space-y-2">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h3 className="font-bold text-lg text-[#016A6D]">{scenario.title}</h3>
+                  <h3 className="font-bold text-lg text-slate-900">{scenario.title}</h3>
                   {scenario.completed && (
                     <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border-none font-bold text-[10px] uppercase tracking-wider px-2 py-0.5">
                       <CheckCircle className="h-3 w-3 mr-1" /> Mastered
                     </Badge>
                   )}
                   {scenario.isCustom && (
-                    <Badge className="bg-[#E16A3D]/10 text-[#E16A3D] border-none font-bold text-[10px] uppercase tracking-wider px-2 py-0.5">
+                    <Badge className="bg-brand-cta/10 text-brand-cta border-none font-bold text-[10px] uppercase tracking-wider px-2 py-0.5">
                       AI Generated
                     </Badge>
                   )}
@@ -760,7 +760,7 @@ function ScenarioCard({ scenario, onStart }: { scenario: Scenario; onStart: (s: 
                 {scenario.score !== undefined && scenario.score > 0 ? (
                   <div className="w-full text-center space-y-3">
                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Highest Score</p>
-                     <p className={`text-2xl font-black ${scenario.score >= 90 ? 'text-emerald-600' : scenario.score >= 60 ? 'text-[#1C9290]' : 'text-red-500'}`}>
+                     <p className={`text-2xl font-black ${scenario.score >= 90 ? 'text-emerald-600' : scenario.score >= 60 ? 'text-role-accent-teal' : 'text-red-500'}`}>
                         {scenario.score}<span className="text-base text-slate-300">/100</span>
                      </p>
                      <Button variant="outline" onClick={() => onStart(scenario)} className="w-full border-slate-200 text-slate-600 font-bold text-xs h-9 hover:bg-slate-50 uppercase tracking-wider">
@@ -770,7 +770,7 @@ function ScenarioCard({ scenario, onStart }: { scenario: Scenario; onStart: (s: 
                 ) : (
                   <Button 
                     onClick={() => onStart(scenario)}
-                    className="w-full bg-[#1C9290] hover:bg-[#157a78] text-white font-bold text-xs h-11 uppercase tracking-wider transition-colors shadow-sm"
+                    className="w-full bg-role-accent-teal hover:bg-role-accent-teal/80 text-white font-bold text-xs h-11 uppercase tracking-wider transition-colors shadow-sm"
                   >
                     <Brain className="mr-2 h-4 w-4" /> Enter Simulation
                   </Button>
