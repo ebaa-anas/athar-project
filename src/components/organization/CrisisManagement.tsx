@@ -317,7 +317,7 @@ export function CrisisManagement() {
     setIsGeneratingTasks(false);
   };
 
-  if (loading) return <div className="p-10 font-bold text-[#043E52]">Verifying Organization Status...</div>;
+  if (loading) return <div className="p-10 font-bold text-role-org">Verifying Organization Status...</div>;
   
   if (!user?.verified && user?.verificationStatus !== 'verified') {
     return (
@@ -326,7 +326,7 @@ export function CrisisManagement() {
           <ShieldX className="h-20 w-20 text-slate-400" />
         </div>
         <div className="max-w-xl space-y-4">
-          <h2 className="text-4xl font-black text-[#043E52] uppercase tracking-tight">Access Restricted</h2>
+          <h2 className="text-4xl font-black text-slate-900 uppercase tracking-tight">Access Restricted</h2>
           <p className="text-slate-500 text-lg leading-relaxed">
             The Crisis Response Center is strictly reserved for <strong>Government-Verified Entities</strong>. 
             You must complete the verification audit in your Profile settings before you can declare emergencies or mobilize the Athar Volunteer Reserve.
@@ -345,14 +345,14 @@ export function CrisisManagement() {
       
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#043E52] flex items-center gap-2">
-            <ShieldAlert className="h-6 w-6 text-[#E16A3D]" /> 
+          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+            <ShieldAlert className="h-6 w-6 text-brand-cta" /> 
             Crisis Command Center
           </h1>
           <p className="text-slate-500 mt-1">Monitor active emergencies and broadcast to deployed teams.</p>
         </div>
         <Button 
-          className="bg-[#E16A3D] hover:bg-[#c2562d] text-white shadow-md font-semibold transition-transform active:scale-95 h-12 px-6"
+          className="bg-brand-cta hover:bg-brand-cta-dark text-white shadow-md font-semibold transition-transform active:scale-95 h-12 px-6"
           onClick={() => setShowCreateForm(true)}
         >
           <Plus className="mr-2 h-5 w-5" /> Declare Emergency
@@ -360,16 +360,16 @@ export function CrisisManagement() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <MetricCard label="Active Incidents" value={activeEvents.length} icon={Activity} color="text-[#E16A3D]" bg="bg-orange-50" border="border-[#E16A3D]" />
-        <MetricCard label="Mobilized Volunteers" value={totalActivated} icon={Users} color="text-[#043E52]" bg="bg-slate-50" border="border-[#043E52]" />
-        <MetricCard label="On-Site Responders" value={totalResponded} icon={MapPin} color="text-[#1C9290]" bg="bg-teal-50" border="border-[#1C9290]" />
+        <MetricCard label="Active Incidents" value={activeEvents.length} icon={Activity} color="text-brand-cta" bg="bg-brand-cta/10" border="border-brand-cta" />
+        <MetricCard label="Mobilized Volunteers" value={totalActivated} icon={Users} color="text-role-org" bg="bg-slate-50" border="border-role-org" />
+        <MetricCard label="On-Site Responders" value={totalResponded} icon={MapPin} color="text-role-accent-teal" bg="bg-teal-50" border="border-role-accent-teal" />
         <MetricCard label="Avg Response Time" value="12m" icon={Zap} color="text-blue-600" bg="bg-blue-50" border="border-blue-500" />
       </div>
 
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-[#043E52]">Operations Feed</h2>
-            <Badge variant="outline" className="text-[#1C9290] border-[#1C9290] bg-teal-50">Auto-Refreshing</Badge>
+            <h2 className="text-lg font-bold text-slate-900">Operations Feed</h2>
+            <Badge variant="outline" className="text-role-accent-teal border-role-accent-teal bg-teal-50">Auto-Refreshing</Badge>
         </div>
         
         {crisisEvents.length === 0 && <p className="text-slate-500 italic p-4">No emergencies declared yet.</p>}
@@ -381,7 +381,7 @@ export function CrisisManagement() {
           return (
             <Card key={event.id} className={`border-l-4 shadow-sm hover:shadow-md transition-all ${
                 isResolved ? 'border-l-slate-300 opacity-80 bg-slate-50' : 
-                event.severity === 'Critical' ? 'border-l-[#E16A3D]' : 'border-l-orange-400'
+                event.severity === 'Critical' ? 'border-l-brand-cta' : 'border-l-amber-500'
             }`}>
                 <CardContent className="p-6">
                     <div className="flex flex-col lg:flex-row gap-6">
@@ -394,14 +394,14 @@ export function CrisisManagement() {
                                             <Lock size={16} />
                                           </div>
                                         )}
-                                        <h3 className={`text-lg font-bold ${isResolved ? 'text-slate-600 line-through decoration-slate-300' : 'text-[#043E52]'}`}>{event.title}</h3>
+                                        <h3 className={`text-lg font-bold ${isResolved ? 'text-slate-600 line-through decoration-slate-300' : 'text-slate-900'}`}>{event.title}</h3>
                                         
                                         {isResolved ? (
                                           <Badge className="bg-slate-200 text-slate-600 font-black uppercase text-[9px] tracking-wider border-none">
                                             Resolved
                                           </Badge>
                                         ) : (
-                                          <Badge className={`${event.severity === 'Critical' ? 'bg-[#E16A3D]' : 'bg-orange-500'} text-white border-none`}>
+                                          <Badge className={`${event.severity === 'Critical' ? 'bg-brand-cta' : 'bg-amber-500'} text-white border-none`}>
                                               {event.severity.toUpperCase()}
                                           </Badge>
                                         )}
@@ -427,7 +427,7 @@ export function CrisisManagement() {
                         <div className={`lg:w-80 flex flex-col justify-between border-t lg:border-t-0 lg:border-l lg:pl-6 pt-4 lg:pt-0 ${isResolved ? 'border-slate-200' : 'border-slate-100'}`}>
                             <div className="space-y-4">
                                 <div>
-                                    <div className={`flex justify-between text-sm font-semibold mb-1 ${isResolved ? 'text-slate-500' : 'text-[#043E52]'}`}>
+                                    <div className={`flex justify-between text-sm font-semibold mb-1 ${isResolved ? 'text-slate-500' : 'text-role-org'}`}>
                                         <span>Mobilization</span>
                                         <span>{Math.min(progress, 100)}%</span>
                                     </div>
@@ -440,13 +440,13 @@ export function CrisisManagement() {
                                 
                                 {!isResolved && (
                                   <div className="grid grid-cols-2 gap-2 text-center">
-                                      <div className="bg-[#1C9290]/5 p-2 rounded-lg border border-[#1C9290]/10">
+                                      <div className="bg-role-accent-teal/5 p-2 rounded-lg border border-role-accent-teal/10">
                                           <p className="text-xs text-slate-500">Target</p>
-                                          <p className="font-bold text-[#1C9290]">{event.volunteersNeeded}</p>
+                                          <p className="font-bold text-role-accent-teal">{event.volunteersNeeded}</p>
                                       </div>
-                                      <div className="bg-[#043E52]/5 p-2 rounded-lg border border-[#043E52]/10">
+                                      <div className="bg-role-org/5 p-2 rounded-lg border border-role-org/10">
                                           <p className="text-xs text-slate-500">Shortfall</p>
-                                          <p className="font-bold text-[#043E52]">{Math.max(0, event.volunteersNeeded - event.volunteersResponded)}</p>
+                                          <p className="font-bold text-role-org">{Math.max(0, event.volunteersNeeded - event.volunteersResponded)}</p>
                                       </div>
                                   </div>
                                 )}
@@ -455,7 +455,7 @@ export function CrisisManagement() {
                             <div className="flex gap-2 mt-4">
                                 <Button 
                                   onClick={() => handleViewTeam(event)}
-                                  className={`flex-1 text-white h-11 text-sm font-bold shadow-sm ${isResolved ? 'bg-slate-400 hover:bg-slate-500' : 'bg-[#043E52] hover:bg-[#033040]'}`}
+                                  className={`flex-1 text-white h-11 text-sm font-bold shadow-sm ${isResolved ? 'bg-slate-400 hover:bg-slate-500' : 'bg-role-org hover:bg-role-org-dark'}`}
                                 >
                                     <Radio className="mr-2 h-4 w-4" /> {isResolved ? 'View Logs' : 'Command Hub'}
                                 </Button>
@@ -485,7 +485,7 @@ export function CrisisManagement() {
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
           <Card className="w-full max-w-4xl shadow-2xl border-none rounded-2xl overflow-hidden flex flex-col max-h-[90vh]">
             
-            <CardHeader className="bg-[#043E52] text-white p-6 shrink-0">
+            <CardHeader className="bg-role-org text-white p-6 shrink-0">
               <div className="flex justify-between items-start">
                 <div>
                   <Badge className="bg-white/20 text-white border-none mb-2 tracking-widest">
@@ -505,8 +505,8 @@ export function CrisisManagement() {
               
               <Tabs defaultValue="roster" className="w-full h-full flex flex-col">
                 <TabsList className="bg-slate-100 rounded-none w-full justify-start h-14 px-4 border-b border-slate-200">
-                  <TabsTrigger value="roster" className="data-[state=active]:bg-white data-[state=active]:text-[#043E52] font-bold px-6">Roster & Details</TabsTrigger>
-                  <TabsTrigger value="broadcast" className="data-[state=active]:bg-[#E16A3D] data-[state=active]:text-white font-bold px-6 flex items-center gap-2">
+                  <TabsTrigger value="roster" className="data-[state=active]:bg-white data-[state=active]:text-role-org font-bold px-6">Roster & Details</TabsTrigger>
+                  <TabsTrigger value="broadcast" className="data-[state=active]:bg-brand-cta data-[state=active]:text-white font-bold px-6 flex items-center gap-2">
                     <Megaphone className="h-4 w-4" /> Mass Broadcast
                   </TabsTrigger>
                 </TabsList>
@@ -517,7 +517,7 @@ export function CrisisManagement() {
                   ) : teamMembers.length === 0 ? (
                     <div className="p-12 text-center flex flex-col items-center">
                       <Users className="h-12 w-12 text-slate-300 mb-3" />
-                      <h3 className="text-lg font-bold text-[#043E52]">Awaiting Responses</h3>
+                      <h3 className="text-lg font-bold text-slate-900">Awaiting Responses</h3>
                       <p className="text-slate-500 text-sm">No volunteers have accepted this deployment yet.</p>
                     </div>
                   ) : (
@@ -538,12 +538,12 @@ export function CrisisManagement() {
                             <div key={vol.id} className="p-6 bg-white flex flex-col md:flex-row gap-4 items-start md:items-center hover:bg-slate-50 transition-colors">
                               <Avatar className="w-14 h-14 border-2 border-slate-100 shrink-0">
                                 <AvatarImage src={vol.avatarUrl} />
-                                <AvatarFallback className="bg-[#1C9290] text-white font-bold">{String(vol.name || 'U').charAt(0).toUpperCase()}</AvatarFallback>
+                                <AvatarFallback className="bg-role-accent-teal text-white font-bold">{String(vol.name || 'U').charAt(0).toUpperCase()}</AvatarFallback>
                               </Avatar>
                               
                               <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-1">
-                                  <h4 className="font-bold text-[#043E52] text-lg">{vol.name}</h4>
+                                  <h4 className="font-bold text-slate-900 text-lg">{vol.name}</h4>
                                   {certified ? (
                                     <Badge variant="outline" className="text-[10px] bg-green-50 text-green-700 border-green-200 uppercase"><CheckCircle className="h-3 w-3 mr-1" /> AVR Certified</Badge>
                                   ) : (
@@ -554,12 +554,12 @@ export function CrisisManagement() {
                                 <div className="flex flex-wrap items-center gap-4 text-sm text-slate-600 font-medium mb-2">
                                   <span className="flex items-center gap-1.5"><Phone className="h-4 w-4 text-slate-400" /> {vol.phone || 'No phone'}</span>
                                   <span className="flex items-center gap-1.5"><Droplet className="h-4 w-4 text-red-400" /> Type: {bloodType}</span>
-                                  {hasCar && <span className="text-[#E16A3D] font-bold text-xs bg-orange-50 px-2 py-0.5 rounded-md">Has Vehicle</span>}
+                                  {hasCar && <span className="text-brand-cta font-bold text-xs bg-brand-cta/10 px-2 py-0.5 rounded-md">Has Vehicle</span>}
                                 </div>
                                 
                                 <div className="flex flex-wrap gap-1.5">
                                   {(vol.skills || []).slice(0,3).map((skill: string, i: number) => (
-                                    <span key={i} className="text-[10px] uppercase tracking-wider font-bold text-[#1C9290] bg-teal-50 px-2 py-1 rounded-md">{skill}</span>
+                                    <span key={i} className="text-[10px] uppercase tracking-wider font-bold text-role-accent-teal bg-teal-50 px-2 py-1 rounded-md">{skill}</span>
                                   ))}
                                 </div>
                               </div>
@@ -574,8 +574,8 @@ export function CrisisManagement() {
                 <TabsContent value="broadcast" className="p-8 m-0 flex-1 bg-slate-50">
                   <div className="max-w-2xl mx-auto space-y-6 bg-white p-8 rounded-2xl shadow-sm border border-slate-100">
                     <div>
-                      <h3 className="text-xl font-bold text-[#043E52] flex items-center gap-2 mb-2">
-                        <Radio className="text-[#E16A3D]" /> Transmit Mission Update
+                      <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2 mb-2">
+                        <Radio className="text-brand-cta" /> Transmit Mission Update
                       </h3>
                       <p className="text-slate-500 text-sm">
                         Send an urgent push notification and in-app alert to all <strong>{teamMembers.length}</strong> volunteers currently deployed to this crisis.
@@ -586,7 +586,7 @@ export function CrisisManagement() {
                       <Label className="font-bold text-slate-700 uppercase tracking-widest text-xs">Message Payload</Label>
                       <Textarea 
                         placeholder={selectedCrisisForTeam.status === 'Resolved' ? "Communications disabled. This crisis is resolved." : "e.g., URGENT: The rally point has been moved to the South Gate. Bring heavy gloves. Acknowledge upon receipt."}
-                        className="min-h-[150px] border-slate-200 focus:border-[#E16A3D] focus:ring-[#E16A3D] text-base p-4 rounded-xl resize-none"
+                        className="min-h-[150px] border-slate-200 focus:border-brand-cta focus:ring-brand-cta text-base p-4 rounded-xl resize-none"
                         value={broadcastMessage}
                         onChange={(e) => setBroadcastMessage(e.target.value)}
                         disabled={selectedCrisisForTeam.status === 'Resolved'}
@@ -596,7 +596,7 @@ export function CrisisManagement() {
                     <Button 
                       disabled={isBroadcasting || teamMembers.length === 0 || selectedCrisisForTeam.status === 'Resolved'}
                       onClick={handleMassBroadcast}
-                      className="w-full h-14 bg-[#E16A3D] hover:bg-[#c2562d] text-white font-black text-lg rounded-xl shadow-lg transition-transform active:scale-95"
+                      className="w-full h-14 bg-brand-cta hover:bg-brand-cta-dark text-white font-black text-lg rounded-xl shadow-lg transition-transform active:scale-95"
                     >
                       {isBroadcasting ? "TRANSMITTING TO FLEET..." : `SEND TO ALL ${teamMembers.length} VOLUNTEERS`}
                     </Button>
@@ -620,7 +620,7 @@ export function CrisisManagement() {
       {showCreateForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
             <Card className="w-full max-w-xl shadow-2xl border-none rounded-2xl overflow-hidden max-h-[90vh] flex flex-col">
-                <CardHeader className="bg-[#043E52] text-white p-5 shrink-0">
+                <CardHeader className="bg-role-org text-white p-5 shrink-0">
                     <div className="flex justify-between items-center">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-red-500/20 rounded-full"><AlertTriangle className="h-5 w-5 text-red-200" /></div>
@@ -632,7 +632,7 @@ export function CrisisManagement() {
                 <div className="p-6 overflow-y-auto bg-slate-50 space-y-5">
                     
                     {/* AI task generator banner */}
-                    <div className="bg-gradient-to-r from-[#043E52] to-[#1C9290] p-4 rounded-xl flex items-center justify-between shadow-sm">
+                    <div className="bg-gradient-to-r from-role-org to-role-accent-teal p-4 rounded-xl flex items-center justify-between shadow-sm">
                        <div>
                          <h4 className="text-white font-bold flex items-center gap-2"><Sparkles className="h-4 w-4 text-yellow-300"/> Generative AI Tasking</h4>
                          <p className="text-white/80 text-xs mt-1">Enter Title & Location, then let AI write the report and find required skills.</p>
@@ -640,7 +640,7 @@ export function CrisisManagement() {
                        <Button
                          onClick={handleGenerateAITasks}
                          disabled={isGeneratingTasks || !newCrisis.title || !newCrisis.location}
-                         className="bg-white text-[#043E52] hover:bg-slate-100 font-bold text-xs h-9 ml-4"
+                         className="bg-white text-role-org hover:bg-slate-100 font-bold text-xs h-9 ml-4"
                        >
                          {isGeneratingTasks ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Wand2 className="h-4 w-4 mr-2" />}
                          Auto-Generate
@@ -648,41 +648,41 @@ export function CrisisManagement() {
                     </div>
 
                     <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
-                      <div className="space-y-1.5"><Label className="font-bold text-[#043E52] text-xs uppercase tracking-widest">Incident Title</Label><Input placeholder="e.g. Structural Collapse" value={newCrisis.title} onChange={(e) => setNewCrisis({...newCrisis, title: e.target.value})} className="border-slate-200 h-11 focus:border-[#E16A3D] focus:ring-[#E16A3D]" /></div>
+                      <div className="space-y-1.5"><Label className="font-bold text-role-org text-xs uppercase tracking-widest">Incident Title</Label><Input placeholder="e.g. Structural Collapse" value={newCrisis.title} onChange={(e) => setNewCrisis({...newCrisis, title: e.target.value})} className="border-slate-200 h-11 focus:border-brand-cta focus:ring-brand-cta" /></div>
                       
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div className="space-y-1.5">
-                            <Label className="font-bold text-[#043E52] text-xs uppercase tracking-widest">Severity</Label>
-                            <select className="w-full h-11 px-3 rounded-md border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#E16A3D]" onChange={(e) => setNewCrisis({...newCrisis, severity: e.target.value})} value={newCrisis.severity}>
+                            <Label className="font-bold text-role-org text-xs uppercase tracking-widest">Severity</Label>
+                            <select className="w-full h-11 px-3 rounded-md border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-cta" onChange={(e) => setNewCrisis({...newCrisis, severity: e.target.value})} value={newCrisis.severity}>
                               <option value="Critical">Critical</option><option value="High">High</option><option value="Medium">Medium</option>
                             </select>
                           </div>
-                          <div className="space-y-1.5"><Label className="font-bold text-[#043E52] text-xs uppercase tracking-widest">Location / City</Label><Input placeholder="e.g. Kadıköy, Istanbul" value={newCrisis.location} onChange={(e) => setNewCrisis({...newCrisis, location: e.target.value})} className="border-slate-200 h-11 focus:border-[#E16A3D] focus:ring-[#E16A3D]" /></div>
+                          <div className="space-y-1.5"><Label className="font-bold text-role-org text-xs uppercase tracking-widest">Location / City</Label><Input placeholder="e.g. Kadıköy, Istanbul" value={newCrisis.location} onChange={(e) => setNewCrisis({...newCrisis, location: e.target.value})} className="border-slate-200 h-11 focus:border-brand-cta focus:ring-brand-cta" /></div>
                       </div>
                     </div>
 
                     <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
-                      <div className="space-y-1.5"><Label className="font-bold text-[#043E52] text-xs uppercase tracking-widest">Required Skills (Comma separated)</Label><Input placeholder="e.g. Medical Aid, Driving License" value={newCrisis.skillsNeeded} onChange={(e) => setNewCrisis({...newCrisis, skillsNeeded: e.target.value})} className="border-slate-200 h-11 focus:border-[#E16A3D] focus:ring-[#E16A3D]" /></div>
+                      <div className="space-y-1.5"><Label className="font-bold text-role-org text-xs uppercase tracking-widest">Required Skills (Comma separated)</Label><Input placeholder="e.g. Medical Aid, Driving License" value={newCrisis.skillsNeeded} onChange={(e) => setNewCrisis({...newCrisis, skillsNeeded: e.target.value})} className="border-slate-200 h-11 focus:border-brand-cta focus:ring-brand-cta" /></div>
                       
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
-                          <Label className="font-bold text-[#043E52] text-xs uppercase tracking-widest">AVR Volunteers Needed</Label>
-                          <Input type="number" value={newCrisis.volunteersNeeded} onChange={(e) => setNewCrisis({...newCrisis, volunteersNeeded: Number(e.target.value)})} className="border-slate-200 h-11 focus:border-[#E16A3D] focus:ring-[#E16A3D]" />
+                          <Label className="font-bold text-role-org text-xs uppercase tracking-widest">AVR Volunteers Needed</Label>
+                          <Input type="number" value={newCrisis.volunteersNeeded} onChange={(e) => setNewCrisis({...newCrisis, volunteersNeeded: Number(e.target.value)})} className="border-slate-200 h-11 focus:border-brand-cta focus:ring-brand-cta" />
                         </div>
                         <div className="space-y-1.5">
-                          <Label className="font-bold text-[#043E52] text-xs uppercase tracking-widest">Secure Comms Link</Label>
-                          <Input placeholder="e.g. https://chat.whatsapp.com/..." value={newCrisis.commsLink} onChange={(e) => setNewCrisis({...newCrisis, commsLink: e.target.value})} className="border-slate-200 h-11 focus:border-[#E16A3D] focus:ring-[#E16A3D]" />
+                          <Label className="font-bold text-role-org text-xs uppercase tracking-widest">Secure Comms Link</Label>
+                          <Input placeholder="e.g. https://chat.whatsapp.com/..." value={newCrisis.commsLink} onChange={(e) => setNewCrisis({...newCrisis, commsLink: e.target.value})} className="border-slate-200 h-11 focus:border-brand-cta focus:ring-brand-cta" />
                         </div>
                       </div>
                     </div>
 
                     <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                      <div className="space-y-1.5"><Label className="font-bold text-[#043E52] text-xs uppercase tracking-widest">Situation Report</Label><Textarea placeholder="Describe the incident details..." value={newCrisis.description} onChange={(e) => setNewCrisis({...newCrisis, description: e.target.value})} className="min-h-[100px] border-slate-200 focus:border-[#E16A3D] focus:ring-[#E16A3D] resize-none" /></div>
+                      <div className="space-y-1.5"><Label className="font-bold text-role-org text-xs uppercase tracking-widest">Situation Report</Label><Textarea placeholder="Describe the incident details..." value={newCrisis.description} onChange={(e) => setNewCrisis({...newCrisis, description: e.target.value})} className="min-h-[100px] border-slate-200 focus:border-brand-cta focus:ring-brand-cta resize-none" /></div>
                     </div>
                 </div>
                 
                 <div className="p-4 bg-white border-t border-slate-200 shrink-0">
-                  <Button disabled={isSubmitting} className="w-full bg-[#E16A3D] hover:bg-[#c2562d] text-white font-bold h-12 text-base shadow-md" onClick={handleActivate}>
+                  <Button disabled={isSubmitting} className="w-full bg-brand-cta hover:bg-brand-cta-dark text-white font-bold h-12 text-base shadow-md" onClick={handleActivate}>
                       {isSubmitting ? "TRANSMITTING..." : <><Send className="mr-2 h-5 w-5" /> ACTIVATE RESERVE ALGORITHM</>}
                   </Button>
                 </div>
