@@ -42,24 +42,27 @@ export function LoginSignup({ onLogin, onClose, userType }: LoginSignupProps) {
     switch (userType) {
       case 'admin':
         return {
-          sidePanel: 'bg-[#043E52]',
-          button: 'bg-[#043E52] hover:bg-[#033040]',
+          sidePanel: 'bg-slate-900',
+          button: 'bg-role-admin-accent hover:bg-role-admin-accent-dark text-slate-900',
+          accentText: 'text-role-admin-accent',
           title: 'System Administration',
           desc: 'Secure access for platform management and oversight.',
           stats: [{ label: 'System Uptime', value: '99.9%' }, { label: 'Active Admins', value: '12' }, { label: 'Security Level', value: 'High' }]
         };
       case 'organization':
         return {
-          sidePanel: 'bg-[#016A6D]',
-          button: 'bg-[#016A6D] hover:bg-[#015052]',
+          sidePanel: 'bg-role-org',
+          button: 'bg-role-org hover:bg-role-org-dark text-white',
+          accentText: 'text-role-org',
           title: 'Organization Portal',
           desc: 'Manage your initiatives and connect with volunteers.',
           stats: [{ label: 'Organizations', value: '800+' }, { label: 'Opportunities', value: '5k+' }, { label: 'Impact Hours', value: '1.2M' }]
         };
       default: // Volunteer
         return {
-          sidePanel: 'bg-[#1C9290]',
-          button: 'bg-[#1C9290] hover:bg-[#157a78]',
+          sidePanel: 'bg-role-volunteer',
+          button: 'bg-role-volunteer hover:bg-role-volunteer-dark text-white',
+          accentText: 'text-role-volunteer',
           title: 'Volunteer Community',
           desc: 'Join thousands making a real difference every day.',
           stats: [{ label: 'Volunteers', value: '15k+' }, { label: 'Events', value: '250+' }, { label: 'Communities', value: '81' }]
@@ -228,8 +231,8 @@ export function LoginSignup({ onLogin, onClose, userType }: LoginSignupProps) {
             {userType === 'admin' ? (
               <div className="mt-8">
                 <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl mb-8 flex items-center gap-3">
-                  <ShieldAlert className="h-5 w-5 text-[#043E52]" />
-                  <p className="text-xs font-bold text-[#043E52] uppercase tracking-wider">Authorized Personnel Only</p>
+                  <ShieldAlert className="h-5 w-5 text-role-admin-accent-dark" />
+                  <p className="text-xs font-bold text-role-admin-accent-dark uppercase tracking-wider">Authorized Personnel Only</p>
                 </div>
                 
                 {/* ADMIN LOGIN FORM */}
@@ -248,7 +251,7 @@ export function LoginSignup({ onLogin, onClose, userType }: LoginSignupProps) {
                     <div className="space-y-2">
                         <div className="flex justify-between items-center">
                             <Label htmlFor="password">Secure Password</Label>
-                            <a href="#" onClick={handleForgotPassword} className="text-xs font-semibold text-[#043E52] hover:text-[#033040]">Forgot password?</a>
+                            <a href="#" onClick={handleForgotPassword} className="text-xs font-semibold text-role-admin-accent-dark hover:text-role-admin-accent">Forgot password?</a>
                         </div>
                         <div className="relative">
                             <Lock className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
@@ -268,7 +271,7 @@ export function LoginSignup({ onLogin, onClose, userType }: LoginSignupProps) {
                             </button>
                         </div>
                     </div>
-                    <Button type="submit" disabled={loading} className={`w-full h-11 ${theme.button} text-white`}>
+                    <Button type="submit" disabled={loading} className={`w-full h-11 ${theme.button}`}>
                         {loading ? 'Authenticating...' : 'Secure Login'} <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                 </form>
@@ -317,7 +320,7 @@ export function LoginSignup({ onLogin, onClose, userType }: LoginSignupProps) {
                                   </button>
                               </div>
                           </div>
-                          <Button type="submit" disabled={loading} className={`w-full h-11 ${theme.button} text-white`}>
+                          <Button type="submit" disabled={loading} className={`w-full h-11 ${theme.button}`}>
                               {loading ? 'Authenticating...' : 'Sign In'} <ArrowRight className="ml-2 h-4 w-4" />
                           </Button>
                       </form>
@@ -398,7 +401,7 @@ export function LoginSignup({ onLogin, onClose, userType }: LoginSignupProps) {
                                             id="org-tier"
                                             value={orgTier}
                                             onChange={(e) => setOrgTier(e.target.value)}
-                                            className="w-full pl-10 pr-4 h-11 bg-slate-50 border border-slate-200 rounded-md text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#016A6D] appearance-none"
+                                            className="w-full pl-10 pr-4 h-11 bg-slate-50 border border-slate-200 rounded-md text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-role-org appearance-none"
                                         >
                                             <option value="tier1">Tier 1: Student Club / Youth Forum</option>
                                             <option value="tier2">Tier 2: Society / Standard NGO</option>
@@ -463,21 +466,21 @@ export function LoginSignup({ onLogin, onClose, userType }: LoginSignupProps) {
                                 className="mt-0.5 focus:outline-none"
                               >
                                 {acceptTerms ? (
-                                  <CheckSquare className="h-5 w-5 text-[#016A6D]" />
+                                  <CheckSquare className={`h-5 w-5 ${theme.accentText}`} />
                                 ) : (
                                   <div className="h-5 w-5 border-2 border-slate-300 rounded-[4px]" />
                                 )}
                               </button>
                               <Label className="text-xs text-slate-500 leading-tight cursor-pointer" onClick={() => setAcceptTerms(!acceptTerms)}>
-                                I certify that the information provided is accurate and agree to the 
-                                <span className="text-[#016A6D] font-semibold hover:underline mx-1">Terms of Service</span> 
-                                and 
-                                <span className="text-[#016A6D] font-semibold hover:underline ml-1">Data Privacy Policy</span> 
+                                I certify that the information provided is accurate and agree to the
+                                <span className={`${theme.accentText} font-semibold hover:underline mx-1`}>Terms of Service</span>
+                                and
+                                <span className={`${theme.accentText} font-semibold hover:underline ml-1`}>Data Privacy Policy</span>
                                 regarding security vetting.
                               </Label>
                           </div>
 
-                          <Button type="submit" disabled={loading} className={`w-full h-11 mt-4 ${theme.button} text-white`}>
+                          <Button type="submit" disabled={loading} className={`w-full h-11 mt-4 ${theme.button}`}>
                               {loading ? "Processing Secure Verification..." : "Submit Registration Request"}
                           </Button>
                       </form>
