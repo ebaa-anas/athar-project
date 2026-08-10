@@ -508,7 +508,7 @@ export function MyProfile() {
     }, 100);
   };
 
-  if (loading) return <div className="p-8 flex justify-center"><Loader2 className="h-8 w-8 text-[#016A6D] animate-spin" /></div>;
+  if (loading) return <div className="p-8 flex justify-center"><Loader2 className="h-8 w-8 text-role-volunteer animate-spin" /></div>;
   if (!user) return <div className="p-8 text-red-500">Please log in to view your profile.</div>;
 
   const initials = profileData.fullName ? profileData.fullName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) : "U";
@@ -518,11 +518,11 @@ export function MyProfile() {
       
       {/* Profile completion warning banner */}
       {!isProfileComplete && (
-        <div className="bg-rose-50 border border-rose-200 p-4 rounded-2xl flex items-center gap-4 shadow-sm animate-in slide-in-from-top-2">
-          <div className="bg-rose-600 p-2.5 rounded-xl text-white"><ShieldAlert size={20} /></div>
+        <div className="bg-red-50 border border-red-200 p-4 rounded-2xl flex items-center gap-4 shadow-sm animate-in slide-in-from-top-2">
+          <div className="bg-red-600 p-2.5 rounded-xl text-white"><ShieldAlert size={20} /></div>
           <div>
-            <h4 className="text-rose-900 font-bold text-sm">Profile Setup Required</h4>
-            <p className="text-rose-700 text-xs font-medium">
+            <h4 className="text-red-900 font-bold text-sm">Profile Setup Required</h4>
+            <p className="text-red-700 text-xs font-medium">
               We have loaded the information you provided during signup. You must fully complete the remaining mandatory sections below to activate your account and apply for opportunities.
             </p>
           </div>
@@ -533,7 +533,7 @@ export function MyProfile() {
       {showVerifyModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-200 flex flex-col">
-            <div className="bg-[#016A6D] p-5 flex items-center justify-between">
+            <div className="bg-role-volunteer p-5 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="bg-white/20 p-2 rounded-lg"><Lock className="h-5 w-5 text-white" /></div>
                 <h2 className="text-white font-bold text-lg">Official Identity Verification</h2>
@@ -542,9 +542,9 @@ export function MyProfile() {
             </div>
             
             <div className="p-6 space-y-6 flex-1 overflow-y-auto">
-              <div className="bg-[#016A6D]/5 border border-[#016A6D]/20 p-4 rounded-xl flex items-start gap-3">
-                <ShieldCheck className="h-5 w-5 text-[#016A6D] shrink-0 mt-0.5" />
-                <p className="text-xs text-[#016A6D] font-medium leading-relaxed">
+              <div className="bg-role-volunteer/5 border border-role-volunteer/20 p-4 rounded-xl flex items-start gap-3">
+                <ShieldCheck className="h-5 w-5 text-role-volunteer shrink-0 mt-0.5" />
+                <p className="text-xs text-role-volunteer font-medium leading-relaxed">
                   To participate in high-impact field operations or join the AVR, your identity must be verified against official national databases. This connection is securely encrypted.
                 </p>
               </div>
@@ -554,15 +554,15 @@ export function MyProfile() {
                 <div className="grid grid-cols-2 gap-3">
                   <div 
                     onClick={() => setVerifyData({...verifyData, residencyType: 'citizen'})}
-                    className={`p-3 rounded-xl border-2 cursor-pointer transition-all text-center ${verifyData.residencyType === 'citizen' ? 'border-[#016A6D] bg-[#016A6D]/5' : 'border-slate-200 hover:border-slate-300'}`}
+                    className={`p-3 rounded-xl border-2 cursor-pointer transition-all text-center ${verifyData.residencyType === 'citizen' ? 'border-role-volunteer bg-role-volunteer/5' : 'border-slate-200 hover:border-slate-300'}`}
                   >
-                    <span className={`text-sm font-bold ${verifyData.residencyType === 'citizen' ? 'text-[#016A6D]' : 'text-slate-500'}`}>Turkish Citizen</span>
+                    <span className={`text-sm font-bold ${verifyData.residencyType === 'citizen' ? 'text-role-volunteer' : 'text-slate-500'}`}>Turkish Citizen</span>
                   </div>
                   <div 
                     onClick={() => setVerifyData({...verifyData, residencyType: 'foreigner'})}
-                    className={`p-3 rounded-xl border-2 cursor-pointer transition-all text-center ${verifyData.residencyType === 'foreigner' ? 'border-[#016A6D] bg-[#016A6D]/5' : 'border-slate-200 hover:border-slate-300'}`}
+                    className={`p-3 rounded-xl border-2 cursor-pointer transition-all text-center ${verifyData.residencyType === 'foreigner' ? 'border-role-volunteer bg-role-volunteer/5' : 'border-slate-200 hover:border-slate-300'}`}
                   >
-                    <span className={`text-sm font-bold ${verifyData.residencyType === 'foreigner' ? 'text-[#016A6D]' : 'text-slate-500'}`}>Foreign Resident</span>
+                    <span className={`text-sm font-bold ${verifyData.residencyType === 'foreigner' ? 'text-role-volunteer' : 'text-slate-500'}`}>Foreign Resident</span>
                   </div>
                 </div>
               </div>
@@ -575,7 +575,7 @@ export function MyProfile() {
                   <Input 
                     type="number"
                     maxLength={11}
-                    className="h-12 font-medium text-lg tracking-widest bg-slate-50 focus:border-[#016A6D] focus:ring-[#016A6D]" 
+                    className="h-12 font-medium text-lg tracking-widest bg-slate-50 focus:border-role-volunteer focus:ring-role-volunteer" 
                     placeholder="11-Digit ID Number" 
                     value={verifyData.idNumber} 
                     onChange={(e) => setVerifyData({...verifyData, idNumber: e.target.value})} 
@@ -585,7 +585,7 @@ export function MyProfile() {
                 <div className="space-y-1.5">
                   <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Full Legal Name (As on ID) *</Label>
                   <Input 
-                    className="h-11 font-medium uppercase bg-slate-50 focus:border-[#016A6D] focus:ring-[#016A6D]" 
+                    className="h-11 font-medium uppercase bg-slate-50 focus:border-role-volunteer focus:ring-role-volunteer" 
                     placeholder="ENTER FULL NAME" 
                     value={verifyData.legalName} 
                     onChange={(e) => setVerifyData({...verifyData, legalName: e.target.value.toUpperCase()})} 
@@ -596,7 +596,7 @@ export function MyProfile() {
                   <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Birth Year *</Label>
                   <Input 
                     type="number"
-                    className="h-11 font-medium bg-slate-50 focus:border-[#016A6D] focus:ring-[#016A6D]" 
+                    className="h-11 font-medium bg-slate-50 focus:border-role-volunteer focus:ring-role-volunteer" 
                     placeholder="YYYY (e.g. 1995)" 
                     value={verifyData.birthYear} 
                     onChange={(e) => setVerifyData({...verifyData, birthYear: e.target.value})} 
@@ -607,7 +607,7 @@ export function MyProfile() {
 
             <div className="p-5 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 shrink-0">
               <Button variant="outline" onClick={() => setShowVerifyModal(false)} className="font-bold text-xs uppercase tracking-wider text-slate-600">Cancel</Button>
-              <Button onClick={submitLegalVerification} disabled={isSubmittingVerify} className="bg-[#016A6D] hover:bg-[#014d4f] text-white font-bold text-xs uppercase tracking-wider border-none shadow-sm">
+              <Button onClick={submitLegalVerification} disabled={isSubmittingVerify} className="bg-role-volunteer hover:bg-role-volunteer-dark text-white font-bold text-xs uppercase tracking-wider border-none shadow-sm">
                 {isSubmittingVerify ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
                 Submit for Verification
               </Button>
@@ -619,22 +619,22 @@ export function MyProfile() {
       {/* HEADER SECTION */}
       <div className="flex flex-col md:flex-row md:items-center justify-between bg-white p-5 rounded-xl shadow-sm border border-slate-200 gap-4">
         <div>
-          <h1 className="text-[#016A6D] font-black text-2xl tracking-tight">Social Impact Portfolio</h1>
+          <h1 className="text-slate-900 font-black text-2xl tracking-tight">Social Impact Portfolio</h1>
           <p className="text-sm font-medium text-slate-500 mt-1">Manage your identity, field experience, and readiness data.</p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={handleDownloadCV} disabled={isGeneratingCV || isEditing || !isProfileComplete} variant="outline" className="border-[#016A6D] text-[#016A6D] hover:bg-[#016A6D]/10 font-bold uppercase tracking-wider text-xs">
+          <Button onClick={handleDownloadCV} disabled={isGeneratingCV || isEditing || !isProfileComplete} variant="outline" className="border-role-volunteer text-role-volunteer hover:bg-role-volunteer/10 font-bold uppercase tracking-wider text-xs">
             {isGeneratingCV ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
             Impact CV
           </Button>
 
           {!isEditing ? (
-            <Button onClick={() => setIsEditing(true)} className="bg-[#016A6D] hover:bg-[#014d4f] text-white shadow-md font-bold uppercase tracking-wider text-xs border-none">
+            <Button onClick={() => setIsEditing(true)} className="bg-role-volunteer hover:bg-role-volunteer-dark text-white shadow-md font-bold uppercase tracking-wider text-xs border-none">
               <Edit className="mr-2 h-4 w-4" /> Edit Profile
             </Button>
           ) : (
             <div className="flex gap-2">
-              <Button onClick={handleSave} disabled={isSaving} className="bg-[#016A6D] hover:bg-[#014d4f] text-white shadow-md font-bold uppercase tracking-wider text-xs border-none">
+              <Button onClick={handleSave} disabled={isSaving} className="bg-role-volunteer hover:bg-role-volunteer-dark text-white shadow-md font-bold uppercase tracking-wider text-xs border-none">
                 {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />} 
                 {isSaving ? "Saving..." : "Save Changes"}
               </Button>
@@ -655,7 +655,7 @@ export function MyProfile() {
           
           {/* PROFILE ID CARD */}
           <Card className="overflow-hidden border border-slate-200 shadow-sm">
-            <div className="h-24 bg-[#016A6D]"></div>
+            <div className="h-24 bg-role-volunteer"></div>
             <CardContent className="px-6 pb-6 relative">
               <div className="flex flex-col md:flex-row gap-5">
                 
@@ -663,10 +663,10 @@ export function MyProfile() {
                 <div className="relative -mt-12 group inline-block w-28 h-28 shrink-0">
                   <Avatar className="w-28 h-28 border-4 border-white shadow-md bg-white">
                     <AvatarImage src={profileData.photoUrl} className="object-cover" />
-                    <AvatarFallback className="text-2xl bg-slate-100 text-[#016A6D] font-bold">{initials}</AvatarFallback>
+                    <AvatarFallback className="text-2xl bg-slate-100 text-role-volunteer font-bold">{initials}</AvatarFallback>
                   </Avatar>
                   <input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageUpload} className="hidden" />
-                  <div onClick={() => fileInputRef.current?.click()} className={`absolute inset-0 bg-[#016A6D]/40 rounded-full flex items-center justify-center cursor-pointer transition-opacity ${isEditing ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                  <div onClick={() => fileInputRef.current?.click()} className={`absolute inset-0 bg-role-volunteer/40 rounded-full flex items-center justify-center cursor-pointer transition-opacity ${isEditing ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
                     {isUploadingPhoto ? <Loader2 className="h-8 w-8 text-white animate-spin" /> : <Camera className="h-8 w-8 text-white" />}
                   </div>
                 </div>
@@ -674,19 +674,19 @@ export function MyProfile() {
                 <div className="flex-1 pt-2 w-full">
                   {isEditing ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-1">
-                      <div className="space-y-1"><Label className="text-[10px] uppercase tracking-wider font-bold text-slate-500">Full Name *</Label><Input className="h-10 text-sm font-medium focus:border-[#016A6D] focus:ring-[#016A6D]" value={profileData.fullName} onChange={(e) => handleInputChange('fullName', e.target.value)} /></div>
-                      <div className="space-y-1"><Label className="text-[10px] uppercase tracking-wider font-bold text-slate-500">Phone *</Label><Input className="h-10 text-sm font-medium focus:border-[#016A6D] focus:ring-[#016A6D]" value={profileData.phone} onChange={(e) => handleInputChange('phone', e.target.value)} /></div>
-                      <div className="space-y-1"><Label className="text-[10px] uppercase tracking-wider font-bold text-slate-500">City *</Label><Input className="h-10 text-sm font-medium focus:border-[#016A6D] focus:ring-[#016A6D]" value={profileData.city} onChange={(e) => handleInputChange('city', e.target.value)} placeholder="e.g. Istanbul" /></div>
-                      <div className="space-y-1"><Label className="text-[10px] uppercase tracking-wider font-bold text-slate-500">Country</Label><Input className="h-10 text-sm font-medium focus:border-[#016A6D] focus:ring-[#016A6D]" value={profileData.country} onChange={(e) => handleInputChange('country', e.target.value)} placeholder="e.g. Turkey" /></div>
-                      <div className="space-y-1 md:col-span-2"><Label className="text-[10px] uppercase tracking-wider font-bold text-slate-500">LinkedIn URL</Label><Input className="h-10 text-sm font-medium focus:border-[#016A6D] focus:ring-[#016A6D]" value={profileData.linkedIn} onChange={(e) => handleInputChange('linkedIn', e.target.value)} /></div>
+                      <div className="space-y-1"><Label className="text-[10px] uppercase tracking-wider font-bold text-slate-500">Full Name *</Label><Input className="h-10 text-sm font-medium focus:border-role-volunteer focus:ring-role-volunteer" value={profileData.fullName} onChange={(e) => handleInputChange('fullName', e.target.value)} /></div>
+                      <div className="space-y-1"><Label className="text-[10px] uppercase tracking-wider font-bold text-slate-500">Phone *</Label><Input className="h-10 text-sm font-medium focus:border-role-volunteer focus:ring-role-volunteer" value={profileData.phone} onChange={(e) => handleInputChange('phone', e.target.value)} /></div>
+                      <div className="space-y-1"><Label className="text-[10px] uppercase tracking-wider font-bold text-slate-500">City *</Label><Input className="h-10 text-sm font-medium focus:border-role-volunteer focus:ring-role-volunteer" value={profileData.city} onChange={(e) => handleInputChange('city', e.target.value)} placeholder="e.g. Istanbul" /></div>
+                      <div className="space-y-1"><Label className="text-[10px] uppercase tracking-wider font-bold text-slate-500">Country</Label><Input className="h-10 text-sm font-medium focus:border-role-volunteer focus:ring-role-volunteer" value={profileData.country} onChange={(e) => handleInputChange('country', e.target.value)} placeholder="e.g. Turkey" /></div>
+                      <div className="space-y-1 md:col-span-2"><Label className="text-[10px] uppercase tracking-wider font-bold text-slate-500">LinkedIn URL</Label><Input className="h-10 text-sm font-medium focus:border-role-volunteer focus:ring-role-volunteer" value={profileData.linkedIn} onChange={(e) => handleInputChange('linkedIn', e.target.value)} /></div>
                     </div>
                   ) : (
                     <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                       <div>
                         <div className="flex items-center gap-3">
-                          <h2 className="text-2xl font-black text-[#016A6D] tracking-tight">{profileData.fullName || "Unnamed Volunteer"}</h2>
+                          <h2 className="text-2xl font-black text-slate-900 tracking-tight">{profileData.fullName || "Unnamed Volunteer"}</h2>
                           {profileData.verificationStatus === 'verified' && (
-                            <Badge className="bg-[#016A6D] hover:bg-[#014d4f] border-none font-bold text-[10px] uppercase tracking-wider px-2 py-0.5 shadow-sm"><ShieldCheck className="h-3 w-3 mr-1" /> Verified</Badge>
+                            <Badge className="bg-role-volunteer hover:bg-role-volunteer-dark border-none font-bold text-[10px] uppercase tracking-wider px-2 py-0.5 shadow-sm"><ShieldCheck className="h-3 w-3 mr-1" /> Verified</Badge>
                           )}
                           {profileData.verificationStatus === 'pending' && (
                             <Badge className="bg-amber-500 hover:bg-amber-600 text-white border-none font-bold text-[10px] uppercase tracking-wider px-2 py-0.5 shadow-sm"><Clock className="h-3 w-3 mr-1" /> Pending Verification</Badge>
@@ -694,11 +694,11 @@ export function MyProfile() {
                         </div>
 
                         <div className="flex flex-wrap items-center gap-x-5 gap-y-2 mt-3">
-                          <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider"><Mail className="h-4 w-4 text-[#016A6D]" /> {profileData.email}</div>
-                          <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider"><Phone className="h-4 w-4 text-[#016A6D]" /> {profileData.phone || "No phone"}</div>
-                          <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider"><MapPin className="h-4 w-4 text-[#016A6D]" /> {profileData.city ? `${profileData.city}, ${profileData.country}` : "Location not set"}</div>
+                          <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider"><Mail className="h-4 w-4 text-role-volunteer" /> {profileData.email}</div>
+                          <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider"><Phone className="h-4 w-4 text-role-volunteer" /> {profileData.phone || "No phone"}</div>
+                          <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider"><MapPin className="h-4 w-4 text-role-volunteer" /> {profileData.city ? `${profileData.city}, ${profileData.country}` : "Location not set"}</div>
                           {profileData.idNumber && (
-                             <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider"><FileText className="h-4 w-4 text-[#016A6D]" /> ID: {profileData.idNumber.substring(0,3)}*****{profileData.idNumber.substring(8,11)}</div>
+                             <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider"><FileText className="h-4 w-4 text-role-volunteer" /> ID: {profileData.idNumber.substring(0,3)}*****{profileData.idNumber.substring(8,11)}</div>
                           )}
                         </div>
                       </div>
@@ -722,12 +722,12 @@ export function MyProfile() {
           {/* BIO */}
           <Card className="border border-slate-200 shadow-sm">
             <CardHeader className="px-6 pt-6 pb-2">
-              <CardTitle className="flex items-center gap-2 text-lg text-[#016A6D]"><User className="h-5 w-5 text-[#016A6D]" /> About Me *</CardTitle>
+              <CardTitle className="flex items-center gap-2 text-lg text-slate-900"><User className="h-5 w-5 text-role-volunteer" /> About Me *</CardTitle>
             </CardHeader>
             <CardContent className="px-6 pb-6 pt-2">
               {isEditing ? (
                 <div className="space-y-4 pt-2">
-                  <div className="space-y-1.5"><Label className="text-[10px] uppercase tracking-wider font-bold text-slate-500">Professional Bio *</Label><Textarea rows={4} className="p-3 text-sm font-medium resize-none focus:border-[#016A6D] focus:ring-[#016A6D]" value={profileData.bio} onChange={(e) => handleInputChange('bio', e.target.value)} placeholder="Summarize your experience and passion for volunteering..." /></div>
+                  <div className="space-y-1.5"><Label className="text-[10px] uppercase tracking-wider font-bold text-slate-500">Professional Bio *</Label><Textarea rows={4} className="p-3 text-sm font-medium resize-none focus:border-role-volunteer focus:ring-role-volunteer" value={profileData.bio} onChange={(e) => handleInputChange('bio', e.target.value)} placeholder="Summarize your experience and passion for volunteering..." /></div>
                 </div>
               ) : (
                 <p className="text-sm font-medium text-slate-600 leading-relaxed whitespace-pre-wrap">{profileData.bio || "No bio added yet. Tell organizations why you volunteer!"}</p>
@@ -738,7 +738,7 @@ export function MyProfile() {
           {/* CORE CREW AFFILIATIONS */}
           <Card className="border border-slate-200 shadow-sm bg-slate-50/50">
             <CardHeader className="px-6 pt-6 pb-2">
-              <CardTitle className="flex items-center gap-2 text-lg text-[#016A6D]"><Building2 className="h-5 w-5 text-[#016A6D]" /> Official Affiliations</CardTitle>
+              <CardTitle className="flex items-center gap-2 text-lg text-slate-900"><Building2 className="h-5 w-5 text-role-volunteer" /> Official Affiliations</CardTitle>
             </CardHeader>
             <CardContent className="px-6 pb-6 pt-2">
               {affiliations.length === 0 ? (
@@ -746,14 +746,14 @@ export function MyProfile() {
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
                   {affiliations.map((org, idx) => (
-                    <div key={idx} className="flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-xl shadow-sm hover:border-[#016A6D]/30 transition-colors">
+                    <div key={idx} className="flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-xl shadow-sm hover:border-role-volunteer/30 transition-colors">
                       <Avatar className="h-12 w-12 border border-slate-100 shadow-sm shrink-0">
                         <AvatarImage src={org.logo} className="object-cover" />
-                        <AvatarFallback className="bg-[#016A6D]/10 text-[#016A6D] font-bold text-lg">{String(org.name).charAt(0).toUpperCase()}</AvatarFallback>
+                        <AvatarFallback className="bg-role-volunteer/10 text-role-volunteer font-bold text-lg">{String(org.name).charAt(0).toUpperCase()}</AvatarFallback>
                       </Avatar>
                       <div className="min-w-0">
-                        <h4 className="font-bold text-[#016A6D] text-sm leading-tight truncate">{org.name}</h4>
-                        <Badge variant="secondary" className="mt-1 bg-[#016A6D]/10 text-[#016A6D] hover:bg-[#016A6D]/20 border-none text-[9px] uppercase tracking-widest px-1.5 py-0 flex w-fit items-center gap-1">
+                        <h4 className="font-bold text-slate-900 text-sm leading-tight truncate">{org.name}</h4>
+                        <Badge variant="secondary" className="mt-1 bg-role-volunteer/10 text-role-volunteer hover:bg-role-volunteer/20 border-none text-[9px] uppercase tracking-widest px-1.5 py-0 flex w-fit items-center gap-1">
                           <Shield className="h-2.5 w-2.5" /> Core Crew
                         </Badge>
                       </div>
@@ -765,9 +765,9 @@ export function MyProfile() {
           </Card>
 
           {/* VERIFIED CREDENTIALS */}
-          <Card className="border-[#016A6D]/20 shadow-sm bg-[#016A6D]/5">
+          <Card className="border-role-volunteer/20 shadow-sm bg-role-volunteer/5">
             <CardHeader className="px-6 pt-6 pb-2">
-              <CardTitle className="flex items-center gap-2 text-lg text-[#016A6D]"><Award className="h-5 w-5 text-[#016A6D]" /> Verified Credentials</CardTitle>
+              <CardTitle className="flex items-center gap-2 text-lg text-slate-900"><Award className="h-5 w-5 text-role-volunteer" /> Verified Credentials</CardTitle>
             </CardHeader>
             <CardContent className="px-6 pb-6 pt-2">
               {earnedCerts.length === 0 ? (
@@ -775,15 +775,15 @@ export function MyProfile() {
               ) : (
                 <div className="space-y-3 mt-2">
                   {earnedCerts.map((cert) => (
-                    <div key={cert.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border border-[#016A6D]/20 bg-white rounded-xl shadow-sm">
+                    <div key={cert.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border border-role-volunteer/20 bg-white rounded-xl shadow-sm">
                       <div className="flex items-center gap-3">
-                        <div className="bg-[#016A6D]/10 p-2 rounded-full shrink-0">
-                          <CheckCircle className="h-4 w-4 text-[#016A6D]" />
+                        <div className="bg-role-volunteer/10 p-2 rounded-full shrink-0">
+                          <CheckCircle className="h-4 w-4 text-role-volunteer" />
                         </div>
                         <div>
-                          <h4 className="text-[#016A6D] font-bold text-sm leading-tight">{cert.title}</h4>
+                          <h4 className="text-slate-900 font-bold text-sm leading-tight">{cert.title}</h4>
                           <div className="flex items-center gap-2 mt-1">
-                            <Badge className="bg-[#016A6D]/10 text-[#016A6D] hover:bg-[#016A6D]/10 border-none font-bold text-[9px] uppercase tracking-widest px-1.5 py-0">{cert.type}</Badge>
+                            <Badge className="bg-role-volunteer/10 text-role-volunteer hover:bg-role-volunteer/10 border-none font-bold text-[9px] uppercase tracking-widest px-1.5 py-0">{cert.type}</Badge>
                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{cert.dateString}</span>
                           </div>
                         </div>
@@ -798,27 +798,27 @@ export function MyProfile() {
           {/* VOLUNTEER EXPERIENCE */}
           <Card className="border border-slate-200 shadow-sm">
             <CardHeader className="px-6 pt-6 pb-2 flex flex-row items-center justify-between">
-              <CardTitle className="flex items-center gap-2 text-lg text-[#016A6D]"><Briefcase className="h-5 w-5 text-[#016A6D]" /> Field Experience</CardTitle>
-              {isEditing && !activeExp && <Button size="sm" variant="outline" className="text-[#016A6D] border-[#016A6D]/20 hover:bg-[#016A6D]/10 font-bold uppercase tracking-wider text-xs" onClick={() => setActiveExp({ id: '', title: '', organization: '', location: '', startDate: '', endDate: '', current: false, description: '' })}><Plus className="mr-1 h-3.5 w-3.5" /> Add</Button>}
+              <CardTitle className="flex items-center gap-2 text-lg text-slate-900"><Briefcase className="h-5 w-5 text-role-volunteer" /> Field Experience</CardTitle>
+              {isEditing && !activeExp && <Button size="sm" variant="outline" className="text-role-volunteer border-role-volunteer/20 hover:bg-role-volunteer/10 font-bold uppercase tracking-wider text-xs" onClick={() => setActiveExp({ id: '', title: '', organization: '', location: '', startDate: '', endDate: '', current: false, description: '' })}><Plus className="mr-1 h-3.5 w-3.5" /> Add</Button>}
             </CardHeader>
             <CardContent className="px-6 pb-6 pt-2 space-y-4">
               
               {activeExp && (
                 <div className="bg-slate-50 p-5 rounded-xl border border-slate-200 space-y-4 mt-2">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-1.5"><Label className="text-[10px] uppercase tracking-wider font-bold text-slate-500">Role Title *</Label><Input className="h-10 text-sm font-medium focus:border-[#016A6D] focus:ring-[#016A6D]" value={activeExp.title} onChange={(e) => setActiveExp({...activeExp, title: e.target.value})} placeholder="e.g. Project Manager" /></div>
-                    <div className="space-y-1.5"><Label className="text-[10px] uppercase tracking-wider font-bold text-slate-500">Organization *</Label><Input className="h-10 text-sm font-medium focus:border-[#016A6D] focus:ring-[#016A6D]" value={activeExp.organization} onChange={(e) => setActiveExp({...activeExp, organization: e.target.value})} placeholder="e.g. Takaful Charity" /></div>
-                    <div className="space-y-1.5"><Label className="text-[10px] uppercase tracking-wider font-bold text-slate-500">Location</Label><Input className="h-10 text-sm font-medium focus:border-[#016A6D] focus:ring-[#016A6D]" value={activeExp.location} onChange={(e) => setActiveExp({...activeExp, location: e.target.value})} placeholder="e.g. Istanbul" /></div>
+                    <div className="space-y-1.5"><Label className="text-[10px] uppercase tracking-wider font-bold text-slate-500">Role Title *</Label><Input className="h-10 text-sm font-medium focus:border-role-volunteer focus:ring-role-volunteer" value={activeExp.title} onChange={(e) => setActiveExp({...activeExp, title: e.target.value})} placeholder="e.g. Project Manager" /></div>
+                    <div className="space-y-1.5"><Label className="text-[10px] uppercase tracking-wider font-bold text-slate-500">Organization *</Label><Input className="h-10 text-sm font-medium focus:border-role-volunteer focus:ring-role-volunteer" value={activeExp.organization} onChange={(e) => setActiveExp({...activeExp, organization: e.target.value})} placeholder="e.g. Takaful Charity" /></div>
+                    <div className="space-y-1.5"><Label className="text-[10px] uppercase tracking-wider font-bold text-slate-500">Location</Label><Input className="h-10 text-sm font-medium focus:border-role-volunteer focus:ring-role-volunteer" value={activeExp.location} onChange={(e) => setActiveExp({...activeExp, location: e.target.value})} placeholder="e.g. Istanbul" /></div>
                     <div className="space-y-1.5 flex gap-3">
-                      <div className="flex-1"><Label className="text-[10px] uppercase tracking-wider font-bold text-slate-500">Start Date</Label><Input className="h-10 text-sm font-medium focus:border-[#016A6D] focus:ring-[#016A6D]" type="month" value={activeExp.startDate} onChange={(e) => setActiveExp({...activeExp, startDate: e.target.value})} /></div>
-                      <div className="flex-1"><Label className="text-[10px] uppercase tracking-wider font-bold text-slate-500">End Date</Label><Input className="h-10 text-sm font-medium focus:border-[#016A6D] focus:ring-[#016A6D]" type="month" value={activeExp.endDate} disabled={activeExp.current} onChange={(e) => setActiveExp({...activeExp, endDate: e.target.value})} /></div>
+                      <div className="flex-1"><Label className="text-[10px] uppercase tracking-wider font-bold text-slate-500">Start Date</Label><Input className="h-10 text-sm font-medium focus:border-role-volunteer focus:ring-role-volunteer" type="month" value={activeExp.startDate} onChange={(e) => setActiveExp({...activeExp, startDate: e.target.value})} /></div>
+                      <div className="flex-1"><Label className="text-[10px] uppercase tracking-wider font-bold text-slate-500">End Date</Label><Input className="h-10 text-sm font-medium focus:border-role-volunteer focus:ring-role-volunteer" type="month" value={activeExp.endDate} disabled={activeExp.current} onChange={(e) => setActiveExp({...activeExp, endDate: e.target.value})} /></div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2"><input type="checkbox" id="currentExp" checked={activeExp.current} onChange={(e) => setActiveExp({...activeExp, current: e.target.checked, endDate: ''})} className="rounded text-[#016A6D] w-4 h-4 border-slate-300" /><Label htmlFor="currentExp" className="text-sm cursor-pointer font-bold text-slate-600">I currently volunteer here</Label></div>
-                  <div className="space-y-1.5"><Label className="text-[10px] uppercase tracking-wider font-bold text-slate-500">Description</Label><Textarea className="p-3 text-sm font-medium resize-none focus:border-[#016A6D] focus:ring-[#016A6D]" rows={3} value={activeExp.description} onChange={(e) => setActiveExp({...activeExp, description: e.target.value})} placeholder="What was your impact?" /></div>
+                  <div className="flex items-center gap-2"><input type="checkbox" id="currentExp" checked={activeExp.current} onChange={(e) => setActiveExp({...activeExp, current: e.target.checked, endDate: ''})} className="rounded text-role-volunteer w-4 h-4 border-slate-300" /><Label htmlFor="currentExp" className="text-sm cursor-pointer font-bold text-slate-600">I currently volunteer here</Label></div>
+                  <div className="space-y-1.5"><Label className="text-[10px] uppercase tracking-wider font-bold text-slate-500">Description</Label><Textarea className="p-3 text-sm font-medium resize-none focus:border-role-volunteer focus:ring-role-volunteer" rows={3} value={activeExp.description} onChange={(e) => setActiveExp({...activeExp, description: e.target.value})} placeholder="What was your impact?" /></div>
                   <div className="flex gap-2 justify-end pt-2">
                     <Button variant="outline" onClick={() => setActiveExp(null)} className="font-bold text-xs uppercase tracking-wider">Cancel</Button>
-                    <Button className="bg-[#016A6D] hover:bg-[#014d4f] text-white font-bold text-xs uppercase tracking-wider border-none shadow-sm" onClick={handleSaveExperience}>{activeExp.id ? "Update" : "Save"}</Button>
+                    <Button className="bg-role-volunteer hover:bg-role-volunteer-dark text-white font-bold text-xs uppercase tracking-wider border-none shadow-sm" onClick={handleSaveExperience}>{activeExp.id ? "Update" : "Save"}</Button>
                   </div>
                 </div>
               )}
@@ -832,8 +832,8 @@ export function MyProfile() {
                         <div className="flex-1">
                           <div className="flex justify-between items-start">
                             <div>
-                              <h3 className="font-black text-base text-[#016A6D]">{exp.title}</h3>
-                              <p className="text-[#016A6D] text-sm font-bold mt-0.5">{exp.organization}</p>
+                              <h3 className="font-black text-base text-slate-900">{exp.title}</h3>
+                              <p className="text-role-volunteer text-sm font-bold mt-0.5">{exp.organization}</p>
                             </div>
                             {isEditing && !activeExp && (
                               <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -860,8 +860,8 @@ export function MyProfile() {
           {/* EDUCATION */}
           <Card className="border border-slate-200 shadow-sm">
             <CardHeader className="px-6 pt-6 pb-2 flex flex-row items-center justify-between">
-              <CardTitle className="flex items-center gap-2 text-lg text-[#016A6D]"><GraduationCap className="h-5 w-5 text-[#016A6D]" /> Education</CardTitle>
-              {isEditing && !activeEdu && <Button size="sm" variant="outline" className="text-[#016A6D] border-[#016A6D]/20 hover:bg-[#016A6D]/10 font-bold uppercase tracking-wider text-xs" onClick={() => setActiveEdu({ id: '', level: '', fieldOfStudy: '', institution: '', gradYear: '', current: true })}><Plus className="mr-1 h-3.5 w-3.5" /> Add</Button>}
+              <CardTitle className="flex items-center gap-2 text-lg text-slate-900"><GraduationCap className="h-5 w-5 text-role-volunteer" /> Education</CardTitle>
+              {isEditing && !activeEdu && <Button size="sm" variant="outline" className="text-role-volunteer border-role-volunteer/20 hover:bg-role-volunteer/10 font-bold uppercase tracking-wider text-xs" onClick={() => setActiveEdu({ id: '', level: '', fieldOfStudy: '', institution: '', gradYear: '', current: true })}><Plus className="mr-1 h-3.5 w-3.5" /> Add</Button>}
             </CardHeader>
             <CardContent className="px-6 pb-6 pt-2 space-y-4">
               
@@ -870,25 +870,25 @@ export function MyProfile() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <Label className="text-[10px] uppercase tracking-wider font-bold text-slate-500">Education Level *</Label>
-                      <select className="w-full h-10 text-sm font-medium border-slate-300 rounded-md px-3 border bg-white focus:border-[#016A6D] focus:ring-[#016A6D]" value={activeEdu.level} onChange={(e) => setActiveEdu({...activeEdu, level: e.target.value})}>
+                      <select className="w-full h-10 text-sm font-medium border-slate-300 rounded-md px-3 border bg-white focus:border-role-volunteer focus:ring-role-volunteer" value={activeEdu.level} onChange={(e) => setActiveEdu({...activeEdu, level: e.target.value})}>
                         <option value="">Select Level...</option>
                         {EDUCATION_LEVELS.map(lvl => <option key={lvl} value={lvl}>{lvl}</option>)}
                       </select>
                     </div>
-                    <div className="space-y-1.5"><Label className="text-[10px] uppercase tracking-wider font-bold text-slate-500">Field of Study</Label><Input className="h-10 text-sm font-medium focus:border-[#016A6D] focus:ring-[#016A6D]" value={activeEdu.fieldOfStudy} onChange={(e) => setActiveEdu({...activeEdu, fieldOfStudy: e.target.value})} placeholder="e.g. Software Engineering" /></div>
-                    <div className="space-y-1.5"><Label className="text-[10px] uppercase tracking-wider font-bold text-slate-500">Institution *</Label><Input className="h-10 text-sm font-medium focus:border-[#016A6D] focus:ring-[#016A6D]" value={activeEdu.institution} onChange={(e) => setActiveEdu({...activeEdu, institution: e.target.value})} placeholder="e.g. Altınbaş University" /></div>
+                    <div className="space-y-1.5"><Label className="text-[10px] uppercase tracking-wider font-bold text-slate-500">Field of Study</Label><Input className="h-10 text-sm font-medium focus:border-role-volunteer focus:ring-role-volunteer" value={activeEdu.fieldOfStudy} onChange={(e) => setActiveEdu({...activeEdu, fieldOfStudy: e.target.value})} placeholder="e.g. Software Engineering" /></div>
+                    <div className="space-y-1.5"><Label className="text-[10px] uppercase tracking-wider font-bold text-slate-500">Institution *</Label><Input className="h-10 text-sm font-medium focus:border-role-volunteer focus:ring-role-volunteer" value={activeEdu.institution} onChange={(e) => setActiveEdu({...activeEdu, institution: e.target.value})} placeholder="e.g. Altınbaş University" /></div>
                     <div className="space-y-1.5">
                       <Label className="text-[10px] uppercase tracking-wider font-bold text-slate-500">Graduation Year</Label>
-                      <Input className="h-10 text-sm font-medium focus:border-[#016A6D] focus:ring-[#016A6D]" type="number" value={activeEdu.gradYear} onChange={(e) => setActiveEdu({...activeEdu, gradYear: e.target.value})} placeholder="e.g. 2026" />
+                      <Input className="h-10 text-sm font-medium focus:border-role-volunteer focus:ring-role-volunteer" type="number" value={activeEdu.gradYear} onChange={(e) => setActiveEdu({...activeEdu, gradYear: e.target.value})} placeholder="e.g. 2026" />
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <input type="checkbox" id="currentEdu" checked={activeEdu.current} onChange={(e) => setActiveEdu({...activeEdu, current: e.target.checked})} className="rounded text-[#016A6D] w-4 h-4 border-slate-300" />
+                    <input type="checkbox" id="currentEdu" checked={activeEdu.current} onChange={(e) => setActiveEdu({...activeEdu, current: e.target.checked})} className="rounded text-role-volunteer w-4 h-4 border-slate-300" />
                     <Label htmlFor="currentEdu" className="text-sm cursor-pointer text-slate-600 font-bold">Currently studying here</Label>
                   </div>
                   <div className="flex gap-2 justify-end pt-2">
                     <Button variant="outline" onClick={() => setActiveEdu(null)} className="font-bold text-xs uppercase tracking-wider">Cancel</Button>
-                    <Button className="bg-[#016A6D] hover:bg-[#014d4f] text-white font-bold text-xs uppercase tracking-wider border-none shadow-sm" onClick={handleSaveEducation}>{activeEdu.id ? "Update" : "Save"}</Button>
+                    <Button className="bg-role-volunteer hover:bg-role-volunteer-dark text-white font-bold text-xs uppercase tracking-wider border-none shadow-sm" onClick={handleSaveEducation}>{activeEdu.id ? "Update" : "Save"}</Button>
                   </div>
                 </div>
               )}
@@ -902,8 +902,8 @@ export function MyProfile() {
                         <div className="flex-1">
                           <div className="flex justify-between items-start">
                             <div>
-                              <h3 className="font-black text-base text-[#016A6D]">{edu.level} {edu.fieldOfStudy && `in ${edu.fieldOfStudy}`}</h3>
-                              <p className="text-[#016A6D] font-bold text-sm mt-0.5">{edu.institution}</p>
+                              <h3 className="font-black text-base text-slate-900">{edu.level} {edu.fieldOfStudy && `in ${edu.fieldOfStudy}`}</h3>
+                              <p className="text-role-volunteer font-bold text-sm mt-0.5">{edu.institution}</p>
                               <p className="text-slate-400 font-bold text-xs uppercase tracking-widest mt-1.5">
                                 {edu.current ? `Expected Graduation: ${formatNiceDate(edu.gradYear)}` : `Class of ${formatNiceDate(edu.gradYear)}`}
                               </p>
@@ -931,41 +931,41 @@ export function MyProfile() {
         <div className="space-y-6">
           
           {/* EMERGENCY DEPLOYMENT */}
-          <Card className="border-rose-200 shadow-sm overflow-hidden">
-            <div className="bg-rose-600 text-white p-4 flex items-center gap-2 font-bold text-sm uppercase tracking-wider">
+          <Card className="border-red-200 shadow-sm overflow-hidden">
+            <div className="bg-red-600 text-white p-4 flex items-center gap-2 font-bold text-sm uppercase tracking-wider">
               <AlertTriangle className="h-4 w-4" /> Emergency Deployment *
             </div>
-            <CardContent className="p-5 space-y-5 bg-rose-50/30">
+            <CardContent className="p-5 space-y-5 bg-red-50/30">
               {isEditing ? (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
                     <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider cursor-pointer" htmlFor="drive">Valid Driving License?</Label>
-                    <input type="checkbox" id="drive" checked={crisisInfo.drivingLicense} onChange={(e) => handleCrisisChange('drivingLicense', e.target.checked)} className="rounded text-rose-600 w-4 h-4 border-slate-300" />
+                    <input type="checkbox" id="drive" checked={crisisInfo.drivingLicense} onChange={(e) => handleCrisisChange('drivingLicense', e.target.checked)} className="rounded text-red-600 w-4 h-4 border-slate-300" />
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Blood Type *</Label>
-                    <select className="w-full h-10 text-sm font-medium border-slate-300 rounded-md px-3 border bg-white focus:border-rose-500" value={crisisInfo.bloodType} onChange={(e) => handleCrisisChange('bloodType', e.target.value)}>
+                    <select className="w-full h-10 text-sm font-medium border-slate-300 rounded-md px-3 border bg-white focus:border-red-500" value={crisisInfo.bloodType} onChange={(e) => handleCrisisChange('bloodType', e.target.value)}>
                       <option value="">Select...</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
                     </select>
                   </div>
                   <div className="bg-white p-4 rounded-lg border border-slate-200 space-y-3 shadow-sm">
-                     <Label className="text-[10px] uppercase tracking-widest text-rose-600 font-bold border-b border-slate-100 pb-2 flex w-full">Emergency Contact *</Label>
-                     <div className="space-y-1"><Label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Name *</Label><Input className="h-9 text-sm font-medium focus:border-rose-500" value={crisisInfo.emergencyName} onChange={(e) => handleCrisisChange('emergencyName', e.target.value)} placeholder="e.g. Ahmed" /></div>
-                     <div className="space-y-1"><Label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Relationship</Label><Input className="h-9 text-sm font-medium focus:border-rose-500" value={crisisInfo.emergencyRelation} onChange={(e) => handleCrisisChange('emergencyRelation', e.target.value)} placeholder="e.g. Brother" /></div>
-                     <div className="space-y-1"><Label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Phone *</Label><Input className="h-9 text-sm font-medium focus:border-rose-500" value={crisisInfo.emergencyPhone} onChange={(e) => handleCrisisChange('emergencyPhone', e.target.value)} placeholder="Phone Number" /></div>
+                     <Label className="text-[10px] uppercase tracking-widest text-red-600 font-bold border-b border-slate-100 pb-2 flex w-full">Emergency Contact *</Label>
+                     <div className="space-y-1"><Label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Name *</Label><Input className="h-9 text-sm font-medium focus:border-red-500" value={crisisInfo.emergencyName} onChange={(e) => handleCrisisChange('emergencyName', e.target.value)} placeholder="e.g. Ahmed" /></div>
+                     <div className="space-y-1"><Label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Relationship</Label><Input className="h-9 text-sm font-medium focus:border-red-500" value={crisisInfo.emergencyRelation} onChange={(e) => handleCrisisChange('emergencyRelation', e.target.value)} placeholder="e.g. Brother" /></div>
+                     <div className="space-y-1"><Label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Phone *</Label><Input className="h-9 text-sm font-medium focus:border-red-500" value={crisisInfo.emergencyPhone} onChange={(e) => handleCrisisChange('emergencyPhone', e.target.value)} placeholder="Phone Number" /></div>
                   </div>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between"><span className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider"><Car className="h-4 w-4 text-slate-400" /> Driver</span><Badge variant={crisisInfo.drivingLicense ? "default" : "secondary"} className={crisisInfo.drivingLicense ? "bg-[#016A6D]/10 text-[#016A6D] border-none font-black text-[10px] uppercase tracking-widest" : "bg-slate-100 text-slate-400 border-none font-black text-[10px] uppercase tracking-widest"}>{crisisInfo.drivingLicense ? "Yes" : "No"}</Badge></div>
-                  <Separator className="bg-rose-100" />
-                  <div className="flex items-center justify-between"><span className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider"><Droplet className="h-4 w-4 text-rose-500" /> Blood Type</span><span className="font-black text-sm text-rose-700">{crisisInfo.bloodType || "Unknown"}</span></div>
-                  <Separator className="bg-rose-100" />
+                  <div className="flex items-center justify-between"><span className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider"><Car className="h-4 w-4 text-slate-400" /> Driver</span><Badge variant={crisisInfo.drivingLicense ? "default" : "secondary"} className={crisisInfo.drivingLicense ? "bg-role-volunteer/10 text-role-volunteer border-none font-black text-[10px] uppercase tracking-widest" : "bg-slate-100 text-slate-400 border-none font-black text-[10px] uppercase tracking-widest"}>{crisisInfo.drivingLicense ? "Yes" : "No"}</Badge></div>
+                  <Separator className="bg-red-100" />
+                  <div className="flex items-center justify-between"><span className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider"><Droplet className="h-4 w-4 text-red-500" /> Blood Type</span><span className="font-black text-sm text-red-700">{crisisInfo.bloodType || "Unknown"}</span></div>
+                  <Separator className="bg-red-100" />
                   <div className="space-y-1.5">
                     <span className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider mb-2"><PhoneCall className="h-4 w-4 text-slate-400" /> Contact</span>
                     {crisisInfo.emergencyName ? (
-                      <div className="pl-6 border-l-2 border-rose-200 ml-2 mt-1">
-                        <p className="text-[#016A6D] font-black text-sm">{crisisInfo.emergencyName} <span className="text-slate-400 font-bold text-[10px] uppercase tracking-widest ml-1">({crisisInfo.emergencyRelation})</span></p>
+                      <div className="pl-6 border-l-2 border-red-200 ml-2 mt-1">
+                        <p className="text-role-volunteer font-black text-sm">{crisisInfo.emergencyName} <span className="text-slate-400 font-bold text-[10px] uppercase tracking-widest ml-1">({crisisInfo.emergencyRelation})</span></p>
                         <p className="text-slate-600 font-medium text-sm mt-0.5">{crisisInfo.emergencyPhone}</p>
                       </div>
                     ) : <p className="pl-6 text-sm text-slate-400 italic">Not set</p>}
@@ -977,20 +977,20 @@ export function MyProfile() {
 
           {/* AVAILABILITY */}
           <Card className="border border-slate-200 shadow-sm">
-            <CardHeader className="px-5 pt-5 pb-2"><CardTitle className="text-base flex items-center gap-2 text-[#016A6D]"><CalendarRange className="h-4 w-4 text-[#016A6D]" /> Availability *</CardTitle></CardHeader>
+            <CardHeader className="px-5 pt-5 pb-2"><CardTitle className="text-base flex items-center gap-2 text-slate-900"><CalendarRange className="h-4 w-4 text-role-volunteer" /> Availability *</CardTitle></CardHeader>
             <CardContent className="px-5 pb-5 pt-2">
               {isEditing ? (
                 <div className="space-y-4 pt-2">
-                  <div className="flex items-center justify-between"><Label className="text-xs font-bold text-slate-600 uppercase tracking-wider cursor-pointer" htmlFor="wkday">Available Weekdays</Label><input type="checkbox" id="wkday" checked={availability.weekdays} onChange={(e) => handleAvailChange('weekdays', e.target.checked)} className="rounded text-[#016A6D] w-4 h-4 border-slate-300" /></div>
-                  <div className="flex items-center justify-between"><Label className="text-xs font-bold text-slate-600 uppercase tracking-wider cursor-pointer" htmlFor="wkend">Available Weekends</Label><input type="checkbox" id="wkend" checked={availability.weekends} onChange={(e) => handleAvailChange('weekends', e.target.checked)} className="rounded text-[#016A6D] w-4 h-4 border-slate-300" /></div>
+                  <div className="flex items-center justify-between"><Label className="text-xs font-bold text-slate-600 uppercase tracking-wider cursor-pointer" htmlFor="wkday">Available Weekdays</Label><input type="checkbox" id="wkday" checked={availability.weekdays} onChange={(e) => handleAvailChange('weekdays', e.target.checked)} className="rounded text-role-volunteer w-4 h-4 border-slate-300" /></div>
+                  <div className="flex items-center justify-between"><Label className="text-xs font-bold text-slate-600 uppercase tracking-wider cursor-pointer" htmlFor="wkend">Available Weekends</Label><input type="checkbox" id="wkend" checked={availability.weekends} onChange={(e) => handleAvailChange('weekends', e.target.checked)} className="rounded text-role-volunteer w-4 h-4 border-slate-300" /></div>
                   <Separator className="my-2 bg-slate-100" />
                   <div className="space-y-1.5"><Label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Format</Label>
-                    <select className="w-full h-10 text-sm font-medium border-slate-300 rounded-md px-3 border bg-white focus:border-[#016A6D] focus:ring-[#016A6D]" value={availability.format} onChange={(e) => handleAvailChange('format', e.target.value)}>
+                    <select className="w-full h-10 text-sm font-medium border-slate-300 rounded-md px-3 border bg-white focus:border-role-volunteer focus:ring-role-volunteer" value={availability.format} onChange={(e) => handleAvailChange('format', e.target.value)}>
                       <option>Flexible (Online & On-site)</option><option>On-site Only</option><option>Remote / Online Only</option>
                     </select>
                   </div>
                   <div className="space-y-1.5"><Label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Hours per week</Label>
-                    <select className="w-full h-10 text-sm font-medium border-slate-300 rounded-md px-3 border bg-white focus:border-[#016A6D] focus:ring-[#016A6D]" value={availability.hours} onChange={(e) => handleAvailChange('hours', e.target.value)}>
+                    <select className="w-full h-10 text-sm font-medium border-slate-300 rounded-md px-3 border bg-white focus:border-role-volunteer focus:ring-role-volunteer" value={availability.hours} onChange={(e) => handleAvailChange('hours', e.target.value)}>
                       <option>1-5 hours</option><option>5-10 hours</option><option>10-20 hours</option><option>20+ hours</option>
                     </select>
                   </div>
@@ -999,14 +999,14 @@ export function MyProfile() {
                 <div className="space-y-4 pt-2">
                   <div className="flex items-center justify-between"><span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Days</span>
                     <div className="flex gap-2">
-                      <Badge className={`h-5 px-2 font-bold text-[9px] uppercase tracking-widest ${availability.weekdays ? 'bg-[#016A6D]/10 text-[#016A6D] border-none' : 'bg-slate-50 text-slate-400 border-none'}`}>Weekdays</Badge>
-                      <Badge className={`h-5 px-2 font-bold text-[9px] uppercase tracking-widest ${availability.weekends ? 'bg-[#016A6D]/10 text-[#016A6D] border-none' : 'bg-slate-50 text-slate-400 border-none'}`}>Weekends</Badge>
+                      <Badge className={`h-5 px-2 font-bold text-[9px] uppercase tracking-widest ${availability.weekdays ? 'bg-role-volunteer/10 text-role-volunteer border-none' : 'bg-slate-50 text-slate-400 border-none'}`}>Weekdays</Badge>
+                      <Badge className={`h-5 px-2 font-bold text-[9px] uppercase tracking-widest ${availability.weekends ? 'bg-role-volunteer/10 text-role-volunteer border-none' : 'bg-slate-50 text-slate-400 border-none'}`}>Weekends</Badge>
                     </div>
                   </div>
                   <Separator className="bg-slate-100" />
-                  <div className="flex items-center justify-between"><span className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider"><Laptop className="h-4 w-4 text-slate-400" /> Format</span><span className="font-black text-xs text-[#016A6D]">{availability.format}</span></div>
+                  <div className="flex items-center justify-between"><span className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider"><Laptop className="h-4 w-4 text-slate-400" /> Format</span><span className="font-black text-xs text-role-volunteer">{availability.format}</span></div>
                   <Separator className="bg-slate-100" />
-                  <div className="flex items-center justify-between"><span className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider"><Clock className="h-4 w-4 text-slate-400" /> Hours</span><span className="font-black text-xs text-[#016A6D]">{availability.hours}</span></div>
+                  <div className="flex items-center justify-between"><span className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider"><Clock className="h-4 w-4 text-slate-400" /> Hours</span><span className="font-black text-xs text-role-volunteer">{availability.hours}</span></div>
                 </div>
               )}
             </CardContent>
@@ -1014,7 +1014,7 @@ export function MyProfile() {
 
           {/* CAUSES */}
           <Card className="border border-slate-200 shadow-sm">
-            <CardHeader className="px-5 pt-5 pb-2"><CardTitle className="text-base flex items-center gap-2 text-[#016A6D]"><Heart className="h-4 w-4 text-[#016A6D]" /> Supported Causes</CardTitle></CardHeader>
+            <CardHeader className="px-5 pt-5 pb-2"><CardTitle className="text-base flex items-center gap-2 text-slate-900"><Heart className="h-4 w-4 text-role-volunteer" /> Supported Causes</CardTitle></CardHeader>
             <CardContent className="px-5 pb-5 pt-2">
               <div className="flex flex-wrap gap-2 pt-2">
                 {interests.length > 0 ? interests.map(interest => (
@@ -1030,18 +1030,18 @@ export function MyProfile() {
 
           {/* SKILLS */}
           <Card className="border border-slate-200 shadow-sm">
-            <CardHeader className="px-5 pt-5 pb-2"><CardTitle className="text-base flex items-center gap-2 text-[#016A6D]"><CheckCircle className="h-4 w-4 text-[#016A6D]" /> Professional Skills *</CardTitle></CardHeader>
+            <CardHeader className="px-5 pt-5 pb-2"><CardTitle className="text-base flex items-center gap-2 text-slate-900"><CheckCircle className="h-4 w-4 text-role-volunteer" /> Professional Skills *</CardTitle></CardHeader>
             <CardContent className="px-5 pb-5 pt-2">
               {isEditing && (
                 <div className="flex gap-2 mb-4 pt-2">
-                  <Input value={newSkill} onChange={(e) => setNewSkill(e.target.value)} placeholder="e.g. Data Analysis" className="h-10 text-sm font-medium focus:border-[#016A6D] focus:ring-[#016A6D]" onKeyDown={(e) => e.key === 'Enter' && handleAddSkill()}/>
-                  <Button onClick={handleAddSkill} className="h-10 bg-[#016A6D] hover:bg-[#014d4f] text-white shrink-0 border-none shadow-sm"><Plus className="h-4 w-4" /></Button>
+                  <Input value={newSkill} onChange={(e) => setNewSkill(e.target.value)} placeholder="e.g. Data Analysis" className="h-10 text-sm font-medium focus:border-role-volunteer focus:ring-role-volunteer" onKeyDown={(e) => e.key === 'Enter' && handleAddSkill()}/>
+                  <Button onClick={handleAddSkill} className="h-10 bg-role-volunteer hover:bg-role-volunteer-dark text-white shrink-0 border-none shadow-sm"><Plus className="h-4 w-4" /></Button>
                 </div>
               )}
               <div className="flex flex-wrap gap-2 pt-2">
                 {skills.map((skill, index) => (
-                  <Badge key={index} className="bg-[#016A6D]/10 text-[#016A6D] border border-[#016A6D]/20 flex items-center gap-1.5 pl-3 pr-2 py-1 text-[10px] uppercase tracking-wider font-bold">
-                    {skill} {isEditing && <button onClick={() => handleRemoveSkill(skill)} className="hover:bg-[#016A6D]/20 rounded-full p-0.5 ml-0.5 transition-colors"><X className="h-3 w-3 text-[#016A6D]" /></button>}
+                  <Badge key={index} className="bg-role-volunteer/10 text-role-volunteer border border-role-volunteer/20 flex items-center gap-1.5 pl-3 pr-2 py-1 text-[10px] uppercase tracking-wider font-bold">
+                    {skill} {isEditing && <button onClick={() => handleRemoveSkill(skill)} className="hover:bg-role-volunteer/20 rounded-full p-0.5 ml-0.5 transition-colors"><X className="h-3 w-3 text-role-volunteer" /></button>}
                   </Badge>
                 ))}
                 {skills.length === 0 && !isEditing && <p className="text-sm text-slate-500 italic">No professional skills listed.</p>}
@@ -1051,21 +1051,21 @@ export function MyProfile() {
 
           {/* LANGUAGES */}
           <Card className="border border-slate-200 shadow-sm">
-            <CardHeader className="px-5 pt-5 pb-2"><CardTitle className="text-base flex items-center gap-2 text-[#016A6D]">Languages *</CardTitle></CardHeader>
+            <CardHeader className="px-5 pt-5 pb-2"><CardTitle className="text-base flex items-center gap-2 text-slate-900">Languages *</CardTitle></CardHeader>
             <CardContent className="px-5 pb-5 pt-2">
               {isEditing && (
                 <div className="flex gap-2 mb-4 pt-2">
-                  <Input value={newLanguage} onChange={(e) => setNewLanguage(e.target.value)} placeholder="e.g. Arabic" className="h-10 flex-1 text-sm font-medium focus:border-[#016A6D] focus:ring-[#016A6D]" />
-                  <select className="h-10 border border-slate-300 rounded-md text-[10px] font-bold uppercase tracking-wider px-2 bg-white text-slate-600 focus:border-[#016A6D] focus:ring-[#016A6D]" value={newProficiency} onChange={(e) => setNewProficiency(e.target.value)}>
+                  <Input value={newLanguage} onChange={(e) => setNewLanguage(e.target.value)} placeholder="e.g. Arabic" className="h-10 flex-1 text-sm font-medium focus:border-role-volunteer focus:ring-role-volunteer" />
+                  <select className="h-10 border border-slate-300 rounded-md text-[10px] font-bold uppercase tracking-wider px-2 bg-white text-slate-600 focus:border-role-volunteer focus:ring-role-volunteer" value={newProficiency} onChange={(e) => setNewProficiency(e.target.value)}>
                     <option>Basic</option><option>Intermediate</option><option>Fluent</option><option>Native</option>
                   </select>
-                  <Button onClick={handleAddLanguage} className="h-10 bg-[#016A6D] hover:bg-[#014d4f] text-white shrink-0 border-none shadow-sm"><Plus className="h-4 w-4" /></Button>
+                  <Button onClick={handleAddLanguage} className="h-10 bg-role-volunteer hover:bg-role-volunteer-dark text-white shrink-0 border-none shadow-sm"><Plus className="h-4 w-4" /></Button>
                 </div>
               )}
               <div className="space-y-3 pt-2">
                 {languages.map((lang, index) => (
                   <div className="flex items-center justify-between border-b border-slate-100 pb-2 last:border-0 last:pb-0" key={index}>
-                    <span className="text-[#016A6D] font-black text-sm">{lang.name}</span>
+                    <span className="text-role-volunteer font-black text-sm">{lang.name}</span>
                     <div className="flex items-center gap-3">
                       <Badge variant="outline" className="text-[9px] font-black uppercase tracking-widest text-slate-500 border-slate-200 h-6 px-2.5 bg-slate-50">{lang.proficiency}</Badge>
                       {isEditing && <button onClick={() => handleRemoveLanguage(index)} className="text-red-400 hover:text-red-600"><Trash2 className="h-4 w-4" /></button>}
