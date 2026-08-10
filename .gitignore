@@ -28,3 +28,6 @@ dist-ssr
 .worktrees
 .vercel
 .env*
+
+# Local Serena MCP project memory
+.serena
