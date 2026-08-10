@@ -2,9 +2,8 @@ import { useState, useEffect } from 'react';
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { 
-  getFirestore, collection, onSnapshot, query, where 
+  getFirestore, collection, onSnapshot, query, where
 } from "firebase/firestore";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
@@ -30,8 +29,20 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// 🔥 INITIALIZE GEMINI AI 🔥
-const genAI = new GoogleGenerativeAI("AIzaSyDiNP9rAwU2fyxz9E1VgkQGnnV_p8LMjgY"); 
+async function callGemini(model: string, message: string): Promise<string> {
+  const response = await fetch("/api/gemini", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ model, history: [], message }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Gemini proxy request failed");
+  }
+
+  const data = await response.json();
+  return data.text;
+}
 
 // Static mock for demographics since we don't store user birthdates yet
 const demographics = [
@@ -153,8 +164,6 @@ export function Reports() {
   const handleDownloadPDF = async () => {
     setIsGeneratingPDF(true);
     try {
-      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-
       const orgName = user?.name || 'Partner Organization';
       const dataSummary = `
         Organization Name: ${orgName}
@@ -174,8 +183,7 @@ export function Reports() {
       DATA TO ANALYZE:
       ${dataSummary}`;
 
-      const result = await model.generateContent(prompt);
-      const reportHTML = result.response.text();
+      const reportHTML = await callGemini("gemini-2.5-flash", prompt);
 
       // Create a hidden iframe
       const iframe = document.createElement('iframe');
