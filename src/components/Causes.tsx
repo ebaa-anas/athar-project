@@ -214,7 +214,7 @@ export function Causes() {
       {/* Header & Search */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-4 border-b pb-6 border-slate-100">
         <div>
-          <h1 className="text-role-volunteer-dark text-2xl font-bold">Explore Causes</h1>
+          <h1 className="text-slate-900 text-2xl font-bold">Explore Causes</h1>
           <p className="text-slate-500 font-medium mt-1">Discover and support global initiatives.</p>
         </div>
         <div className="flex items-center gap-3">

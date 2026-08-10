@@ -367,7 +367,7 @@ export function Messages() {
                     {activeChannel.type === 'crisis' ? <ShieldAlert className="h-6 w-6 text-brand-cta" /> : activeChannel.type === 'group' ? <Users className="h-6 w-6 text-blue-600" /> : activeChannel.type === 'dm' ? <Lock className="h-6 w-6 text-slate-600" /> : <Hash className="h-6 w-6 text-role-accent-teal" />}
                   </div>
                   <div>
-                    <h2 className="text-lg font-black text-role-volunteer tracking-tight leading-tight">
+                    <h2 className="text-lg font-black text-slate-900 tracking-tight leading-tight">
                       {activeChannel.title}
                     </h2>
                     <div className="flex items-center gap-1.5 mt-1 text-[10px] uppercase tracking-widest text-slate-500 font-bold">
@@ -456,7 +456,7 @@ export function Messages() {
               <div className="bg-white p-8 rounded-full shadow-sm border border-slate-100 mb-5">
                 <Users className="h-12 w-12 text-slate-300" />
               </div>
-              <h3 className="text-xl font-bold text-role-volunteer">Select an Operation</h3>
+              <h3 className="text-xl font-bold text-slate-900">Select an Operation</h3>
               <p className="text-sm text-slate-500 max-w-xs mt-2 leading-relaxed font-medium">Choose an active mission, group chat, or direct message from the sidebar to start chatting.</p>
             </div>
           )}

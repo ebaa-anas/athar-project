@@ -134,7 +134,7 @@ export function OverviewDashboard({ onNavigate }: { onNavigate?: (section: strin
                   <Lock className="h-8 w-8 text-slate-400" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-black tracking-tight text-role-volunteer-dark uppercase mb-1">Athar Volunteer Reserve (AVR)</h3>
+                  <h3 className="text-lg font-black tracking-tight text-slate-900 uppercase mb-1">Athar Volunteer Reserve (AVR)</h3>
                   <p className="text-slate-500 text-sm font-medium">
                     The AVR is our elite emergency deployment unit. Complete your clearance requirements to access live crisis comms and field deployments.
                   </p>

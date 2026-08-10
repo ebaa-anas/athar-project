@@ -267,7 +267,7 @@ export function Certificates() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 pb-4">
         <div>
-          <h1 className="text-role-volunteer font-bold text-3xl tracking-tight">Credentials & Achievements</h1>
+          <h1 className="text-slate-900 font-bold text-3xl tracking-tight">Credentials & Achievements</h1>
           <p className="text-slate-500 text-sm font-medium mt-1">Manage your verified certifications, skills, and platform milestones.</p>
         </div>
         <Button className="bg-role-volunteer hover:bg-role-volunteer-dark text-white font-bold text-xs uppercase tracking-wider h-10 shadow-sm">
