@@ -52,10 +52,10 @@ function timeAgo(dateInput: any) {
 // Helper to map DB 'type' to UI Colors & Icons
 function getNotificationStyling(type: string) {
   switch (type?.toLowerCase()) {
-    case 'application': return { icon: Briefcase, color: 'text-[#043E52]', bg: 'bg-[#043E52]/10', border: 'border-[#043E52]' };
-    case 'volunteer': return { icon: Users, color: 'text-[#1C9290]', bg: 'bg-[#1C9290]/10', border: 'border-[#1C9290]' };
-    case 'alert': return { icon: AlertCircle, color: 'text-[#E16A3D]', bg: 'bg-[#E16A3D]/10', border: 'border-[#E16A3D]' };
-    case 'success': return { icon: CheckCircle, color: 'text-[#1C9290]', bg: 'bg-[#1C9290]/10', border: 'border-[#1C9290]' };
+    case 'application': return { icon: Briefcase, color: 'text-role-org', bg: 'bg-role-org/10', border: 'border-role-org' };
+    case 'volunteer': return { icon: Users, color: 'text-role-accent-teal', bg: 'bg-role-accent-teal/10', border: 'border-role-accent-teal' };
+    case 'alert': return { icon: AlertCircle, color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-500' };
+    case 'success': return { icon: CheckCircle, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-500' };
     case 'info': return { icon: Info, color: 'text-blue-500', bg: 'bg-blue-50', border: 'border-blue-500' };
     default: return { icon: Bell, color: 'text-slate-600', bg: 'bg-slate-100', border: 'border-slate-300' };
   }
@@ -143,7 +143,7 @@ export function OrganizationNotifications() {
       <div className={`group relative flex gap-4 p-5 rounded-xl border transition-all duration-200 
         ${notification.read 
           ? 'bg-white border-slate-100 hover:border-slate-300' 
-          : 'bg-[#043E52]/[0.02] border-[#043E52]/20 shadow-sm border-l-4 border-l-[#043E52]'
+          : 'bg-role-org/[0.02] border-role-org/20 shadow-sm border-l-4 border-l-role-org'
         }`}
       >
         <div className={`shrink-0 h-12 w-12 rounded-xl flex items-center justify-center ${notification.bg}`}>
@@ -153,7 +153,7 @@ export function OrganizationNotifications() {
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h3 className={`font-semibold text-base ${notification.read ? 'text-slate-700' : 'text-[#043E52]'}`}>
+              <h3 className={`font-semibold text-base ${notification.read ? 'text-slate-700' : 'text-role-org'}`}>
                 {notification.title}
               </h3>
               <p className="text-sm text-slate-600 mt-1 leading-relaxed">
@@ -168,7 +168,7 @@ export function OrganizationNotifications() {
                 {notification.time}
               </span>
               {!notification.read && (
-                <span className="h-2 w-2 rounded-full bg-[#E16A3D] shadow-sm ring-4 ring-white" />
+                <span className="h-2 w-2 rounded-full bg-brand-cta shadow-sm ring-4 ring-white" />
               )}
             </div>
           </div>
@@ -176,11 +176,11 @@ export function OrganizationNotifications() {
           {/* Actions */}
           <div className="mt-3 flex gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200">
             {!notification.read && (
-              <Button onClick={() => markAsRead(notification.id)} size="sm" variant="outline" className="h-8 text-xs border-[#043E52]/20 text-[#043E52] hover:bg-[#043E52]/5">
+              <Button onClick={() => markAsRead(notification.id)} size="sm" variant="outline" className="h-8 text-xs border-role-org/20 text-role-org hover:bg-role-org/5">
                 <Check className="h-3 w-3 mr-1" /> Mark as Read
               </Button>
             )}
-            <Button onClick={() => deleteNotification(notification.id)} size="sm" variant="ghost" className="h-8 text-xs text-slate-500 hover:text-[#E16A3D]">
+            <Button onClick={() => deleteNotification(notification.id)} size="sm" variant="ghost" className="h-8 text-xs text-slate-500 hover:text-brand-cta">
               <Trash2 className="h-3 w-3 mr-1"/> Delete
             </Button>
           </div>
@@ -195,19 +195,19 @@ export function OrganizationNotifications() {
       {/* Header */}
       <div className="flex items-center justify-between border-b border-slate-200 pb-6">
         <div>
-          <h1 className="text-3xl font-bold text-[#043E52]">Notifications</h1>
+          <h1 className="text-3xl font-bold text-slate-900">Notifications</h1>
           <p className="text-slate-500 mt-1 flex items-center gap-2">
-            <Bell className="h-4 w-4 text-[#1C9290]" />
+            <Bell className="h-4 w-4 text-role-accent-teal" />
             Stay updated with your organization's activities
           </p>
         </div>
         <div className="flex items-center gap-3">
           {unreadCount > 0 && (
-            <Badge variant="secondary" className="bg-[#E16A3D]/10 text-[#E16A3D] px-3 py-1 text-sm font-bold">
+            <Badge variant="secondary" className="bg-brand-cta/10 text-brand-cta px-3 py-1 text-sm font-bold">
               {unreadCount} Unread
             </Badge>
           )}
-          <Button onClick={markAllAsRead} disabled={unreadCount === 0} variant="outline" className="border-slate-200 text-slate-600 hover:text-[#043E52] shadow-sm font-bold">
+          <Button onClick={markAllAsRead} disabled={unreadCount === 0} variant="outline" className="border-slate-200 text-slate-600 hover:text-role-org shadow-sm font-bold">
             Mark All as Read
           </Button>
         </div>
@@ -227,35 +227,35 @@ export function OrganizationNotifications() {
           title="Applications" 
           value={notifications.filter(n => n.type === 'application').length} 
           icon={Briefcase} 
-          color="text-[#043E52]" 
+          color="text-role-org" 
           bg="from-blue-50" 
-          border="border-[#043E52]" 
+          border="border-role-org" 
         />
         <StatCard 
           title="Volunteers" 
           value={notifications.filter(n => n.type === 'volunteer').length} 
           icon={Users} 
-          color="text-[#1C9290]" 
+          color="text-role-accent-teal" 
           bg="from-teal-50" 
-          border="border-[#1C9290]" 
+          border="border-role-accent-teal" 
         />
-        <StatCard 
-          title="Alerts" 
-          value={notifications.filter(n => n.type === 'alert').length} 
-          icon={AlertCircle} 
-          color="text-[#E16A3D]" 
-          bg="from-orange-50" 
-          border="border-[#E16A3D]" 
+        <StatCard
+          title="Alerts"
+          value={notifications.filter(n => n.type === 'alert').length}
+          icon={AlertCircle}
+          color="text-red-600"
+          bg="from-red-50"
+          border="border-red-500"
         />
       </div>
 
       {/* Main content tabs */}
       <Tabs defaultValue="all" className="w-full">
         <TabsList className="bg-slate-100 p-1 rounded-xl w-full md:w-auto flex justify-start mb-6 overflow-x-auto">
-          <TabsTrigger value="all" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#043E52] data-[state=active]:shadow-sm px-4 font-bold">All</TabsTrigger>
-          <TabsTrigger value="unread" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#E16A3D] data-[state=active]:shadow-sm px-4 font-bold">Unread</TabsTrigger>
-          <TabsTrigger value="applications" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#043E52] data-[state=active]:shadow-sm px-4 font-bold">Applications</TabsTrigger>
-          <TabsTrigger value="volunteers" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#1C9290] data-[state=active]:shadow-sm px-4 font-bold">Volunteers</TabsTrigger>
+          <TabsTrigger value="all" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-role-org data-[state=active]:shadow-sm px-4 font-bold">All</TabsTrigger>
+          <TabsTrigger value="unread" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-brand-cta data-[state=active]:shadow-sm px-4 font-bold">Unread</TabsTrigger>
+          <TabsTrigger value="applications" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-role-org data-[state=active]:shadow-sm px-4 font-bold">Applications</TabsTrigger>
+          <TabsTrigger value="volunteers" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-role-accent-teal data-[state=active]:shadow-sm px-4 font-bold">Volunteers</TabsTrigger>
           <TabsTrigger value="settings" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-slate-600 data-[state=active]:shadow-sm px-4 font-bold">Preferences</TabsTrigger>
         </TabsList>
 
@@ -297,12 +297,12 @@ export function OrganizationNotifications() {
         <TabsContent value="settings" className="animate-in fade-in-50 slide-in-from-bottom-2 duration-500">
           <Card className="border-slate-200 shadow-sm">
             <CardHeader className="border-b border-slate-100 pb-4">
-              <CardTitle className="text-[#043E52]">Notification Preferences</CardTitle>
+              <CardTitle className="text-slate-900">Notification Preferences</CardTitle>
             </CardHeader>
             <CardContent className="space-y-8 pt-6">
               
               <div>
-                <h4 className="text-sm font-bold text-[#043E52] uppercase tracking-wide mb-4">Email Alerts</h4>
+                <h4 className="text-sm font-bold text-slate-900 uppercase tracking-wide mb-4">Email Alerts</h4>
                 <div className="space-y-4">
                   {[
                     { id: 'new-app', label: 'New Applications', desc: 'Get notified when volunteers apply' },
@@ -321,11 +321,11 @@ export function OrganizationNotifications() {
               </div>
 
               <div>
-                <h4 className="text-sm font-bold text-[#E16A3D] uppercase tracking-wide mb-4">Urgent Alerts</h4>
+                <h4 className="text-sm font-bold text-brand-cta uppercase tracking-wide mb-4">Urgent Alerts</h4>
                 <div className="space-y-4">
-                   <div className="flex items-center justify-between p-3 rounded-lg bg-[#E16A3D]/5 border border-[#E16A3D]/10">
+                   <div className="flex items-center justify-between p-3 rounded-lg bg-brand-cta/5 border border-brand-cta/10">
                       <Label htmlFor="low-vol" className="flex-1 cursor-pointer">
-                        <span className="text-sm font-bold text-[#E16A3D] block">Low Volunteer Registration</span>
+                        <span className="text-sm font-bold text-brand-cta block">Low Volunteer Registration</span>
                         <span className="text-xs text-slate-600 font-normal">Notify me when events are understaffed</span>
                       </Label>
                       <Switch id="low-vol" defaultChecked />
@@ -334,7 +334,7 @@ export function OrganizationNotifications() {
               </div>
 
               <div className="pt-4 border-t border-slate-100">
-                <Button className="bg-[#043E52] hover:bg-[#033040] text-white shadow-md w-full sm:w-auto font-bold h-11 px-8">
+                <Button className="bg-role-org hover:bg-role-org-dark text-white shadow-md w-full sm:w-auto font-bold h-11 px-8">
                   Save Preferences
                 </Button>
               </div>
