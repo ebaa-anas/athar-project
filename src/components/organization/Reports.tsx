@@ -92,9 +92,9 @@ export function Reports() {
         const retentionRate = totalActiveVols > 0 ? Math.round((returningVols / totalActiveVols) * 100) : 0;
 
         setStats([
-          { label: 'Total Impact Hours', value: totalHours.toLocaleString(), change: '+12%', trend: 'up', icon: Clock, color: 'text-[#043E52]', borderColor: 'border-[#043E52]', bgGradient: 'from-slate-50 to-slate-100' },
-          { label: 'Active Volunteers', value: totalActiveVols.toLocaleString(), change: '+8%', trend: 'up', icon: Users, color: 'text-[#1C9290]', borderColor: 'border-[#1C9290]', bgGradient: 'from-emerald-50 to-teal-50' },
-          { label: 'Projects Delivered', value: projectsDelivered.toLocaleString(), change: '+2', trend: 'up', icon: Award, color: 'text-[#E16A3D]', borderColor: 'border-[#E16A3D]', bgGradient: 'from-orange-50 to-amber-50' },
+          { label: 'Total Impact Hours', value: totalHours.toLocaleString(), change: '+12%', trend: 'up', icon: Clock, color: 'text-role-org', borderColor: 'border-role-org', bgGradient: 'from-slate-50 to-slate-100' },
+          { label: 'Active Volunteers', value: totalActiveVols.toLocaleString(), change: '+8%', trend: 'up', icon: Users, color: 'text-role-accent-teal', borderColor: 'border-role-accent-teal', bgGradient: 'from-emerald-50 to-teal-50' },
+          { label: 'Projects Delivered', value: projectsDelivered.toLocaleString(), change: '+2', trend: 'up', icon: Award, color: 'text-brand-cta', borderColor: 'border-brand-cta', bgGradient: 'from-orange-50 to-amber-50' },
           { label: 'Retention Rate', value: `${retentionRate}%`, change: retentionRate > 50 ? '+5%' : '-2%', trend: retentionRate > 50 ? 'up' : 'down', icon: Target, color: 'text-slate-600', borderColor: 'border-slate-600', bgGradient: 'from-slate-50 to-slate-100' }
         ]);
 
@@ -264,7 +264,7 @@ export function Reports() {
     setIsGeneratingPDF(false);
   };
 
-  if (loading) return <div className="p-12 text-center text-[#043E52] font-bold flex flex-col items-center justify-center"><Loader2 className="h-8 w-8 animate-spin mb-4" /> Compiling Analytics...</div>;
+  if (loading) return <div className="p-12 text-center text-role-org font-bold flex flex-col items-center justify-center"><Loader2 className="h-8 w-8 animate-spin mb-4" /> Compiling Analytics...</div>;
 
   return (
     <div className="space-y-8 pb-12">
@@ -272,14 +272,14 @@ export function Reports() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-5">
         <div>
-          <h1 className="text-2xl font-bold text-[#043E52] uppercase tracking-tight">Reports & Analytics</h1>
+          <h1 className="text-2xl font-bold text-slate-900 uppercase tracking-tight">Reports & Analytics</h1>
           <p className="text-slate-500 mt-1 flex items-center gap-2 text-sm font-semibold">
-            <Activity className="h-4 w-4 text-[#1C9290]" />
+            <Activity className="h-4 w-4 text-role-accent-teal" />
             Real-time performance metrics and impact tracking
           </p>
         </div>
         <div className="flex gap-3">
-          <Button onClick={handleDownloadPDF} disabled={isGeneratingPDF} className="bg-[#043E52] hover:bg-[#033040] text-white shadow-md h-10 px-5 font-bold uppercase tracking-wider text-xs">
+          <Button onClick={handleDownloadPDF} disabled={isGeneratingPDF} className="bg-role-org hover:bg-role-org-dark text-white shadow-md h-10 px-5 font-bold uppercase tracking-wider text-xs">
             {isGeneratingPDF ? (
               <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating Report...</>
             ) : (
@@ -322,10 +322,10 @@ export function Reports() {
       {/* Main content tabs */}
       <Tabs defaultValue="overview" className="w-full">
         <TabsList className="bg-slate-100 p-1 rounded-xl w-full md:w-auto flex justify-start mb-6">
-          <TabsTrigger value="overview" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#043E52] data-[state=active]:shadow-sm px-5 font-bold text-xs uppercase tracking-wider">Overview</TabsTrigger>
-          <TabsTrigger value="volunteers" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#043E52] data-[state=active]:shadow-sm px-5 font-bold text-xs uppercase tracking-wider">Volunteers</TabsTrigger>
-          <TabsTrigger value="opportunities" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#043E52] data-[state=active]:shadow-sm px-5 font-bold text-xs uppercase tracking-wider">Opportunities</TabsTrigger>
-          <TabsTrigger value="impact" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#043E52] data-[state=active]:shadow-sm px-5 font-bold text-xs uppercase tracking-wider">Impact</TabsTrigger>
+          <TabsTrigger value="overview" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-role-org data-[state=active]:shadow-sm px-5 font-bold text-xs uppercase tracking-wider">Overview</TabsTrigger>
+          <TabsTrigger value="volunteers" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-role-org data-[state=active]:shadow-sm px-5 font-bold text-xs uppercase tracking-wider">Volunteers</TabsTrigger>
+          <TabsTrigger value="opportunities" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-role-org data-[state=active]:shadow-sm px-5 font-bold text-xs uppercase tracking-wider">Opportunities</TabsTrigger>
+          <TabsTrigger value="impact" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-role-org data-[state=active]:shadow-sm px-5 font-bold text-xs uppercase tracking-wider">Impact</TabsTrigger>
         </TabsList>
 
         {/* Overview tab */}
@@ -337,10 +337,10 @@ export function Reports() {
               <CardHeader className="pb-4 border-b border-slate-50">
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle className="text-base font-bold text-[#043E52] uppercase">Monthly Activity Trends</CardTitle>
+                    <CardTitle className="text-base font-bold text-slate-900 uppercase">Monthly Activity Trends</CardTitle>
                     <CardDescription className="text-xs font-semibold mt-1">Volunteer hours contributed over the last 6 months</CardDescription>
                   </div>
-                  <div className="p-2 bg-[#043E52]/5 rounded-lg"><BarChart3 className="h-5 w-5 text-[#043E52]" /></div>
+                  <div className="p-2 bg-role-org/5 rounded-lg"><BarChart3 className="h-5 w-5 text-role-org" /></div>
                 </div>
               </CardHeader>
               <CardContent>
@@ -351,12 +351,12 @@ export function Reports() {
                         <span className="font-bold text-slate-700 uppercase tracking-widest">{data.month}</span>
                         <div className="flex gap-4 text-[10px] text-slate-500 font-bold uppercase tracking-wider">
                             <span>{data.volunteers} Vols</span>
-                            <span className="font-black text-[#043E52]">{data.hours} hrs</span>
+                            <span className="font-black text-role-org">{data.hours} hrs</span>
                         </div>
                       </div>
                       <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
                         <div 
-                          className="bg-gradient-to-r from-[#043E52] to-[#1C9290] h-2.5 rounded-full transition-all duration-1000 ease-out group-hover:scale-[1.01]"
+                          className="bg-gradient-to-r from-role-org to-role-accent-teal h-2.5 rounded-full transition-all duration-1000 ease-out group-hover:scale-[1.01]"
                           style={{ width: `${Math.min((data.hours / 600) * 100, 100)}%` }}
                         />
                       </div>
@@ -370,8 +370,8 @@ export function Reports() {
             <Card className="border-slate-200 shadow-sm bg-slate-50/50">
               <CardHeader className="pb-4 border-b border-slate-50">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-base font-bold text-[#043E52] uppercase">Top Contributors</CardTitle>
-                  <Award className="h-5 w-5 text-[#E16A3D]" />
+                  <CardTitle className="text-base font-bold text-slate-900 uppercase">Top Contributors</CardTitle>
+                  <Award className="h-5 w-5 text-brand-cta" />
                 </div>
               </CardHeader>
               <CardContent className="pt-5">
@@ -379,16 +379,16 @@ export function Reports() {
                   {topVolunteers.length === 0 ? (
                     <div className="text-center text-xs text-slate-400 p-4">No data available yet.</div>
                   ) : topVolunteers.map((volunteer, index) => (
-                    <div key={index} className="flex items-center gap-3 bg-white p-3 rounded-xl border border-slate-100 shadow-sm hover:border-[#1C9290]/30 transition-colors">
+                    <div key={index} className="flex items-center gap-3 bg-white p-3 rounded-xl border border-slate-100 shadow-sm hover:border-role-accent-teal/30 transition-colors">
                       <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${
                           index === 0 ? 'bg-yellow-100 text-yellow-700' :
                           index === 1 ? 'bg-slate-100 text-slate-600' :
-                          index === 2 ? 'bg-[#E16A3D]/10 text-[#E16A3D]' : 'bg-slate-50 text-slate-400'
+                          index === 2 ? 'bg-brand-cta/10 text-brand-cta' : 'bg-slate-50 text-slate-400'
                       }`}>
                         {index + 1}
                       </div>
                       <div className="flex-1">
-                        <p className="text-sm font-bold text-[#043E52]">{volunteer.name}</p>
+                        <p className="text-sm font-bold text-role-org">{volunteer.name}</p>
                         <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">
                           {volunteer.hours} hrs • ⭐ {volunteer.rating}
                         </p>
@@ -407,8 +407,8 @@ export function Reports() {
             <Card className="border-slate-200 shadow-sm">
               <CardHeader className="pb-4 border-b border-slate-50">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-base font-bold text-[#043E52] uppercase">Demographics</CardTitle>
-                  <PieChart className="h-5 w-5 text-[#1C9290]" />
+                  <CardTitle className="text-base font-bold text-slate-900 uppercase">Demographics</CardTitle>
+                  <PieChart className="h-5 w-5 text-role-accent-teal" />
                 </div>
                 <CardDescription className="text-xs font-semibold">Volunteer age distribution (Estimates)</CardDescription>
               </CardHeader>
@@ -422,9 +422,9 @@ export function Reports() {
                     <div className="w-full bg-slate-100 rounded-full h-2.5">
                       <div 
                         className={`h-2.5 rounded-full ${
-                            index === 0 ? 'bg-[#043E52]' : 
-                            index === 1 ? 'bg-[#1C9290]' : 
-                            index === 2 ? 'bg-[#E16A3D]' : 'bg-slate-400'
+                            index === 0 ? 'bg-role-org' : 
+                            index === 1 ? 'bg-role-accent-teal' : 
+                            index === 2 ? 'bg-brand-cta' : 'bg-slate-400'
                         }`}
                         style={{ width: `${demo.percentage}%` }}
                       />
@@ -436,17 +436,17 @@ export function Reports() {
 
             <div className="grid grid-cols-1 gap-4">
                 <Card className="border-slate-200 shadow-sm flex flex-col justify-center text-center p-6 bg-gradient-to-br from-white to-slate-50">
-                    <div className="mb-2 mx-auto bg-[#043E52]/10 p-4 rounded-full w-14 h-14 flex items-center justify-center">
-                        <Clock className="h-6 w-6 text-[#043E52]" />
+                    <div className="mb-2 mx-auto bg-role-org/10 p-4 rounded-full w-14 h-14 flex items-center justify-center">
+                        <Clock className="h-6 w-6 text-role-org" />
                     </div>
-                    <p className="text-3xl font-black text-[#043E52]">{(stats[0]?.value.replace(/,/g, '') / (parseInt(stats[1]?.value) || 1) || 0).toFixed(1)}</p>
+                    <p className="text-3xl font-black text-role-org">{(stats[0]?.value.replace(/,/g, '') / (parseInt(stats[1]?.value) || 1) || 0).toFixed(1)}</p>
                     <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Avg Hours / Volunteer</p>
                 </Card>
                 <Card className="border-slate-200 shadow-sm flex flex-col justify-center text-center p-6 bg-gradient-to-br from-white to-slate-50">
-                    <div className="mb-2 mx-auto bg-[#1C9290]/10 p-4 rounded-full w-14 h-14 flex items-center justify-center">
-                        <Users className="h-6 w-6 text-[#1C9290]" />
+                    <div className="mb-2 mx-auto bg-role-accent-teal/10 p-4 rounded-full w-14 h-14 flex items-center justify-center">
+                        <Users className="h-6 w-6 text-role-accent-teal" />
                     </div>
-                    <p className="text-3xl font-black text-[#1C9290]">{stats[3]?.value || '0%'}</p>
+                    <p className="text-3xl font-black text-role-accent-teal">{stats[3]?.value || '0%'}</p>
                     <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Retention Rate</p>
                 </Card>
             </div>
@@ -459,10 +459,10 @@ export function Reports() {
             <CardHeader className="pb-4 border-b border-slate-50">
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-base font-bold text-[#043E52] uppercase">Opportunity Performance</CardTitle>
+                  <CardTitle className="text-base font-bold text-slate-900 uppercase">Opportunity Performance</CardTitle>
                   <CardDescription className="text-xs font-semibold mt-1">Application and acceptance metrics</CardDescription>
                 </div>
-                <Briefcase className="h-5 w-5 text-[#E16A3D]" />
+                <Briefcase className="h-5 w-5 text-brand-cta" />
               </div>
             </CardHeader>
             <CardContent className="pt-5">
@@ -482,19 +482,19 @@ export function Reports() {
                       <tr><td colSpan={5} className="py-4 text-center text-xs text-slate-400">No active opportunities to analyze.</td></tr>
                     ) : oppPerformance.map((opp, index) => (
                       <tr key={index} className="hover:bg-slate-50/50 transition-colors">
-                        <td className="py-3 px-4 text-sm font-bold text-[#043E52]">{opp.title}</td>
+                        <td className="py-3 px-4 text-sm font-bold text-role-org">{opp.title}</td>
                         <td className="py-3 px-4 text-sm font-semibold text-slate-600">{opp.applications}</td>
                         <td className="py-3 px-4 text-sm font-semibold text-slate-600">{opp.filled}</td>
                         <td className="py-3 px-4 text-sm text-slate-600">
                             <div className="flex items-center gap-2">
                                 <div className="w-16 bg-slate-100 rounded-full h-1.5">
-                                    <div className={`h-1.5 rounded-full ${opp.acceptance > 60 ? 'bg-[#1C9290]' : 'bg-[#E16A3D]'}`} style={{ width: `${opp.acceptance}%` }}></div>
+                                    <div className={`h-1.5 rounded-full ${opp.acceptance > 60 ? 'bg-role-accent-teal' : 'bg-brand-cta'}`} style={{ width: `${opp.acceptance}%` }}></div>
                                 </div>
                                 <span className="font-bold text-xs">{opp.acceptance}%</span>
                             </div>
                         </td>
                         <td className="py-3 px-4 text-sm">
-                            <Badge variant="outline" className={`text-[9px] font-bold uppercase tracking-wider ${opp.acceptance >= 60 ? "bg-[#1C9290]/10 text-[#1C9290] border-none" : "bg-[#E16A3D]/10 text-[#E16A3D] border-none"}`}>
+                            <Badge variant="outline" className={`text-[9px] font-bold uppercase tracking-wider ${opp.acceptance >= 60 ? "bg-role-accent-teal/10 text-role-accent-teal border-none" : "bg-brand-cta/10 text-brand-cta border-none"}`}>
                                 {opp.acceptance >= 60 ? 'High Demand' : 'Standard'}
                             </Badge>
                         </td>
@@ -510,13 +510,13 @@ export function Reports() {
         {/* Impact tab */}
         <TabsContent value="impact" className="mt-6 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card className="bg-[#043E52] text-white border-none shadow-md">
+            <Card className="bg-role-org text-white border-none shadow-md">
               <CardContent className="p-6 text-center">
                 <p className="text-4xl font-black mb-1">50k+</p>
                 <p className="text-blue-200 font-bold tracking-widest uppercase text-[10px]">Meals Distributed</p>
               </CardContent>
             </Card>
-            <Card className="bg-[#1C9290] text-white border-none shadow-md">
+            <Card className="bg-role-accent-teal text-white border-none shadow-md">
               <CardContent className="p-6 text-center">
                 <p className="text-4xl font-black mb-1">5,000</p>
                 <p className="text-emerald-100 font-bold tracking-widest uppercase text-[10px]">Families Served</p>
@@ -524,7 +524,7 @@ export function Reports() {
             </Card>
             <Card className="bg-white border-slate-200 shadow-sm">
               <CardContent className="p-6 text-center">
-                <p className="text-4xl font-black mb-1 text-[#E16A3D]">$146k</p>
+                <p className="text-4xl font-black mb-1 text-brand-cta">$146k</p>
                 <p className="text-slate-500 font-bold tracking-widest uppercase text-[10px]">Community Value Generated</p>
               </CardContent>
             </Card>
@@ -532,35 +532,35 @@ export function Reports() {
 
           <Card className="border-slate-200 shadow-sm">
             <CardHeader className="pb-4 border-b border-slate-50">
-                <CardTitle className="text-base font-bold text-[#043E52] uppercase">Impact Coverage</CardTitle>
+                <CardTitle className="text-base font-bold text-slate-900 uppercase">Impact Coverage</CardTitle>
                 <CardDescription className="text-xs font-semibold mt-1">Measuring efficacy across key initiatives</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6 pt-5">
                 <div>
                     <div className="flex justify-between mb-1.5">
-                        <span className="font-bold text-[#043E52] text-sm">Food Distribution</span>
-                        <span className="font-bold text-[#043E52] text-xs">85% Goal Reached</span>
+                        <span className="font-bold text-role-org text-sm">Food Distribution</span>
+                        <span className="font-bold text-role-org text-xs">85% Goal Reached</span>
                     </div>
                     <div className="w-full bg-slate-100 rounded-full h-3">
-                        <div className="bg-[#043E52] h-3 rounded-full" style={{ width: '85%' }}></div>
+                        <div className="bg-role-org h-3 rounded-full" style={{ width: '85%' }}></div>
                     </div>
                 </div>
                 <div>
                     <div className="flex justify-between mb-1.5">
-                        <span className="font-bold text-[#1C9290] text-sm">Community Satisfaction</span>
-                        <span className="font-bold text-[#1C9290] text-xs">92% Positive</span>
+                        <span className="font-bold text-role-accent-teal text-sm">Community Satisfaction</span>
+                        <span className="font-bold text-role-accent-teal text-xs">92% Positive</span>
                     </div>
                     <div className="w-full bg-slate-100 rounded-full h-3">
-                        <div className="bg-[#1C9290] h-3 rounded-full" style={{ width: '92%' }}></div>
+                        <div className="bg-role-accent-teal h-3 rounded-full" style={{ width: '92%' }}></div>
                     </div>
                 </div>
                 <div>
                     <div className="flex justify-between mb-1.5">
-                        <span className="font-bold text-[#E16A3D] text-sm">Program Efficiency</span>
-                        <span className="font-bold text-[#E16A3D] text-xs">88% Score</span>
+                        <span className="font-bold text-brand-cta text-sm">Program Efficiency</span>
+                        <span className="font-bold text-brand-cta text-xs">88% Score</span>
                     </div>
                     <div className="w-full bg-slate-100 rounded-full h-3">
-                        <div className="bg-[#E16A3D] h-3 rounded-full" style={{ width: '88%' }}></div>
+                        <div className="bg-brand-cta h-3 rounded-full" style={{ width: '88%' }}></div>
                     </div>
                 </div>
             </CardContent>
