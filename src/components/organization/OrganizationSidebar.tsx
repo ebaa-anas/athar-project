@@ -12,7 +12,8 @@ import {
   BarChart3,
   AlertTriangle,
   LogOut,
-  ChevronRight 
+  ChevronRight,
+  X
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
@@ -27,6 +28,8 @@ interface SidebarProps {
   activeSection: string;
   onSectionChange: (section: string) => void;
   onLogout: () => void;
+  isMobileOpen?: boolean;
+  onMobileClose?: () => void;
 }
 
 interface MenuItem {
@@ -53,7 +56,9 @@ const menuItems: MenuItem[] = [
 export function OrganizationSidebar({
   activeSection,
   onSectionChange,
-  onLogout 
+  onLogout,
+  isMobileOpen = false,
+  onMobileClose
 }: SidebarProps) {
   const { user } = useUserProfile();
   
@@ -103,9 +108,14 @@ export function OrganizationSidebar({
 
   const isVerified = user?.verified === true;
 
+  const handleNavigation = (id: string) => {
+    onSectionChange(id);
+    onMobileClose?.();
+  };
+
   return (
-    <aside className="fixed inset-y-0 left-0 w-64 h-screen bg-[#043E52] flex flex-col shadow-2xl z-50 font-sans">
-      
+    <aside className={`fixed inset-y-0 left-0 w-64 h-screen bg-role-org flex flex-col shadow-2xl z-50 font-sans transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+
       {/* Fixed upper section */}
       <div className="flex-none flex flex-col">
         <div className="px-6 pt-8 pb-4">
@@ -113,16 +123,24 @@ export function OrganizationSidebar({
               <img src={atharLogo} alt="Athar" className="w-10 h-10 brightness-0 invert" />
               <div className="flex flex-col justify-center -mt-1">
                 <span className="text-xl text-white tracking-wide font-bold leading-none">Athar</span>
-                <span className="text-[10px] text-[#1C9290] font-bold tracking-widest uppercase mt-1">Partner Portal</span>
+                <span className="text-[10px] text-role-accent-teal font-bold tracking-widest uppercase mt-1">Partner Portal</span>
               </div>
+              <button
+                type="button"
+                onClick={onMobileClose}
+                className="ml-auto p-1.5 rounded-md text-white/70 hover:bg-white/10 hover:text-white lg:hidden"
+                aria-label="Close navigation menu"
+              >
+                <X className="h-5 w-5" />
+              </button>
           </div>
         </div>
 
         <div className="px-3 mb-2">
-          <div className="flex items-center gap-3 bg-white/5 p-3 rounded-xl border border-white/5 hover:border-[#1C9290]/50 transition-colors cursor-default backdrop-blur-sm">
-            <Avatar className="w-9 h-9 border border-[#1C9290]/50">
+          <div className="flex items-center gap-3 bg-white/5 p-3 rounded-xl border border-white/5 hover:border-role-accent-teal/50 transition-colors cursor-default backdrop-blur-sm">
+            <Avatar className="w-9 h-9 border border-role-accent-teal/50">
               <AvatarImage src={user?.photoURL || "https://images.unsplash.com/photo-1557683316-973673baf926?w=100&h=100&fit=crop"} />
-              <AvatarFallback className="bg-[#1C9290] text-white text-xs font-bold">ORG</AvatarFallback>
+              <AvatarFallback className="bg-role-accent-teal text-white text-xs font-bold">ORG</AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
               <p className="truncate text-white text-sm font-semibold tracking-tight">
@@ -131,8 +149,8 @@ export function OrganizationSidebar({
               
               <div className="flex items-center gap-1.5 mt-0.5">
                   <span className="relative flex h-2 w-2">
-                    <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isVerified ? 'bg-emerald-400' : 'bg-orange-400'}`}></span>
-                    <span className={`relative inline-flex rounded-full h-2 w-2 ${isVerified ? 'bg-[#1C9290]' : 'bg-orange-500'}`}></span>
+                    <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isVerified ? 'bg-emerald-400' : 'bg-amber-400'}`}></span>
+                    <span className={`relative inline-flex rounded-full h-2 w-2 ${isVerified ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
                   </span>
                   <p className="text-[11px] text-slate-300 font-medium">
                     {isVerified ? 'Verified Active' : 'Audit Pending'}
@@ -167,16 +185,16 @@ export function OrganizationSidebar({
               <Button
                 key={item.id}
                 variant="ghost"
-                onClick={() => onSectionChange(item.id)}
+                onClick={() => handleNavigation(item.id)}
                 className={`w-full justify-between group h-10 px-3 transition-all duration-200 rounded-lg mb-1 ${
                   isActive
-                    ? "bg-[#1C9290] text-white shadow-lg shadow-[#000000]/20 font-medium" 
+                    ? "bg-role-accent-teal text-white shadow-lg shadow-black/20 font-medium" 
                     : "text-slate-300 hover:bg-white/5 hover:text-white" 
                 }`}
               >
                 <div className="flex items-center gap-3">
                   <Icon className={`h-[18px] w-[18px] ${
-                    isActive ? "text-white" : isCrisis ? "text-[#E16A3D]" : "text-slate-400 group-hover:text-white"
+                    isActive ? "text-white" : isCrisis ? "text-brand-cta" : "text-slate-400 group-hover:text-white"
                   }`} />
                   <span className="text-sm">{item.label}</span>
                 </div>
@@ -185,8 +203,8 @@ export function OrganizationSidebar({
                     {displayBadge !== null && (
                     <Badge className={`px-1.5 h-5 text-[10px] min-w-[20px] justify-center border-none ${
                         isActive 
-                        ? "bg-white text-[#1C9290] font-bold" 
-                        : "bg-[#E16A3D] text-white font-bold"
+                        ? "bg-white text-role-accent-teal font-bold" 
+                        : "bg-brand-cta text-white font-bold"
                     }`}>
                         {displayBadge}
                     </Badge>
@@ -200,11 +218,11 @@ export function OrganizationSidebar({
       </div>
 
       {/* Fixed bottom section */}
-      <div className="flex-none p-4 border-t border-white/5 bg-[#033040]/30">
+      <div className="flex-none p-4 border-t border-white/5 bg-role-org-dark/30">
         <Button
           variant="ghost"
           onClick={onLogout}
-          className="w-full justify-start text-slate-400 hover:bg-[#E16A3D] hover:text-white transition-all rounded-lg h-10 px-3"
+          className="w-full justify-start text-slate-400 hover:bg-brand-cta hover:text-white transition-all rounded-lg h-10 px-3"
         >
           <LogOut className="mr-3 h-[18px] w-[18px]" />
           <span className="text-sm font-medium">Sign Out</span>

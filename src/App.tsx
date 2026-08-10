@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Menu } from 'lucide-react';
 import { Sidebar } from './components/Sidebar';
 import { OverviewDashboard } from './components/OverviewDashboard';
 import { MyProfile } from './components/MyProfile';
@@ -44,6 +45,7 @@ export default function App() {
   const [userType, setUserType] = useState<UserType>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [activeSection, setActiveSection] = useState('overview');
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   const handleUserTypeSelection = (type: UserType) => {
     setUserType(type);
@@ -126,35 +128,70 @@ export default function App() {
     );
   }
 
+  const closeMobileNav = () => setIsMobileNavOpen(false);
+
+  const mobileTopBarAccent =
+    userType === 'volunteer' ? 'text-role-volunteer' :
+    userType === 'organization' ? 'text-role-org' :
+    'text-role-admin-accent-dark';
+
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
 
+      {/* Mobile nav backdrop */}
+      {isMobileNavOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          onClick={closeMobileNav}
+          aria-hidden="true"
+        />
+      )}
+
       {/* Sidebar */}
       {userType === 'volunteer' && (
-        <Sidebar 
-          activeSection={activeSection} 
-          onSectionChange={setActiveSection} 
-          onLogout={handleLogout} 
+        <Sidebar
+          activeSection={activeSection}
+          onSectionChange={setActiveSection}
+          onLogout={handleLogout}
+          isMobileOpen={isMobileNavOpen}
+          onMobileClose={closeMobileNav}
         />
       )}
       {userType === 'organization' && (
-        <OrganizationSidebar 
-          activeSection={activeSection} 
-          onSectionChange={setActiveSection} 
-          onLogout={handleLogout} 
+        <OrganizationSidebar
+          activeSection={activeSection}
+          onSectionChange={setActiveSection}
+          onLogout={handleLogout}
+          isMobileOpen={isMobileNavOpen}
+          onMobileClose={closeMobileNav}
         />
       )}
       {userType === 'admin' && (
-        <AdminSidebar 
-            activeSection={activeSection} 
-            onSectionChange={setActiveSection} 
-            onLogout={handleLogout} 
+        <AdminSidebar
+            activeSection={activeSection}
+            onSectionChange={setActiveSection}
+            onLogout={handleLogout}
+            isMobileOpen={isMobileNavOpen}
+            onMobileClose={closeMobileNav}
         />
       )}
-      
+
       {/* Main content */}
-      <main className="flex-1 overflow-y-auto ml-64">
-        <div className="min-h-full max-w-7xl mx-auto p-8">
+      <main className="flex-1 overflow-y-auto lg:ml-64">
+        {/* Mobile top bar */}
+        <div className="sticky top-0 z-30 flex items-center gap-3 border-b border-slate-200 bg-white px-4 py-3 lg:hidden">
+          <button
+            type="button"
+            onClick={() => setIsMobileNavOpen(true)}
+            className={`-ml-1 p-2 rounded-md hover:bg-slate-100 ${mobileTopBarAccent}`}
+            aria-label="Open navigation menu"
+          >
+            <Menu className="h-6 w-6" />
+          </button>
+          <span className="text-sm font-bold text-slate-700">Athar</span>
+        </div>
+
+        <div className="min-h-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
           {userType === 'volunteer' && renderVolunteerContent()}
           {userType === 'organization' && renderOrganizationContent()}
           {userType === 'admin' && renderAdminContent()}

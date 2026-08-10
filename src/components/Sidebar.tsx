@@ -13,7 +13,8 @@ import {
   Brain,
   AlertTriangle,
   ChevronRight,
-  MessageSquare
+  MessageSquare,
+  X
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
@@ -24,6 +25,8 @@ interface SidebarProps {
   activeSection: string;
   onSectionChange: (section: string) => void;
   onLogout: () => void;
+  isMobileOpen?: boolean;
+  onMobileClose?: () => void;
 }
 
 const menuItems = [
@@ -42,17 +45,22 @@ const menuItems = [
    { id: "notifications", label: "Notifications", icon: Bell }
 ];
 
-export function Sidebar({ activeSection, onSectionChange, onLogout }: SidebarProps) {
+export function Sidebar({ activeSection, onSectionChange, onLogout, isMobileOpen = false, onMobileClose }: SidebarProps) {
   // 1. Fetch user data
   const { user } = useUserProfile();
-  
+
   // 2. Safely get the name and generate initials
   const displayName = user?.name || "Volunteer";
   const initials = displayName.split(' ').map((n: string) => n[0]).join('').toUpperCase().substring(0, 2);
 
+  const handleNavigation = (id: string) => {
+    onSectionChange(id);
+    onMobileClose?.();
+  };
+
   return (
-    <aside className="fixed inset-y-0 left-0 w-64 h-screen bg-[#016A6D] flex flex-col shadow-2xl z-50 font-sans border-r border-[#014d4f]">
-      
+    <aside className={`fixed inset-y-0 left-0 w-64 h-screen bg-role-volunteer flex flex-col shadow-2xl z-50 font-sans border-r border-role-volunteer-dark transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+
       {/* --- FIXED UPPER SECTION (Header & Profile) --- */}
       <div className="flex-none flex flex-col">
         {/* 1. Header: Fixed Alignment */}
@@ -61,19 +69,27 @@ export function Sidebar({ activeSection, onSectionChange, onLogout }: SidebarPro
             <img src={atharLogo} alt="Athar" className="w-10 h-10 brightness-0 invert" />
             <div className="flex flex-col justify-center -mt-1">
               <span className="text-xl text-white tracking-wide font-bold leading-none">Athar</span>
-              <span className="text-[10px] text-[#ccfbf1] font-bold tracking-widest uppercase mt-1">Volunteer Hub</span>
+              <span className="text-[10px] text-teal-100 font-bold tracking-widest uppercase mt-1">Volunteer Hub</span>
             </div>
+            <button
+              type="button"
+              onClick={onMobileClose}
+              className="ml-auto p-1.5 rounded-md text-white/70 hover:bg-white/10 hover:text-white lg:hidden"
+              aria-label="Close navigation menu"
+            >
+              <X className="h-5 w-5" />
+            </button>
           </div>
         </div>
 
         {/* 2. Glass Profile Card */}
         <div className="px-3 mb-2">
-          <div className="flex items-center gap-3 bg-white/10 p-3 rounded-xl border border-white/10 hover:border-[#1C9290]/50 transition-colors cursor-default backdrop-blur-sm">
-            <Avatar className="w-9 h-9 border border-[#1C9290]/50">
+          <div className="flex items-center gap-3 bg-white/10 p-3 rounded-xl border border-white/10 hover:border-role-accent-teal/50 transition-colors cursor-default backdrop-blur-sm">
+            <Avatar className="w-9 h-9 border border-role-accent-teal/50">
               {/* Load real image if it exists */}
               <AvatarImage src={user?.photoUrl || ""} className="object-cover" />
               {/* Show dynamic initials if no image */}
-              <AvatarFallback className="bg-[#1C9290] text-white text-xs font-bold">
+              <AvatarFallback className="bg-role-accent-teal text-white text-xs font-bold">
                 {initials}
               </AvatarFallback>
             </Avatar>
@@ -102,10 +118,10 @@ export function Sidebar({ activeSection, onSectionChange, onLogout }: SidebarPro
               <Button
                 key={item.id}
                 variant="ghost"
-                onClick={() => onSectionChange(item.id)}
+                onClick={() => handleNavigation(item.id)}
                 className={`w-full justify-between group h-10 px-3 transition-all duration-200 rounded-lg mb-1 ${
                   isActive
-                    ? "bg-[#1C9290] text-white shadow-lg shadow-black/10 font-semibold"
+                    ? "bg-role-accent-teal text-white shadow-lg shadow-black/10 font-semibold"
                     : "text-teal-100 hover:bg-white/10 hover:text-white font-medium"
                 }`}
               >
@@ -120,7 +136,7 @@ export function Sidebar({ activeSection, onSectionChange, onLogout }: SidebarPro
                   {item.badge && (
                     <span className={`px-1.5 h-5 text-[10px] min-w-[20px] flex items-center justify-center rounded-full font-bold ${
                         isActive 
-                        ? "bg-white text-[#016A6D]" 
+                        ? "bg-white text-role-volunteer" 
                         : "bg-red-500 text-white"
                     }`}>
                       {item.badge}
@@ -135,11 +151,11 @@ export function Sidebar({ activeSection, onSectionChange, onLogout }: SidebarPro
       </div>
 
       {/* --- FIXED BOTTOM SECTION (Logout) --- */}
-      <div className="flex-none p-4 border-t border-white/10 bg-[#016A6D]">
+      <div className="flex-none p-4 border-t border-white/10 bg-role-volunteer">
         <Button
           variant="ghost"
           onClick={onLogout}
-          className="w-full justify-start text-teal-100 hover:bg-[#014d4f] hover:text-white transition-all rounded-lg h-10 px-3 font-medium"
+          className="w-full justify-start text-teal-100 hover:bg-role-volunteer-dark hover:text-white transition-all rounded-lg h-10 px-3 font-medium"
         >
           <LogOut className="mr-3 h-[18px] w-[18px]" />
           <span className="text-sm">Logout</span>
