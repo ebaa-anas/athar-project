@@ -147,7 +147,7 @@ export function AdminSettings() {
   };
 
   if (loading) {
-    return <div className="p-12 text-center text-[#043E52] font-bold flex flex-col items-center justify-center"><Loader2 className="h-8 w-8 animate-spin mb-4" /> Loading System Configurations...</div>;
+    return <div className="p-12 text-center text-slate-700 font-bold flex flex-col items-center justify-center"><Loader2 className="h-8 w-8 animate-spin mb-4" /> Loading System Configurations...</div>;
   }
 
   return (
@@ -155,7 +155,7 @@ export function AdminSettings() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-[#043E52] font-bold text-3xl mb-2">Settings</h1>
+          <h1 className="text-slate-900 font-bold text-3xl mb-2">Settings</h1>
           <p className="text-slate-500">Manage platform configurations and system preferences</p>
         </div>
         <div className="bg-emerald-50 text-emerald-700 px-4 py-2 rounded-lg border border-emerald-100 flex items-center gap-2 text-sm font-bold shadow-sm">
@@ -165,22 +165,22 @@ export function AdminSettings() {
 
       <Tabs defaultValue="general" className="space-y-6">
         <TabsList className="bg-slate-100 p-1 rounded-xl border border-slate-200 w-full md:w-fit h-auto flex flex-wrap justify-start">
-          <TabsTrigger value="general" className="data-[state=active]:bg-white data-[state=active]:text-[#043E52] data-[state=active]:shadow-sm px-6 py-2.5 font-bold text-sm">General</TabsTrigger>
-          <TabsTrigger value="security" className="data-[state=active]:bg-white data-[state=active]:text-[#016A6D] data-[state=active]:shadow-sm px-6 py-2.5 font-bold text-sm">Security</TabsTrigger>
-          <TabsTrigger value="notifications" className="data-[state=active]:bg-white data-[state=active]:text-[#E16A3D] data-[state=active]:shadow-sm px-6 py-2.5 font-bold text-sm">Notifications</TabsTrigger>
-          <TabsTrigger value="integrations" className="data-[state=active]:bg-white data-[state=active]:text-[#1C9290] data-[state=active]:shadow-sm px-6 py-2.5 font-bold text-sm">Integrations</TabsTrigger>
+          <TabsTrigger value="general" className="data-[state=active]:bg-white data-[state=active]:text-role-admin-accent-dark data-[state=active]:shadow-sm px-6 py-2.5 font-bold text-sm">General</TabsTrigger>
+          <TabsTrigger value="security" className="data-[state=active]:bg-white data-[state=active]:text-role-admin-accent-dark data-[state=active]:shadow-sm px-6 py-2.5 font-bold text-sm">Security</TabsTrigger>
+          <TabsTrigger value="notifications" className="data-[state=active]:bg-white data-[state=active]:text-role-admin-accent-dark data-[state=active]:shadow-sm px-6 py-2.5 font-bold text-sm">Notifications</TabsTrigger>
+          <TabsTrigger value="integrations" className="data-[state=active]:bg-white data-[state=active]:text-role-admin-accent-dark data-[state=active]:shadow-sm px-6 py-2.5 font-bold text-sm">Integrations</TabsTrigger>
         </TabsList>
 
         {/* ========================================== */}
         {/* GENERAL SETTINGS                           */}
         {/* ========================================== */}
         <TabsContent value="general" className="space-y-6">
-          <Card className="border-slate-200 border-t-4 border-t-[#043E52] shadow-sm bg-white">
+          <Card className="border-slate-200 border-t-4 border-t-role-admin-accent shadow-sm bg-white">
             <CardHeader>
               <div className="flex items-center gap-3">
-                <div className="bg-[#043E52]/10 p-2 rounded-lg"><Settings className="h-5 w-5 text-[#043E52]" /></div>
+                <div className="bg-role-admin-accent/10 p-2 rounded-lg"><Settings className="h-5 w-5 text-role-admin-accent-dark" /></div>
                 <div>
-                    <CardTitle className="text-[#043E52] text-lg">Platform Information</CardTitle>
+                    <CardTitle className="text-slate-900 text-lg">Platform Information</CardTitle>
                     <CardDescription>Basic platform settings and branding</CardDescription>
                 </div>
               </div>
@@ -189,23 +189,23 @@ export function AdminSettings() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div className="space-y-2">
                     <Label htmlFor="platform-name" className="text-slate-600 font-bold uppercase text-[10px] tracking-wider">Platform Name</Label>
-                    <Input id="platform-name" value={config.platformName} onChange={(e) => setConfig({...config, platformName: e.target.value})} className="border-slate-200 focus:border-[#043E52] h-11" />
+                    <Input id="platform-name" value={config.platformName} onChange={(e) => setConfig({...config, platformName: e.target.value})} className="border-slate-200 focus:border-role-admin-accent-dark h-11" />
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="support-email" className="text-slate-600 font-bold uppercase text-[10px] tracking-wider">Support Email</Label>
-                    <Input id="support-email" type="email" value={config.supportEmail} onChange={(e) => setConfig({...config, supportEmail: e.target.value})} className="border-slate-200 focus:border-[#043E52] h-11" />
+                    <Input id="support-email" type="email" value={config.supportEmail} onChange={(e) => setConfig({...config, supportEmail: e.target.value})} className="border-slate-200 focus:border-role-admin-accent-dark h-11" />
                 </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="platform-description" className="text-slate-600 font-bold uppercase text-[10px] tracking-wider">Description</Label>
-                <Input id="platform-description" value={config.description} onChange={(e) => setConfig({...config, description: e.target.value})} className="border-slate-200 focus:border-[#043E52] h-11" />
+                <Input id="platform-description" value={config.description} onChange={(e) => setConfig({...config, description: e.target.value})} className="border-slate-200 focus:border-role-admin-accent-dark h-11" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="website-url" className="text-slate-600 font-bold uppercase text-[10px] tracking-wider">Website URL</Label>
-                <Input id="website-url" value={config.websiteUrl} onChange={(e) => setConfig({...config, websiteUrl: e.target.value})} className="border-slate-200 focus:border-[#043E52] h-11" />
+                <Input id="website-url" value={config.websiteUrl} onChange={(e) => setConfig({...config, websiteUrl: e.target.value})} className="border-slate-200 focus:border-role-admin-accent-dark h-11" />
               </div>
               <div className="pt-3 border-t border-slate-100 flex justify-end">
-                <Button onClick={handleSaveGeneral} disabled={isSavingGeneral} className="bg-[#043E52] hover:bg-[#033040] text-white gap-2 font-bold px-6 h-11">
+                <Button onClick={handleSaveGeneral} disabled={isSavingGeneral} className="bg-role-admin-accent hover:bg-role-admin-accent-dark text-slate-900 text-white gap-2 font-bold px-6 h-11">
                     {isSavingGeneral ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} 
                     {isSavingGeneral ? 'Saving...' : 'Save Details'}
                 </Button>
@@ -216,9 +216,9 @@ export function AdminSettings() {
           <Card className="border-slate-200 shadow-sm bg-white">
             <CardHeader>
               <div className="flex items-center gap-3">
-                <div className="bg-[#E16A3D]/10 p-2 rounded-lg"><ToggleLeft className="h-5 w-5 text-[#E16A3D]" /></div>
+                <div className="bg-role-admin-accent/10 p-2 rounded-lg"><ToggleLeft className="h-5 w-5 text-role-admin-accent-dark" /></div>
                 <div>
-                    <CardTitle className="text-[#043E52] text-lg">Feature Flags</CardTitle>
+                    <CardTitle className="text-slate-900 text-lg">Feature Flags</CardTitle>
                     <CardDescription>Control system-wide features instantly</CardDescription>
                 </div>
               </div>
@@ -226,26 +226,26 @@ export function AdminSettings() {
             <CardContent className="space-y-6">
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5 pr-4">
-                  <Label className="text-[#043E52] font-bold text-sm">New User Registration</Label>
+                  <Label className="text-slate-900 font-bold text-sm">New User Registration</Label>
                   <p className="text-xs text-slate-500 font-medium">Allow new volunteers and orgs to create accounts</p>
                 </div>
-                <Switch checked={config.flagNewUsers} onCheckedChange={(val) => handleToggle('flagNewUsers', val)} className="data-[state=checked]:bg-[#1C9290]" />
+                <Switch checked={config.flagNewUsers} onCheckedChange={(val) => handleToggle('flagNewUsers', val)} className="data-[state=checked]:bg-role-admin-accent" />
               </div>
               <Separator />
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5 pr-4">
-                  <Label className="text-[#043E52] font-bold text-sm">Organization Verification</Label>
+                  <Label className="text-slate-900 font-bold text-sm">Organization Verification</Label>
                   <p className="text-xs text-slate-500 font-medium">Require manual admin verification before orgs can post</p>
                 </div>
-                <Switch checked={config.flagOrgVerification} onCheckedChange={(val) => handleToggle('flagOrgVerification', val)} className="data-[state=checked]:bg-[#1C9290]" />
+                <Switch checked={config.flagOrgVerification} onCheckedChange={(val) => handleToggle('flagOrgVerification', val)} className="data-[state=checked]:bg-role-admin-accent" />
               </div>
               <Separator />
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5 pr-4">
-                  <Label className="text-[#043E52] font-bold text-sm">Public Profiles</Label>
+                  <Label className="text-slate-900 font-bold text-sm">Public Profiles</Label>
                   <p className="text-xs text-slate-500 font-medium">Allow volunteer profiles to be visible on public search engines</p>
                 </div>
-                <Switch checked={config.flagPublicProfiles} onCheckedChange={(val) => handleToggle('flagPublicProfiles', val)} className="data-[state=checked]:bg-[#1C9290]" />
+                <Switch checked={config.flagPublicProfiles} onCheckedChange={(val) => handleToggle('flagPublicProfiles', val)} className="data-[state=checked]:bg-role-admin-accent" />
               </div>
             </CardContent>
           </Card>
@@ -255,12 +255,12 @@ export function AdminSettings() {
         {/* SECURITY SETTINGS                          */}
         {/* ========================================== */}
         <TabsContent value="security" className="space-y-6">
-          <Card className="border-slate-200 border-t-4 border-t-[#016A6D] shadow-sm bg-white">
+          <Card className="border-slate-200 border-t-4 border-t-role-admin-accent-dark shadow-sm bg-white">
             <CardHeader>
               <div className="flex items-center gap-3">
-                <div className="bg-[#016A6D]/10 p-2 rounded-lg"><Shield className="h-5 w-5 text-[#016A6D]" /></div>
+                <div className="bg-role-admin-accent-dark/10 p-2 rounded-lg"><Shield className="h-5 w-5 text-role-admin-accent-dark" /></div>
                 <div>
-                    <CardTitle className="text-[#043E52] text-lg">Access Control</CardTitle>
+                    <CardTitle className="text-slate-900 text-lg">Access Control</CardTitle>
                     <CardDescription>Manage security and authentication protocols</CardDescription>
                 </div>
               </div>
@@ -271,7 +271,7 @@ export function AdminSettings() {
                   <Label className="text-slate-700 font-bold text-sm">Two-Factor Authentication (2FA)</Label>
                   <p className="text-xs text-slate-500 font-medium">Require 2FA via SMS or Authenticator App for all admins</p>
                 </div>
-                <Switch checked={config.secTwoFactor} onCheckedChange={(val) => handleToggle('secTwoFactor', val)} className="data-[state=checked]:bg-[#016A6D]" />
+                <Switch checked={config.secTwoFactor} onCheckedChange={(val) => handleToggle('secTwoFactor', val)} className="data-[state=checked]:bg-role-admin-accent" />
               </div>
               <Separator />
               <div className="flex items-center justify-between">
@@ -279,7 +279,7 @@ export function AdminSettings() {
                   <Label className="text-slate-700 font-bold text-sm">Session Timeout</Label>
                   <p className="text-xs text-slate-500 font-medium">Auto logout after 30 minutes of inactivity</p>
                 </div>
-                <Switch checked={config.secSessionTimeout} onCheckedChange={(val) => handleToggle('secSessionTimeout', val)} className="data-[state=checked]:bg-[#016A6D]" />
+                <Switch checked={config.secSessionTimeout} onCheckedChange={(val) => handleToggle('secSessionTimeout', val)} className="data-[state=checked]:bg-role-admin-accent" />
               </div>
               <Separator />
               <div className="flex items-center justify-between">
@@ -287,7 +287,7 @@ export function AdminSettings() {
                   <Label className="text-slate-700 font-bold text-sm">Login Attempt Limits</Label>
                   <p className="text-xs text-slate-500 font-medium">Lock account after 5 failed password attempts</p>
                 </div>
-                <Switch checked={config.secLoginLimits} onCheckedChange={(val) => handleToggle('secLoginLimits', val)} className="data-[state=checked]:bg-[#016A6D]" />
+                <Switch checked={config.secLoginLimits} onCheckedChange={(val) => handleToggle('secLoginLimits', val)} className="data-[state=checked]:bg-role-admin-accent" />
               </div>
             </CardContent>
           </Card>
@@ -295,9 +295,9 @@ export function AdminSettings() {
           <Card className="border-slate-200 shadow-sm bg-white">
             <CardHeader>
               <div className="flex items-center gap-3">
-                <div className="bg-[#016A6D]/10 p-2 rounded-lg"><Lock className="h-5 w-5 text-[#016A6D]" /></div>
+                <div className="bg-role-admin-accent-dark/10 p-2 rounded-lg"><Lock className="h-5 w-5 text-role-admin-accent-dark" /></div>
                 <div>
-                    <CardTitle className="text-[#043E52] text-lg">Password Policy</CardTitle>
+                    <CardTitle className="text-slate-900 text-lg">Password Policy</CardTitle>
                     <CardDescription>Enforce password strength requirements</CardDescription>
                 </div>
               </div>
@@ -309,14 +309,14 @@ export function AdminSettings() {
               </div>
               <div className="flex items-center justify-between bg-slate-50 p-4 rounded-lg border border-slate-100">
                 <Label className="text-slate-700 font-bold text-sm">Require Special Characters</Label>
-                <Switch checked={config.secReqSpecial} onCheckedChange={(val) => handleToggle('secReqSpecial', val)} className="data-[state=checked]:bg-[#016A6D]" />
+                <Switch checked={config.secReqSpecial} onCheckedChange={(val) => handleToggle('secReqSpecial', val)} className="data-[state=checked]:bg-role-admin-accent" />
               </div>
               <div className="flex items-center justify-between bg-slate-50 p-4 rounded-lg border border-slate-100">
                 <Label className="text-slate-700 font-bold text-sm">Require Numbers</Label>
-                <Switch checked={config.secReqNumbers} onCheckedChange={(val) => handleToggle('secReqNumbers', val)} className="data-[state=checked]:bg-[#016A6D]" />
+                <Switch checked={config.secReqNumbers} onCheckedChange={(val) => handleToggle('secReqNumbers', val)} className="data-[state=checked]:bg-role-admin-accent" />
               </div>
               <div className="pt-2 border-t border-slate-100 flex justify-end">
-                <Button onClick={handleSaveSecurity} disabled={isSavingSecurity} className="bg-[#016A6D] hover:bg-[#015052] text-white px-6 font-bold h-11">
+                <Button onClick={handleSaveSecurity} disabled={isSavingSecurity} className="bg-role-admin-accent-dark hover:bg-amber-700 text-white px-6 font-bold h-11">
                     {isSavingSecurity ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                     {isSavingSecurity ? 'Updating...' : 'Update Policy'}
                 </Button>
@@ -329,12 +329,12 @@ export function AdminSettings() {
         {/* NOTIFICATION SETTINGS                      */}
         {/* ========================================== */}
         <TabsContent value="notifications" className="space-y-6">
-          <Card className="border-slate-200 border-t-4 border-t-[#E16A3D] shadow-sm bg-white">
+          <Card className="border-slate-200 border-t-4 border-t-role-admin-accent-dark shadow-sm bg-white">
             <CardHeader>
               <div className="flex items-center gap-3">
-                <div className="bg-[#E16A3D]/10 p-2 rounded-lg"><Bell className="h-5 w-5 text-[#E16A3D]" /></div>
+                <div className="bg-role-admin-accent-dark/10 p-2 rounded-lg"><Bell className="h-5 w-5 text-role-admin-accent-dark" /></div>
                 <div>
-                    <CardTitle className="text-[#043E52] text-lg">System Alerts (Email)</CardTitle>
+                    <CardTitle className="text-slate-900 text-lg">System Alerts (Email)</CardTitle>
                     <CardDescription>Configure which events trigger an email to administrators</CardDescription>
                 </div>
               </div>
@@ -345,7 +345,7 @@ export function AdminSettings() {
                   <Label className="text-slate-700 font-bold text-sm">Verification Requests</Label>
                   <p className="text-xs text-slate-500 font-medium">Notify admins when new orgs apply</p>
                 </div>
-                <Switch checked={config.notifVerifications} onCheckedChange={(val) => handleToggle('notifVerifications', val)} className="data-[state=checked]:bg-[#E16A3D]" />
+                <Switch checked={config.notifVerifications} onCheckedChange={(val) => handleToggle('notifVerifications', val)} className="data-[state=checked]:bg-role-admin-accent" />
               </div>
               <Separator />
               <div className="flex items-center justify-between">
@@ -353,7 +353,7 @@ export function AdminSettings() {
                   <Label className="text-slate-700 font-bold text-sm">Content Reports</Label>
                   <p className="text-xs text-slate-500 font-medium">Notify moderators of flagged content</p>
                 </div>
-                <Switch checked={config.notifReports} onCheckedChange={(val) => handleToggle('notifReports', val)} className="data-[state=checked]:bg-[#E16A3D]" />
+                <Switch checked={config.notifReports} onCheckedChange={(val) => handleToggle('notifReports', val)} className="data-[state=checked]:bg-role-admin-accent" />
               </div>
               <Separator />
               <div className="flex items-center justify-between">
@@ -361,7 +361,7 @@ export function AdminSettings() {
                   <Label className="text-slate-700 font-bold text-sm">Critical System Errors</Label>
                   <p className="text-xs text-slate-500 font-medium">Server health and database failure alerts</p>
                 </div>
-                <Switch checked={config.notifErrors} onCheckedChange={(val) => handleToggle('notifErrors', val)} className="data-[state=checked]:bg-[#E16A3D]" />
+                <Switch checked={config.notifErrors} onCheckedChange={(val) => handleToggle('notifErrors', val)} className="data-[state=checked]:bg-role-admin-accent" />
               </div>
             </CardContent>
           </Card>
@@ -369,18 +369,18 @@ export function AdminSettings() {
           <Card className="border-slate-200 shadow-sm bg-white">
             <CardHeader>
               <div className="flex items-center gap-3">
-                <div className="bg-[#FFA45D]/10 p-2 rounded-lg"><Mail className="h-5 w-5 text-[#E16A3D]" /></div>
+                <div className="bg-role-admin-accent/10 p-2 rounded-lg"><Mail className="h-5 w-5 text-role-admin-accent-dark" /></div>
                 <div>
-                    <CardTitle className="text-[#043E52] text-lg">Email Templates</CardTitle>
+                    <CardTitle className="text-slate-900 text-lg">Email Templates</CardTitle>
                     <CardDescription>Manage automated outgoing email content</CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                  <Button onClick={() => handleOpenEmailTemplate('welcome')} variant="outline" className="border-slate-200 text-slate-600 font-bold hover:text-[#E16A3D] hover:border-[#E16A3D] h-12 hover:bg-orange-50">Welcome Email</Button>
-                  <Button onClick={() => handleOpenEmailTemplate('approval')} variant="outline" className="border-slate-200 text-slate-600 font-bold hover:text-[#E16A3D] hover:border-[#E16A3D] h-12 hover:bg-orange-50">Org Approval</Button>
-                  <Button onClick={() => handleOpenEmailTemplate('reset')} variant="outline" className="border-slate-200 text-slate-600 font-bold hover:text-[#E16A3D] hover:border-[#E16A3D] h-12 hover:bg-orange-50">Password Reset</Button>
+                  <Button onClick={() => handleOpenEmailTemplate('welcome')} variant="outline" className="border-slate-200 text-slate-600 font-bold hover:text-role-admin-accent-dark hover:border-role-admin-accent-dark h-12 hover:bg-role-admin-accent/10">Welcome Email</Button>
+                  <Button onClick={() => handleOpenEmailTemplate('approval')} variant="outline" className="border-slate-200 text-slate-600 font-bold hover:text-role-admin-accent-dark hover:border-role-admin-accent-dark h-12 hover:bg-role-admin-accent/10">Org Approval</Button>
+                  <Button onClick={() => handleOpenEmailTemplate('reset')} variant="outline" className="border-slate-200 text-slate-600 font-bold hover:text-role-admin-accent-dark hover:border-role-admin-accent-dark h-12 hover:bg-role-admin-accent/10">Password Reset</Button>
               </div>
             </CardContent>
           </Card>
@@ -390,12 +390,12 @@ export function AdminSettings() {
         {/* INTEGRATIONS SETTINGS                      */}
         {/* ========================================== */}
         <TabsContent value="integrations" className="space-y-6">
-          <Card className="border-slate-200 border-t-4 border-t-[#1C9290] shadow-sm bg-white">
+          <Card className="border-slate-200 border-t-4 border-t-role-admin-accent-dark shadow-sm bg-white">
             <CardHeader>
               <div className="flex items-center gap-3">
-                <div className="bg-[#1C9290]/10 p-2 rounded-lg"><Globe className="h-5 w-5 text-[#1C9290]" /></div>
+                <div className="bg-role-admin-accent-dark/10 p-2 rounded-lg"><Globe className="h-5 w-5 text-role-admin-accent-dark" /></div>
                 <div>
-                    <CardTitle className="text-[#043E52] text-lg">Third-Party Services</CardTitle>
+                    <CardTitle className="text-slate-900 text-lg">Third-Party Services</CardTitle>
                     <CardDescription>Manage external API connections</CardDescription>
                 </div>
               </div>
@@ -404,14 +404,14 @@ export function AdminSettings() {
               {/* SendGrid */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
-                    <div className="bg-slate-50 border border-slate-100 p-3 rounded-xl"><Mail className="h-6 w-6 text-[#1C9290]" /></div>
+                    <div className="bg-slate-50 border border-slate-100 p-3 rounded-xl"><Mail className="h-6 w-6 text-role-admin-accent-dark" /></div>
                     <div className="space-y-0.5">
-                        <Label className="text-[#043E52] text-base font-bold">SendGrid</Label>
+                        <Label className="text-slate-900 text-base font-bold">SendGrid</Label>
                         <p className="text-xs font-medium text-slate-500">Email delivery service for notifications</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-[#1C9290] bg-[#1C9290]/10 px-3 py-1.5 rounded-md">Connected</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-role-admin-accent-dark bg-role-admin-accent-dark/10 px-3 py-1.5 rounded-md">Connected</span>
                     <Button variant="outline" size="sm" className="text-slate-600 font-bold border-slate-200">Configure</Button>
                 </div>
               </div>
@@ -426,7 +426,7 @@ export function AdminSettings() {
                         <p className="text-xs font-medium text-slate-500">Traffic and behavior analysis</p>
                     </div>
                 </div>
-                <Button variant="outline" size="sm" className="text-[#1C9290] font-bold border-[#1C9290] hover:bg-[#1C9290]/5">Connect Integration</Button>
+                <Button variant="outline" size="sm" className="text-role-admin-accent-dark font-bold border-role-admin-accent-dark hover:bg-role-admin-accent-dark/5">Connect Integration</Button>
               </div>
               <Separator />
 
@@ -439,7 +439,7 @@ export function AdminSettings() {
                         <p className="text-xs font-medium text-slate-500">Secure donation processing via credit card</p>
                     </div>
                 </div>
-                <Button variant="outline" size="sm" className="text-[#1C9290] font-bold border-[#1C9290] hover:bg-[#1C9290]/5">Connect Integration</Button>
+                <Button variant="outline" size="sm" className="text-role-admin-accent-dark font-bold border-role-admin-accent-dark hover:bg-role-admin-accent-dark/5">Connect Integration</Button>
               </div>
             </CardContent>
           </Card>
@@ -447,9 +447,9 @@ export function AdminSettings() {
           <Card className="border-slate-200 shadow-sm bg-white">
             <CardHeader>
               <div className="flex items-center gap-3">
-                <div className="bg-[#043E52]/10 p-2 rounded-lg"><Database className="h-5 w-5 text-[#043E52]" /></div>
+                <div className="bg-role-admin-accent-dark/10 p-2 rounded-lg"><Database className="h-5 w-5 text-slate-900" /></div>
                 <div>
-                    <CardTitle className="text-[#043E52] text-lg">Database & Recovery</CardTitle>
+                    <CardTitle className="text-slate-900 text-lg">Database & Recovery</CardTitle>
                     <CardDescription>Manage data retention policies and backups</CardDescription>
                 </div>
               </div>
@@ -460,7 +460,7 @@ export function AdminSettings() {
                   <Label className="text-slate-700 font-bold text-sm">Automatic Nightly Backups</Label>
                   <p className="text-xs text-slate-500 font-medium">Perform a full Firestore dump daily at 02:00 AM UTC</p>
                 </div>
-                <Switch checked={config.autoBackup} onCheckedChange={(val) => handleToggle('autoBackup', val)} className="data-[state=checked]:bg-[#043E52]" />
+                <Switch checked={config.autoBackup} onCheckedChange={(val) => handleToggle('autoBackup', val)} className="data-[state=checked]:bg-role-admin-accent" />
               </div>
               
               <div className="pt-2">
