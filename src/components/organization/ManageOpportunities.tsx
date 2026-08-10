@@ -320,15 +320,15 @@ export function ManageOpportunities() {
 
     return (
       <div className="space-y-6 pb-10 max-w-7xl mx-auto p-4 animate-in fade-in duration-300">
-        <Button variant="ghost" onClick={() => setSelectedOpp(null)} className="text-slate-500 hover:text-[#043E52] hover:bg-slate-100 -ml-2 font-bold mb-2">
+        <Button variant="ghost" onClick={() => setSelectedOpp(null)} className="text-slate-500 hover:text-role-org hover:bg-slate-100 -ml-2 font-bold mb-2">
           <ArrowLeft className="h-4 w-4 mr-2" /> Back to Opportunities
         </Button>
 
         <div className="flex flex-col md:flex-row gap-6">
           <div className="md:w-1/3 space-y-6">
-            <Card className="border-slate-200 shadow-sm border-t-4 border-t-[#043E52]">
+            <Card className="border-slate-200 shadow-sm border-t-4 border-t-role-org">
               <CardHeader className="pb-3">
-                <CardTitle className="text-[#043E52] text-lg leading-tight flex items-center gap-2">
+                <CardTitle className="text-slate-900 text-lg leading-tight flex items-center gap-2">
                   {selectedOpp.title}
                   {selectedOpp.status === 'closed' && <Badge className="bg-slate-200 text-slate-600 text-[10px] uppercase font-black border-none">Closed</Badge>}
                 </CardTitle>
@@ -340,7 +340,7 @@ export function ManageOpportunities() {
                     <span>Goal Required</span><Badge className="bg-slate-200 text-slate-700">{selectedOpp.goal}</Badge>
                   </div>
                   <div className="flex justify-between items-center text-sm font-bold text-slate-700">
-                    <span>Deployed (Accepted)</span><Badge className="bg-[#E16A3D]">{deployedCount}</Badge>
+                    <span>Deployed (Accepted)</span><Badge className="bg-brand-cta">{deployedCount}</Badge>
                   </div>
                 </div>
 
@@ -348,14 +348,14 @@ export function ManageOpportunities() {
                   <Label className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">Broadcast to Team</Label>
                   <Textarea 
                     placeholder={selectedOpp.status === 'closed' ? "This mission is closed." : "Type instructions..."} 
-                    className="min-h-[120px] resize-none border-slate-200 focus:border-[#1C9290] text-sm"
+                    className="min-h-[120px] resize-none border-slate-200 focus:border-role-accent-teal text-sm"
                     value={broadcastMessage} onChange={(e) => setBroadcastMessage(e.target.value)}
                     disabled={selectedOpp.status === 'closed'}
                   />
                   <Button 
                     onClick={handleBroadcastMessage} 
                     disabled={isBroadcasting || deployedCount === 0 || !broadcastMessage.trim() || selectedOpp.status === 'closed'} 
-                    className="w-full bg-[#043E52] hover:bg-[#033040] text-white font-bold mt-2"
+                    className="w-full bg-role-org hover:bg-role-org-dark text-white font-bold mt-2"
                   >
                     {isBroadcasting ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Send className="mr-2 h-4 w-4" /> Send to Comms</>}
                   </Button>
@@ -365,7 +365,7 @@ export function ManageOpportunities() {
           </div>
 
           <div className="md:w-2/3 space-y-4">
-            <h2 className="text-lg font-bold text-[#043E52] flex items-center gap-2"><Users className="h-5 w-5 text-[#1C9290]" /> Roster & Applications</h2>
+            <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2"><Users className="h-5 w-5 text-role-accent-teal" /> Roster & Applications</h2>
             {applicants.length === 0 ? (
               <Card className="border-dashed border-2 border-slate-200 shadow-none bg-slate-50/50">
                 <CardContent className="flex flex-col items-center justify-center py-12 text-center">
@@ -376,15 +376,15 @@ export function ManageOpportunities() {
             ) : (
               <div className="grid gap-3">
                 {applicants.map((app) => (
-                  <Card key={app.id} className="border-slate-200 shadow-sm hover:border-[#1C9290]/30 transition-colors">
+                  <Card key={app.id} className="border-slate-200 shadow-sm hover:border-role-accent-teal/30 transition-colors">
                     <CardContent className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                       <div className="flex items-center gap-4">
                         <Avatar className="h-12 w-12 border border-slate-200">
                           <AvatarImage src={app.volunteerAvatar} />
-                          <AvatarFallback className="bg-[#043E52] text-white font-bold">{String(app.volunteerName || 'U').charAt(0).toUpperCase()}</AvatarFallback>
+                          <AvatarFallback className="bg-role-org text-white font-bold">{String(app.volunteerName || 'U').charAt(0).toUpperCase()}</AvatarFallback>
                         </Avatar>
                         <div>
-                          <h4 className="font-bold text-[#043E52] text-sm">{app.volunteerName || "Unknown Volunteer"}</h4>
+                          <h4 className="font-bold text-slate-900 text-sm">{app.volunteerName || "Unknown Volunteer"}</h4>
                           <p className="text-xs text-slate-500 mt-0.5">Applied: {app.createdAt ? new Date(app.createdAt.toDate()).toLocaleDateString() : 'Recently'}</p>
                         </div>
                       </div>
@@ -392,13 +392,13 @@ export function ManageOpportunities() {
                       <div className="flex flex-col items-end gap-2 w-full sm:w-auto mt-2 sm:mt-0">
                         {app.status === 'pending' && selectedOpp.status !== 'closed' ? (
                            <div className="flex gap-2">
-                              <Button size="sm" onClick={() => handleApplicationStatus(app.id, 'accepted')} className="bg-[#1C9290] hover:bg-teal-700 text-white h-8 text-[10px] uppercase font-bold tracking-wide"><Check className="h-3 w-3 mr-1"/> Accept</Button>
-                              <Button size="sm" variant="outline" onClick={() => handleApplicationStatus(app.id, 'rejected')} className="border-rose-200 text-rose-600 hover:bg-rose-50 h-8 text-[10px] uppercase font-bold tracking-wide"><X className="h-3 w-3 mr-1"/> Reject</Button>
+                              <Button size="sm" onClick={() => handleApplicationStatus(app.id, 'accepted')} className="bg-role-accent-teal hover:bg-role-accent-teal/80 text-white h-8 text-[10px] uppercase font-bold tracking-wide"><Check className="h-3 w-3 mr-1"/> Accept</Button>
+                              <Button size="sm" variant="outline" onClick={() => handleApplicationStatus(app.id, 'rejected')} className="border-red-200 text-red-600 hover:bg-red-50 h-8 text-[10px] uppercase font-bold tracking-wide"><X className="h-3 w-3 mr-1"/> Reject</Button>
                            </div>
                         ) : (
                           <Badge variant="outline" className={`text-[10px] font-bold uppercase tracking-wider ${
                             app.status === 'accepted' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                            app.status === 'rejected' ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-orange-50 text-orange-700 border-orange-200'
+                            app.status === 'rejected' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-amber-50 text-amber-700 border-amber-200'
                           }`}>
                             {app.status || 'Pending'}
                           </Badge>
@@ -421,12 +421,12 @@ export function ManageOpportunities() {
     <div className="space-y-6 pb-10 max-w-7xl mx-auto p-4">
       <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#043E52] flex items-center gap-2">
-            <CheckCircle className="h-6 w-6 text-[#1C9290]" /> Opportunity Management
+          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+            <CheckCircle className="h-6 w-6 text-role-accent-teal" /> Opportunity Management
           </h1>
           {/* Validation Warnings */}
           {!isProfileComplete && (
-            <p className="text-xs text-rose-600 font-bold mt-2 flex items-center gap-1.5 bg-rose-50 p-2 rounded-md border border-rose-200 w-fit">
+            <p className="text-xs text-red-600 font-bold mt-2 flex items-center gap-1.5 bg-red-50 p-2 rounded-md border border-red-200 w-fit">
               <ShieldAlert className="h-4 w-4" /> Action Required: Complete your Organization Profile settings to unlock posting.
             </p>
           )}
@@ -438,7 +438,7 @@ export function ManageOpportunities() {
         </div>
         
         <Button 
-            className={`${canPost ? 'bg-[#043E52] hover:bg-[#033040] text-white' : 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'}`} 
+            className={`${canPost ? 'bg-role-org hover:bg-role-org-dark text-white' : 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'}`} 
             onClick={handleOpenCreate}
             disabled={!canPost}
         >
@@ -448,9 +448,9 @@ export function ManageOpportunities() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <MetricCard label="Total Missions" value={opportunities.length} icon={Tag} color="text-[#043E52]" bg="bg-slate-50" border="border-[#043E52]" />
-        <MetricCard label="Active Applicants" value={opportunities.reduce((a, b) => a + (b.applicantsCount || 0), 0)} icon={Users} color="text-[#1C9290]" bg="bg-teal-50" border="border-[#1C9290]" />
-        <MetricCard label="Live Feeds" value={opportunities.filter(o => o.status !== 'closed').length} icon={Clock} color="text-[#E16A3D]" bg="bg-orange-50" border="border-[#E16A3D]" />
+        <MetricCard label="Total Missions" value={opportunities.length} icon={Tag} color="text-role-org" bg="bg-slate-50" border="border-role-org" />
+        <MetricCard label="Active Applicants" value={opportunities.reduce((a, b) => a + (b.applicantsCount || 0), 0)} icon={Users} color="text-role-accent-teal" bg="bg-teal-50" border="border-role-accent-teal" />
+        <MetricCard label="Live Feeds" value={opportunities.filter(o => o.status !== 'closed').length} icon={Clock} color="text-brand-cta" bg="bg-brand-cta/10" border="border-brand-cta" />
       </div>
 
       <div className="space-y-4">
@@ -458,7 +458,7 @@ export function ManageOpportunities() {
           const isClosed = opp.status === 'closed';
 
           return (
-            <Card key={opp.id} className={`transition-all duration-300 ${isClosed ? 'opacity-80 bg-slate-50 border-l-4 border-l-slate-300' : 'border-l-4 border-l-[#1C9290]'}`}>
+            <Card key={opp.id} className={`transition-all duration-300 ${isClosed ? 'opacity-80 bg-slate-50 border-l-4 border-l-slate-300' : 'border-l-4 border-l-role-accent-teal'}`}>
               <CardContent className="p-6">
                 <div className="flex flex-col lg:flex-row gap-6">
                   <div className="flex-1">
@@ -466,13 +466,13 @@ export function ManageOpportunities() {
                       <div className="space-y-1">
                         <div className="flex items-center gap-3">
                           {isClosed && <div className="h-8 w-8 rounded-lg bg-slate-200 flex items-center justify-center text-slate-500"><Lock size={16} /></div>}
-                          <h3 className={`text-lg font-bold ${isClosed ? 'text-slate-600 line-through decoration-slate-300' : 'text-[#043E52]'}`}>{opp.title}</h3>
+                          <h3 className={`text-lg font-bold ${isClosed ? 'text-slate-600 line-through decoration-slate-300' : 'text-slate-900'}`}>{opp.title}</h3>
                           
                           {isClosed ? (
                             <Badge className="bg-slate-200 text-slate-600 font-black uppercase text-[9px] border-none">Archived / Disabled</Badge>
                           ) : (
                             <>
-                              <Badge variant="outline" className="text-[#E16A3D] border-[#E16A3D] bg-orange-50 font-bold uppercase text-[10px]">{opp.category}</Badge>
+                              <Badge variant="outline" className="text-brand-cta border-brand-cta bg-brand-cta/10 font-bold uppercase text-[10px]">{opp.category}</Badge>
                               <Badge variant="secondary" className="bg-slate-100 text-slate-500 border-none font-bold uppercase text-[10px]">
                                 {opp.targetAudience === 'avr_only' ? 'AVR Exclusive' : opp.targetAudience === 'org_internal' ? 'Internal Roster' : 'Public System'}
                               </Badge>
@@ -487,32 +487,32 @@ export function ManageOpportunities() {
                       
                       <div className="flex gap-1 flex-col sm:flex-row items-end sm:items-center">
                         {!isClosed && (
-                          <Button variant="outline" size="sm" onClick={() => handleCloseOpportunity(opp.id)} disabled={closingId === opp.id} className="h-8 border-orange-200 text-orange-600 font-bold text-[10px] uppercase">
+                          <Button variant="outline" size="sm" onClick={() => handleCloseOpportunity(opp.id)} disabled={closingId === opp.id} className="h-8 border-brand-cta/30 text-brand-cta font-bold text-[10px] uppercase">
                             {closingId === opp.id ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />} Close
                           </Button>
                         )}
-                        {!isClosed && <Button variant="ghost" size="sm" onClick={() => handleEdit(opp)} className="text-slate-400 hover:text-[#043E52] h-8"><Edit3 size={16} /></Button>}
-                        <Button variant="ghost" size="sm" onClick={() => handleDelete(opp.id)} className="text-slate-300 hover:text-rose-500 h-8"><Trash2 size={16} /></Button>
+                        {!isClosed && <Button variant="ghost" size="sm" onClick={() => handleEdit(opp)} className="text-slate-400 hover:text-role-org h-8"><Edit3 size={16} /></Button>}
+                        <Button variant="ghost" size="sm" onClick={() => handleDelete(opp.id)} className="text-slate-300 hover:text-red-500 h-8"><Trash2 size={16} /></Button>
                       </div>
                     </div>
                     <p className={`text-sm mb-4 p-3 rounded-lg border ${isClosed ? 'bg-white text-slate-400 border-slate-200' : 'bg-slate-50 text-slate-600 border-slate-100'}`}>{opp.description}</p>
                     
                     {!isClosed && (
                       <div className="flex flex-wrap gap-2">
-                        {opp.skills?.map((skill: string) => <Badge key={skill} variant="secondary" className="bg-white text-[#1C9290] border border-teal-100 text-[10px] font-bold">{skill}</Badge>)}
+                        {opp.skills?.map((skill: string) => <Badge key={skill} variant="secondary" className="bg-white text-role-accent-teal border border-teal-100 text-[10px] font-bold">{skill}</Badge>)}
                       </div>
                     )}
                   </div>
 
                   <div className={`lg:w-72 border-l lg:pl-6 ${isClosed ? 'border-slate-200' : 'border-slate-100'}`}>
-                      <div className={`flex justify-between text-sm font-semibold mb-1 ${isClosed ? 'text-slate-500' : 'text-[#043E52]'}`}>
+                      <div className={`flex justify-between text-sm font-semibold mb-1 ${isClosed ? 'text-slate-500' : 'text-role-org'}`}>
                           <span>Progress</span><span>{Math.round(((opp.applicantsCount || 0) / (parseInt(opp.goal) || 1)) * 100) || 0}%</span>
                       </div>
                       <Progress value={((opp.applicantsCount || 0) / (parseInt(opp.goal) || 1)) * 100} className={`h-2.5 ${isClosed ? 'bg-slate-200 [&>div]:bg-slate-400' : 'bg-slate-100'}`} />
                       <div className="flex justify-between text-xs text-slate-500 mt-1.5">
                           <span>{opp.applicantsCount || 0} Applied</span><span>Goal: {opp.goal}</span>
                       </div>
-                      <Button onClick={() => setSelectedOpp(opp)} className={`w-full mt-4 h-9 text-sm ${isClosed ? 'bg-slate-200 text-slate-700' : 'bg-[#043E52] text-white'}`}>
+                      <Button onClick={() => setSelectedOpp(opp)} className={`w-full mt-4 h-9 text-sm ${isClosed ? 'bg-slate-200 text-slate-700' : 'bg-role-org text-white'}`}>
                         {isClosed ? 'View Roster' : 'Manage Applicants'}
                       </Button>
                   </div>
@@ -527,13 +527,13 @@ export function ManageOpportunities() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <Card className="w-full max-w-lg shadow-xl border-none">
             <CardHeader className="border-b border-slate-100 pb-4 flex flex-row items-center justify-between">
-              <CardTitle className="text-[#043E52] text-lg">{editingId ? 'Edit Opportunity' : 'New Opportunity'}</CardTitle>
+              <CardTitle className="text-slate-900 text-lg">{editingId ? 'Edit Opportunity' : 'New Opportunity'}</CardTitle>
               <XCircle className="h-6 w-6 text-slate-300 cursor-pointer hover:text-red-500" onClick={() => setShowForm(false)} />
             </CardHeader>
             <CardContent className="p-6 space-y-4">
               <div className="space-y-2"><Label>Title</Label><Input value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} /></div>
               
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label>Category</Label>
                   <select className="w-full h-10 px-3 rounded-md border border-slate-200 bg-white text-sm" value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})}>
@@ -549,7 +549,7 @@ export function ManageOpportunities() {
                 <div className="space-y-2"><Label>Volunteer Goal</Label><Input type="number" value={formData.goal} onChange={e => setFormData({...formData, goal: e.target.value})} /></div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2"><Label>Location</Label><Input value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} /></div>
                 
                 {/* Prevent selecting a deadline in the past */}
@@ -566,8 +566,8 @@ export function ManageOpportunities() {
 
               {orgProfile?.tier === 'tier2' && (
                 <div className="space-y-2 bg-slate-50 p-3 rounded-lg border border-slate-100">
-                  <Label className="flex items-center gap-1.5 text-[#043E52]">
-                    <Users className="h-4 w-4 text-[#1C9290]" /> Visibility Target
+                  <Label className="flex items-center gap-1.5 text-role-org">
+                    <Users className="h-4 w-4 text-role-accent-teal" /> Visibility Target
                   </Label>
                   <select 
                     className="w-full h-10 px-3 rounded-md border border-slate-200 bg-white text-sm" 
@@ -585,14 +585,14 @@ export function ManageOpportunities() {
                 <Input value={skillInput} onChange={e => setSkillInput(e.target.value)} onKeyDown={handleAddSkill} placeholder="e.g. Nursing" />
                 <div className="flex flex-wrap gap-1 mt-2">
                   {skills.map((s, i) => (
-                    <Badge key={i} className="bg-slate-100 text-[#043E52] border-none">{s} <XCircle size={12} className="ml-1 cursor-pointer" onClick={() => setSkills(skills.filter((_, idx) => idx !== i))} /></Badge>
+                    <Badge key={i} className="bg-slate-100 text-role-org border-none">{s} <XCircle size={12} className="ml-1 cursor-pointer" onClick={() => setSkills(skills.filter((_, idx) => idx !== i))} /></Badge>
                   ))}
                 </div>
               </div>
 
               <div className="space-y-2"><Label>Description</Label><Textarea value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} /></div>
 
-              <Button onClick={handleSubmit} disabled={loading} className="w-full bg-[#1C9290] text-white font-bold h-11">
+              <Button onClick={handleSubmit} disabled={loading} className="w-full bg-role-accent-teal text-white font-bold h-11">
                 <Send className="mr-2 h-4 w-4" /> {editingId ? 'UPDATE CHANGES' : 'PUBLISH NOW'}
               </Button>
             </CardContent>
