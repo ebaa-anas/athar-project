@@ -259,7 +259,7 @@ export function Certificates() {
   };
 
   if (loading) {
-    return <div className="p-12 text-center text-[#016A6D] font-bold flex flex-col items-center justify-center"><Loader2 className="h-8 w-8 animate-spin mb-4" /> Synchronizing Ledger...</div>;
+    return <div className="p-12 text-center text-role-volunteer font-bold flex flex-col items-center justify-center"><Loader2 className="h-8 w-8 animate-spin mb-4" /> Synchronizing Ledger...</div>;
   }
 
   return (
@@ -267,10 +267,10 @@ export function Certificates() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 pb-4">
         <div>
-          <h1 className="text-[#016A6D] font-bold text-3xl tracking-tight">Credentials & Achievements</h1>
+          <h1 className="text-role-volunteer font-bold text-3xl tracking-tight">Credentials & Achievements</h1>
           <p className="text-slate-500 text-sm font-medium mt-1">Manage your verified certifications, skills, and platform milestones.</p>
         </div>
-        <Button className="bg-[#016A6D] hover:bg-[#125d56] text-white font-bold text-xs uppercase tracking-wider h-10 shadow-sm">
+        <Button className="bg-role-volunteer hover:bg-role-volunteer-dark text-white font-bold text-xs uppercase tracking-wider h-10 shadow-sm">
           <Share2 className="mr-2 h-4 w-4" />
           Share Portfolio
         </Button>
@@ -290,14 +290,14 @@ export function Certificates() {
           </CardContent>
         </Card>
         
-        <Card className="border-slate-200 shadow-sm bg-white border-l-4 border-l-[#E16A3D]">
+        <Card className="border-slate-200 shadow-sm bg-white border-l-4 border-l-brand-cta">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">In Progress</p>
-                <p className="text-2xl font-bold text-[#E16A3D]">{pendingCourses.length}</p>
+                <p className="text-2xl font-bold text-brand-cta">{pendingCourses.length}</p>
               </div>
-              <div className="bg-orange-50 p-2.5 rounded-lg"><Clock className="h-5 w-5 text-[#E16A3D]" /></div>
+              <div className="bg-brand-cta/10 p-2.5 rounded-lg"><Clock className="h-5 w-5 text-brand-cta" /></div>
             </div>
           </CardContent>
         </Card>
@@ -314,14 +314,14 @@ export function Certificates() {
           </CardContent>
         </Card>
         
-        <Card className="border-slate-200 shadow-sm bg-white border-l-4 border-l-[#1C9290]">
+        <Card className="border-slate-200 shadow-sm bg-white border-l-4 border-l-role-accent-teal">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">Status</p>
-                <p className="text-xl font-bold text-[#1C9290] leading-none mt-1">Verified</p>
+                <p className="text-xl font-bold text-role-accent-teal leading-none mt-1">Verified</p>
               </div>
-              <div className="bg-teal-50 p-2.5 rounded-lg"><CheckCircle className="h-5 w-5 text-[#1C9290]" /></div>
+              <div className="bg-teal-50 p-2.5 rounded-lg"><CheckCircle className="h-5 w-5 text-role-accent-teal" /></div>
             </div>
           </CardContent>
         </Card>
@@ -330,9 +330,9 @@ export function Certificates() {
       {/* Tabs */}
       <Tabs defaultValue="earned" className="w-full">
         <TabsList className="bg-slate-100 p-1 rounded-lg flex flex-wrap w-full md:w-auto justify-start mb-6">
-          <TabsTrigger value="earned" className="rounded-md data-[state=active]:bg-white data-[state=active]:text-[#016A6D] data-[state=active]:shadow-sm px-5 py-2 font-bold text-xs uppercase tracking-wider">Earned Credentials ({earnedCerts.length})</TabsTrigger>
-          <TabsTrigger value="in-progress" className="rounded-md data-[state=active]:bg-white data-[state=active]:text-[#016A6D] data-[state=active]:shadow-sm px-5 py-2 font-bold text-xs uppercase tracking-wider">In Progress ({pendingCourses.length})</TabsTrigger>
-          <TabsTrigger value="achievements" className="rounded-md data-[state=active]:bg-white data-[state=active]:text-[#016A6D] data-[state=active]:shadow-sm px-5 py-2 font-bold text-xs uppercase tracking-wider">Milestones</TabsTrigger>
+          <TabsTrigger value="earned" className="rounded-md data-[state=active]:bg-white data-[state=active]:text-role-volunteer data-[state=active]:shadow-sm px-5 py-2 font-bold text-xs uppercase tracking-wider">Earned Credentials ({earnedCerts.length})</TabsTrigger>
+          <TabsTrigger value="in-progress" className="rounded-md data-[state=active]:bg-white data-[state=active]:text-role-volunteer data-[state=active]:shadow-sm px-5 py-2 font-bold text-xs uppercase tracking-wider">In Progress ({pendingCourses.length})</TabsTrigger>
+          <TabsTrigger value="achievements" className="rounded-md data-[state=active]:bg-white data-[state=active]:text-role-volunteer data-[state=active]:shadow-sm px-5 py-2 font-bold text-xs uppercase tracking-wider">Milestones</TabsTrigger>
         </TabsList>
 
         <TabsContent value="earned" className="mt-6">
@@ -349,19 +349,19 @@ export function Certificates() {
                   <CardHeader className="bg-gradient-to-br from-teal-50/50 to-emerald-50/50 border-b border-slate-100 pb-5">
                     <div className="flex items-start justify-between gap-4">
                       <div className="bg-white p-3.5 rounded-xl shadow-sm border border-slate-100 group-hover:scale-110 transition-transform">
-                        <Award className="h-8 w-8 text-[#1C9290]" />
+                        <Award className="h-8 w-8 text-role-accent-teal" />
                       </div>
                       <Badge className="bg-emerald-500 text-white hover:bg-emerald-600 border-none font-bold text-[10px] uppercase tracking-wider px-2.5 py-1 shadow-sm">
                         <CheckCircle className="mr-1.5 h-3 w-3" /> Verified
                       </Badge>
                     </div>
-                    <CardTitle className="mt-5 text-xl font-black text-[#016A6D] leading-tight">{cert.title}</CardTitle>
-                    <CardDescription className="text-[#1C9290] font-bold text-xs uppercase tracking-widest">{cert.type}</CardDescription>
+                    <CardTitle className="mt-5 text-xl font-black text-role-volunteer leading-tight">{cert.title}</CardTitle>
+                    <CardDescription className="text-role-accent-teal font-bold text-xs uppercase tracking-widest">{cert.type}</CardDescription>
                   </CardHeader>
                   <CardContent className="p-6 space-y-5">
                     <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-100">
                       <div className="flex items-center gap-3 text-xs font-bold text-slate-600 uppercase tracking-wider">
-                        <Calendar className="h-4 w-4 text-[#E16A3D]" />
+                        <Calendar className="h-4 w-4 text-brand-cta" />
                         <span>Issued: {cert.dateString}</span>
                       </div>
                       <div className="flex items-center gap-3 text-xs font-bold text-slate-600 uppercase tracking-wider">
@@ -374,7 +374,7 @@ export function Certificates() {
                       <Button 
                         onClick={() => handleDownloadCertificate(cert.id, cert.title, cert.type, cert.dateString)}
                         disabled={isGeneratingCert === cert.id}
-                        className="flex-1 bg-[#016A6D] hover:bg-[#125d56] text-white font-bold text-xs uppercase tracking-wider h-10 shadow-sm"
+                        className="flex-1 bg-role-volunteer hover:bg-role-volunteer-dark text-white font-bold text-xs uppercase tracking-wider h-10 shadow-sm"
                       >
                         {isGeneratingCert === cert.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
                         Download
@@ -400,14 +400,14 @@ export function Certificates() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {pendingCourses.map((cert) => (
-                <Card key={cert.id} className="border-slate-200 shadow-sm bg-white hover:border-[#E16A3D]/30 transition-colors">
+                <Card key={cert.id} className="border-slate-200 shadow-sm bg-white hover:border-brand-cta/30 transition-colors">
                   <CardHeader className="pb-3 border-b border-slate-50">
                     <div className="flex items-start gap-4">
-                      <div className="bg-orange-50 p-3 rounded-xl border border-orange-100">
-                        <Clock className="h-6 w-6 text-[#E16A3D]" />
+                      <div className="bg-brand-cta/10 p-3 rounded-xl border border-brand-cta/20">
+                        <Clock className="h-6 w-6 text-brand-cta" />
                       </div>
                       <div className="flex-1 pt-1">
-                        <CardTitle className="text-base font-bold text-[#016A6D]">{cert.title}</CardTitle>
+                        <CardTitle className="text-base font-bold text-role-volunteer">{cert.title}</CardTitle>
                         <CardDescription className="text-xs font-semibold mt-1">Athar Training Academy</CardDescription>
                       </div>
                     </div>
@@ -416,13 +416,13 @@ export function Certificates() {
                     <div className="space-y-2">
                       <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-500">
                         <span>Progress</span>
-                        <span className="text-[#E16A3D]">{cert.progress}%</span>
+                        <span className="text-brand-cta">{cert.progress}%</span>
                       </div>
-                      <Progress value={cert.progress} className="h-2 bg-slate-100 [&>div]:bg-[#E16A3D]" />
+                      <Progress value={cert.progress} className="h-2 bg-slate-100 [&>div]:bg-brand-cta" />
                     </div>
                     <div className="flex items-center justify-between bg-slate-50 p-3 rounded-lg border border-slate-100 text-xs font-bold text-slate-500">
                       <span>Status</span>
-                      <span className="text-[#016A6D] uppercase tracking-widest">Enrolled</span>
+                      <span className="text-role-volunteer uppercase tracking-widest">Enrolled</span>
                     </div>
                   </CardContent>
                 </Card>
@@ -438,7 +438,7 @@ export function Certificates() {
               <Card key={achievement.id} className="overflow-hidden hover:shadow-lg transition-shadow border-slate-200 bg-white">
                 <CardContent className="p-8 text-center flex flex-col items-center">
                   <div className="text-6xl mb-5 drop-shadow-md">{achievement.icon}</div>
-                  <h3 className="text-[#016A6D] font-black text-lg mb-2">{achievement.title}</h3>
+                  <h3 className="text-role-volunteer font-black text-lg mb-2">{achievement.title}</h3>
                   <p className="text-xs font-medium text-slate-500 mb-5 leading-relaxed">{achievement.description}</p>
                   <div className="flex items-center justify-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest bg-slate-50 px-4 py-2 rounded-lg border border-slate-100 w-full">
                     <Sparkles className="h-3.5 w-3.5 text-amber-500" />
