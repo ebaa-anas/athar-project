@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test:rules": "firebase emulators:exec --project athar-rules-test --only firestore \"vitest run firestore-tests\"",
-    "test:api": "vitest run api"
+    "test:api": "vitest run api src/gemini.test.js"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

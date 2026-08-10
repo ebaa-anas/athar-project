@@ -65,7 +65,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       headers: {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
-        "HTTP-Referer": "http://localhost:3000",
         "X-Title": "Athar Project",
       },
       body: JSON.stringify({
