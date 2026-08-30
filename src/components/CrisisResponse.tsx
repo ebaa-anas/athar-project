@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
-import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { 
-  getFirestore, collection, onSnapshot, query, where, doc, updateDoc, increment, serverTimestamp, addDoc 
+import {
+  collection, onSnapshot, query, where, doc, updateDoc, increment, serverTimestamp, addDoc
 } from "firebase/firestore";
+import { auth, db } from '../lib/firebase';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
@@ -16,20 +15,6 @@ import {
 } from 'lucide-react';
 import { Label } from './ui/label';
 import { useUserProfile } from '../hooks/useUserProfile';
-
-// --- FIREBASE CONFIG ---
-const firebaseConfig = {
-  apiKey: "AIzaSyDRSETgWx1F3RX3_KAzgceyYBJKfpheRQk",
-  authDomain: "athar-project-aa74e.firebaseapp.com",
-  projectId: "athar-project-aa74e",
-  storageBucket: "athar-project-aa74e.firebasestorage.app",
-  messagingSenderId: "715063889584",
-  appId: "1:715063889584:web:3443ae48678c91a7f4b575",
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
 
 const timeAgo = (timestamp: any) => {
   if (!timestamp) return 'Just now';

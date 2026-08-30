@@ -1,5 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Menu } from 'lucide-react';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
+import { auth, db } from './lib/firebase';
 import { Sidebar } from './components/Sidebar';
 import { OverviewDashboard } from './components/OverviewDashboard';
 import { MyProfile } from './components/MyProfile';
@@ -46,6 +49,39 @@ export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [activeSection, setActiveSection] = useState('overview');
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  // True until Firebase tells us whether a persisted session exists. Without
+  // this gate a logged-in user briefly sees the landing page on every refresh.
+  const [authChecking, setAuthChecking] = useState(true);
+
+  // Restore a persisted session on load. Firebase keeps the auth session in the
+  // browser, but App used to track isLoggedIn/userType in plain useState only,
+  // so every refresh dropped the user back to the landing page. This reads the
+  // session once on mount; interactive login/logout stays with the handlers
+  // below, so a wrong-portal login attempt still shows its error in place.
+  useEffect(() => {
+    let cancelled = false;
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      unsubscribe(); // one-shot: only used for the initial session restore
+      if (!cancelled && firebaseUser) {
+        try {
+          const nametag = await getDoc(doc(db, 'users', firebaseUser.uid));
+          const role = nametag.exists() ? (nametag.data().role as UserType) : null;
+          if (!cancelled && (role === 'volunteer' || role === 'organization' || role === 'admin')) {
+            setUserType(role);
+            setIsLoggedIn(true);
+          }
+        } catch (err) {
+          console.error('Session restore failed:', err);
+        }
+      }
+      if (!cancelled) setAuthChecking(false);
+    });
+
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
+  }, []);
 
   const handleUserTypeSelection = (type: UserType) => {
     setUserType(type);
@@ -55,11 +91,17 @@ export default function App() {
     setIsLoggedIn(true);
   };
 
-  const handleLogout = () => {
-    
+  const handleLogout = async () => {
+    try {
+      // Actually end the Firebase session so it does not come back on refresh.
+      // The old handler only reset local state, leaving the session alive.
+      await signOut(auth);
+    } catch (err) {
+      console.error('Sign-out failed:', err);
+    }
     setIsLoggedIn(false);
-    setUserType(null); 
-    setActiveSection('overview'); 
+    setUserType(null);
+    setActiveSection('overview');
   };
 
   const renderVolunteerContent = () => {
@@ -109,6 +151,16 @@ export default function App() {
       default: return <AdminOverview />;
     }
   };
+
+  // Wait for Firebase to report whether a session was restored before deciding
+  // what to render, otherwise a logged-in user flashes the landing page on load.
+  if (authChecking) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-gray-50">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-300 border-t-slate-600" />
+      </div>
+    );
+  }
 
   if (!userType) {
     return (

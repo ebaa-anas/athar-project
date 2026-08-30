@@ -1,4 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { callOpenRouter } from "./_shared/openrouter";
 
 const ATHAR_CONTEXT = `
 Athar is a web-based platform that connects verified volunteers with organizations.
@@ -59,22 +60,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
-  try {
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-        "X-Title": "Athar Project",
-      },
-      body: JSON.stringify({
-        model: "meta-llama/llama-3.1-8b-instruct:free",
-        temperature: 0.3,
-        max_tokens: 120,
-        messages: [
-          {
-            role: "system",
-            content: `
+  const systemPrompt = `
 You are Athar Assistant.
 
 ${userContextFor(userType)}
@@ -93,27 +79,23 @@ RULES:
 
 If unrelated:
 "I can help with Athar platform questions only."
-`,
-          },
-          ...messagesHistory,
-        ],
-      }),
-    });
+`;
 
-    const data = await response.json();
+  const result = await callOpenRouter(
+    apiKey,
+    [{ role: "system", content: systemPrompt }, ...messagesHistory],
+    { temperature: 0.3, max_tokens: 120 }
+  );
 
-    if (data.error || !data.choices || !data.choices.length) {
-      res.status(502).json({ error: "Upstream AI request failed" });
-      return;
-    }
-
-    let reply = data.choices[0].message.content.trim();
-    reply = reply.replace(/^(hello|hi|hey)[!,. ]*/i, "");
-    reply = reply.replace(/\n{3,}/g, "\n\n");
-
-    res.status(200).json({ reply });
-  } catch (error) {
-    console.error("OpenRouter proxy error:", error);
+  if (!result.ok) {
+    console.error("OpenRouter proxy error:", result.status, result.detail);
     res.status(502).json({ error: "Upstream AI request failed" });
+    return;
   }
+
+  let reply = result.content.trim();
+  reply = reply.replace(/^(hello|hi|hey)[!,. ]*/i, "");
+  reply = reply.replace(/\n{3,}/g, "\n\n");
+
+  res.status(200).json({ reply });
 }

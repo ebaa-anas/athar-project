@@ -1,4 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { callOpenRouter } from "./_shared/openrouter";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") {
@@ -18,38 +19,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
+  const result = await callOpenRouter(apiKey, [
+    {
+      role: "system",
+      content:
+        "You are an expert crisis management AI for Project Athar. Based on the crisis title, location, and severity, quickly generate a professional situation report (description) and a comma-separated list of the 5 most critical skills needed (skillsNeeded). Return ONLY valid JSON with keys: 'description' and 'skillsNeeded'.",
+    },
+    {
+      role: "user",
+      content: `Title: ${title}, Location: ${location}, Severity: ${severity}`,
+    },
+  ]);
+
+  if (!result.ok) {
+    console.error("Crisis tasking proxy error:", result.status, result.detail);
+    res.status(502).json({ error: "Upstream AI request failed" });
+    return;
+  }
+
   try {
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "meta-llama/llama-3.1-8b-instruct:free",
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are an expert crisis management AI for Project Athar. Based on the crisis title, location, and severity, quickly generate a professional situation report (description) and a comma-separated list of the 5 most critical skills needed (skillsNeeded). Return ONLY valid JSON with keys: 'description' and 'skillsNeeded'.",
-          },
-          {
-            role: "user",
-            content: `Title: ${title}, Location: ${location}, Severity: ${severity}`,
-          },
-        ],
-      }),
-    });
-
-    const data = await response.json();
-    const aiContent = data?.choices?.[0]?.message?.content;
-
-    if (!aiContent) {
-      res.status(502).json({ error: "Upstream AI request failed" });
-      return;
-    }
-
-    const cleanedJson = aiContent.replace(/```json/g, "").replace(/```/g, "").trim();
+    const cleanedJson = result.content.replace(/```json/g, "").replace(/```/g, "").trim();
     const parsed = JSON.parse(cleanedJson);
 
     res.status(200).json({
@@ -57,7 +46,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       skillsNeeded: parsed.skillsNeeded ?? "",
     });
   } catch (error) {
-    console.error("Crisis tasking proxy error:", error);
+    console.error("Crisis tasking parse error:", (error as Error).message);
     res.status(502).json({ error: "Upstream AI request failed" });
   }
 }

@@ -1,10 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
-import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { 
-  getFirestore, collection, onSnapshot, query, orderBy, 
+import {
+  collection, onSnapshot, query, orderBy,
   doc, getDoc, addDoc, updateDoc, increment, serverTimestamp, getDocs, where
 } from "firebase/firestore";
+import { auth, db } from '../lib/firebase';
 
 import { Card, CardContent } from './ui/card';
 import { Badge } from './ui/badge';
@@ -18,20 +17,6 @@ import {
 } from 'lucide-react';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-
-// --- FIREBASE CONFIG ---
-const firebaseConfig = {
-  apiKey: "AIzaSyDRSETgWx1F3RX3_KAzgceyYBJKfpheRQk",
-  authDomain: "athar-project-aa74e.firebaseapp.com",
-  projectId: "athar-project-aa74e",
-  storageBucket: "athar-project-aa74e.firebasestorage.app",
-  messagingSenderId: "715063889584",
-  appId: "1:715063889584:web:3443ae48678c91a7f4b575",
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
 
 export function ExploreOpportunities() {
   const { user, loading: userLoading } = useUserProfile();

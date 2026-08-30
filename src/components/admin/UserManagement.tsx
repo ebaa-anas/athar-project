@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { initializeApp } from "firebase/app";
-import { getFirestore, collection, onSnapshot, doc, setDoc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { collection, onSnapshot, doc, setDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 // Auth SDK pieces needed for the secondary app instance below
 import { getAuth, createUserWithEmailAndPassword, signOut } from "firebase/auth";
+import { db } from '../../lib/firebase';
 
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
@@ -37,13 +38,10 @@ const firebaseConfig = {
   appId: "1:715063889584:web:3443ae48678c91a7f4b575",
 };
 
-// Primary app instance, used for the admin's own session and Firestore access
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
 // A second app instance lets us create Auth users for other people without
 // signing the admin out of their own session (Firebase Auth only supports
-// one active user per app instance).
+// one active user per app instance). This is a named, non-default app, so it
+// does not collide with the shared default app in lib/firebase.ts.
 const secondaryApp = initializeApp(firebaseConfig, "SecondaryApp");
 const secondaryAuth = getAuth(secondaryApp);
 

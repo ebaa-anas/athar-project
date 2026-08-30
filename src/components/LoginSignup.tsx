@@ -7,7 +7,7 @@ import { Separator } from './ui/separator';
 import { Mail, Lock, User, ArrowRight, X, ShieldAlert, Eye, EyeOff, Building2, Phone, FileText, CheckSquare } from 'lucide-react'; 
 import atharLogo from '../assets/athar-logo.png';
 import { auth } from '../lib/firebase';
-import { signUpVolunteer, loginUser, signUpOrganization, loginWithGoogle } from '../lib/authService';
+import { signUpVolunteer, loginUser, signUpOrganization, loginWithGoogle, friendlyAuthError } from '../lib/authService';
 import { sendPasswordResetEmail } from 'firebase/auth'; 
 
 interface LoginSignupProps {
@@ -36,6 +36,10 @@ export function LoginSignup({ onLogin, onClose, userType }: LoginSignupProps) {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Single inline banner for auth feedback (replaces scattered alert() calls so
+  // failures are always shown to the user, with a clear message).
+  const [feedback, setFeedback] = useState<{ type: 'error' | 'success'; text: string } | null>(null);
 
   // --- THEME CONFIG ---
   const getTheme = () => {
@@ -73,10 +77,15 @@ export function LoginSignup({ onLogin, onClose, userType }: LoginSignupProps) {
   const theme = getTheme();
 
   // --- HANDLERS ---
+  const roleLabel = (role: string) =>
+    role === 'admin' ? 'an administrator' : `a ${role}`;
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFeedback(null);
+
     if (!loginEmail || !loginPassword) {
-      alert("Please enter your email and password.");
+      setFeedback({ type: 'error', text: 'Please enter your email and password.' });
       return;
     }
 
@@ -85,84 +94,87 @@ export function LoginSignup({ onLogin, onClose, userType }: LoginSignupProps) {
 
     if (result.success) {
       if (result.role !== userType) {
-        alert(`Access Denied: You are registered as a ${result.role}, not an ${userType}.`);
-        auth.signOut(); 
+        setFeedback({
+          type: 'error',
+          text: `This account is registered as ${roleLabel(result.role)}, not ${roleLabel(userType)}. Please use the correct portal.`,
+        });
+        auth.signOut();
       } else {
-        onLogin(); 
+        onLogin();
       }
     } else {
-      alert("Login Failed: " + result.error);
+      setFeedback({ type: 'error', text: result.error || 'Login failed. Please try again.' });
     }
     setLoading(false);
   };
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    setFeedback(null);
+
     // Core Form Validation (No officialId for volunteers)
     if (!signupName || !signupEmail || !signupPass || !confirmPass || !signupPhone) {
-      alert("Please fill in all mandatory fields.");
+      setFeedback({ type: 'error', text: 'Please fill in all mandatory fields.' });
       return;
     }
 
     // Organization-Specific Validation
     if (userType === 'organization' && !officialId) {
-      alert("Please provide your Organization Tax/Registration Number.");
+      setFeedback({ type: 'error', text: 'Please provide your Organization Tax/Registration Number.' });
       return;
     }
 
     if (signupPass !== confirmPass) {
-      alert("Security Alert: Passwords do not match. Please try again.");
+      setFeedback({ type: 'error', text: 'Passwords do not match. Please re-enter them.' });
       return;
     }
 
     if (!acceptTerms) {
-      alert("You must agree to the Terms of Service and Data Privacy Policy.");
+      setFeedback({ type: 'error', text: 'You must agree to the Terms of Service and Data Privacy Policy.' });
       return;
     }
 
     setLoading(true);
-    let success = false;
 
-    if (userType === 'organization') {
-      success = await signUpOrganization(signupEmail, signupPass, signupName, orgTier, signupPhone, officialId);
+    const result = userType === 'organization'
+      ? await signUpOrganization(signupEmail, signupPass, signupName, orgTier, signupPhone, officialId)
+      : await signUpVolunteer(signupEmail, signupPass, signupName, signupPhone);
+
+    if (result.success) {
+      setFeedback({ type: 'success', text: 'Account created successfully! Switch to the Login tab to sign in.' });
     } else {
-      // Volunteer signup (Phone included, National ID removed)
-      success = await signUpVolunteer(signupEmail, signupPass, signupName, signupPhone);
-    }
-
-    if (success) {
-      alert("Account Created Successfully! You can now log in.");
+      setFeedback({ type: 'error', text: result.error || 'Sign up failed. Please try again.' });
     }
     setLoading(false);
   };
 
   const handleForgotPassword = async (e: React.MouseEvent) => {
     e.preventDefault();
+    setFeedback(null);
     if (!loginEmail) {
-      alert("Please enter your email address in the Email field above, then click 'Forgot password?'.");
+      setFeedback({ type: 'error', text: "Enter your email in the Email field above, then click 'Forgot password?'." });
       return;
     }
     try {
       await sendPasswordResetEmail(auth, loginEmail);
-      alert("Password reset email sent! Please check your inbox and spam folders.");
+      setFeedback({ type: 'success', text: 'Password reset email sent. Check your inbox and spam folder.' });
     } catch (error: any) {
-      alert("Failed to send reset email. Please ensure your email is correct.");
+      setFeedback({ type: 'error', text: friendlyAuthError(error) });
     }
   };
 
   const handleSocialLogin = async () => {
-    setLoading(true);
+    setFeedback(null);
     if (userType === 'admin') {
-        setLoading(false);
-        return; 
+        return;
     }
+    setLoading(true);
 
     const result = await loginWithGoogle(userType);
     if (result.success) {
       onLogin();
     } else {
-      alert(result.error);
+      setFeedback({ type: 'error', text: result.error || 'Google sign-in failed. Please try again.' });
     }
     setLoading(false);
   };
@@ -221,11 +233,28 @@ export function LoginSignup({ onLogin, onClose, userType }: LoginSignupProps) {
                   {userType === 'admin' ? 'Secure Access' : 'Get Started'}
                 </h2>
                 <p className="text-slate-500 mt-2">
-                  {userType === 'admin' 
-                    ? 'Enter your administrative credentials' 
+                  {userType === 'admin'
+                    ? 'Enter your administrative credentials'
                     : 'Enter your credentials to access your account'}
                 </p>
             </div>
+
+            {/* Inline auth feedback — shown for every login/signup failure */}
+            {feedback && (
+              <div
+                role="alert"
+                className={`flex items-start gap-3 rounded-xl border p-4 text-sm ${
+                  feedback.type === 'error'
+                    ? 'border-red-200 bg-red-50 text-red-800'
+                    : 'border-green-200 bg-green-50 text-green-800'
+                }`}
+              >
+                {feedback.type === 'error'
+                  ? <ShieldAlert className="h-5 w-5 flex-none mt-0.5" />
+                  : <CheckSquare className="h-5 w-5 flex-none mt-0.5" />}
+                <span>{feedback.text}</span>
+              </div>
+            )}
 
             {/* SMART RENDERING: Admins only get Login form */}
             {userType === 'admin' ? (
@@ -277,7 +306,7 @@ export function LoginSignup({ onLogin, onClose, userType }: LoginSignupProps) {
                 </form>
               </div>
             ) : (
-              <Tabs defaultValue="login" className="w-full">
+              <Tabs defaultValue="login" className="w-full" onValueChange={() => setFeedback(null)}>
                   <TabsList className="grid w-full grid-cols-2 mb-8 h-12 bg-slate-100 p-1 rounded-xl">
                       <TabsTrigger value="login" className="rounded-lg data-[state=active]:bg-white shadow-sm">Login</TabsTrigger>
                       <TabsTrigger value="signup" className="rounded-lg data-[state=active]:bg-white shadow-sm">Sign Up</TabsTrigger>

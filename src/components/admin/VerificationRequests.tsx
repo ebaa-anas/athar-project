@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { initializeApp } from "firebase/app";
-import { getFirestore, collection, onSnapshot, doc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { collection, onSnapshot, doc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { db } from '../../lib/firebase';
 
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
@@ -15,19 +15,6 @@ import {
   X, ShieldAlert, Landmark, Shield, DownloadCloud, Scale, Globe, FileCheck,
   ArrowLeft, Mail, Phone, Calendar, User, UserCheck, Activity, Droplet, Car, ShieldCheck
 } from 'lucide-react';
-
-// --- FIREBASE CONFIG ---
-const firebaseConfig = {
-  apiKey: "AIzaSyDRSETgWx1F3RX3_KAzgceyYBJKfpheRQk",
-  authDomain: "athar-project-aa74e.firebaseapp.com",
-  projectId: "athar-project-aa74e",
-  storageBucket: "athar-project-aa74e.firebasestorage.app",
-  messagingSenderId: "715063889584",
-  appId: "1:715063889584:web:3443ae48678c91a7f4b575",
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
 
 export default function VerificationRequests() {
   const [pendingReqs, setPendingReqs] = useState<any[]>([]);

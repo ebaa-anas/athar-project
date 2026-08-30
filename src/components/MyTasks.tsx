@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { initializeApp } from "firebase/app";
-import { getFirestore, collection, onSnapshot, query, where, doc, updateDoc, serverTimestamp, addDoc } from "firebase/firestore";
+import { collection, onSnapshot, query, where, doc, updateDoc, serverTimestamp, addDoc } from "firebase/firestore";
 
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
@@ -10,20 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Calendar, Clock, AlertCircle, CheckCircle2, ShieldAlert, Shield, MapPin, Inbox, Send, FileText, Radio } from 'lucide-react';
 
 import { useUserProfile } from '../hooks/useUserProfile';
-import { auth } from '../lib/firebase';
-
-// --- FIREBASE CONFIG ---
-const firebaseConfig = {
-  apiKey: "AIzaSyDRSETgWx1F3RX3_KAzgceyYBJKfpheRQk",
-  authDomain: "athar-project-aa74e.firebaseapp.com",
-  projectId: "athar-project-aa74e",
-  storageBucket: "athar-project-aa74e.firebasestorage.app",
-  messagingSenderId: "715063889584",
-  appId: "1:715063889584:web:3443ae48678c91a7f4b575",
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+import { db } from '../lib/firebase';
 
 const formatDate = (timestamp: any) => {
   try {

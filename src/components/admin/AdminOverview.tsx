@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { initializeApp } from "firebase/app";
-import { getFirestore, collection, onSnapshot, query, where } from "firebase/firestore";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
+import { db } from '../../lib/firebase';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
@@ -10,19 +10,6 @@ import {
   Users, Building2, Clock, TrendingUp, AlertCircle, CheckCircle, 
   UserCheck, Brain, Zap, Activity, CheckCircle2, Sparkles, Loader2 
 } from 'lucide-react';
-
-// --- FIREBASE CONFIG ---
-const firebaseConfig = {
-  apiKey: "AIzaSyDRSETgWx1F3RX3_KAzgceyYBJKfpheRQk",
-  authDomain: "athar-project-aa74e.firebaseapp.com",
-  projectId: "athar-project-aa74e",
-  storageBucket: "athar-project-aa74e.firebasestorage.app",
-  messagingSenderId: "715063889584",
-  appId: "1:715063889584:web:3443ae48678c91a7f4b575",
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
 
 // Calls our Vercel proxy so the Gemini API key never reaches the client
 async function callGemini(model: string, message: string): Promise<string> {
