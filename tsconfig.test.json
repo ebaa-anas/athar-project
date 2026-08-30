@@ -1,0 +1,17 @@
+// Type-checking context for the test suite. tsconfig.app.json deliberately
+// excludes *.test.ts(x) so the production build (tsc -b) never compiles tests;
+// this config gives editors and any `tsc --noEmit -p tsconfig.test.json` run
+// the right ambient types (Vitest globals + jest-dom matchers) for them.
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "types": ["vitest/globals", "@testing-library/jest-dom", "node", "vite/client"]
+  },
+  "include": [
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx",
+    "vitest.config.ts",
+    "vitest.setup.ts"
+  ],
+  "exclude": []
+}

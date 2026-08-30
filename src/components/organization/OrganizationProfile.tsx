@@ -9,14 +9,20 @@ import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Separator } from '../ui/separator';
 import { Checkbox } from '../ui/checkbox';
 import { Progress } from '../ui/progress';
-import { 
-  Mail, Phone, MapPin, Globe, Edit3, Save, CheckCircle2, ShieldCheck, 
-  Users2, Timer, Activity, Scale, Fingerprint, Landmark, FileDigit, Building, 
-  ShieldAlert, UploadCloud, Check, FileCheck, Shield, HeartHandshake, Camera, Loader2, Image as ImageIcon, Gavel, X
+import {
+  Mail, Phone, MapPin, Globe, Edit3, Save, CheckCircle2, ShieldCheck,
+  Users2, Timer, Activity, Scale, Landmark, FileDigit, Building,
+  ShieldAlert, UploadCloud, Check, HeartHandshake, Camera, Loader2, Image as ImageIcon, Gavel, X
 } from 'lucide-react';
 
 import { useUserProfile } from '../../hooks/useUserProfile';
 import { updateOrganizationProfile } from '../../lib/authService';
+import {
+  getProfileErrors,
+  getRequiredDocs,
+  areAllDocsUploaded,
+  deriveOrgVerification,
+} from '../../lib/orgVerification';
 
 import { db } from '../../lib/firebase';
 import { collection, query, where, onSnapshot, doc, getDoc } from 'firebase/firestore';
@@ -138,54 +144,12 @@ export function OrganizationProfile() {
     return () => { unsubMissions(); unsubApps(); };
   }, [user]);
 
-  const currentTier = user?.tier || 'tier1';
-  const isVerified = user?.verified || user?.verificationStatus === 'verified' || currentTier === 'tier1';
-  const vStatus = user?.verificationStatus || "unverified";
+  const { currentTier, isVerified, vStatus } = deriveOrgVerification(user);
 
-  // Tier2/3 orgs have additional required fields beyond the base profile
-  const getProfileErrors = () => {
-    const errs = [];
-    if (!profileData.name || profileData.name.trim().length < 3) errs.push("Legal Entity Name");
-    if (!profileData.description || profileData.description.trim().length < 50) errs.push("About Entity (min. 50 characters required)");
-    if (!profileData.mission || profileData.mission.trim().length < 20) errs.push("Mission Statement (min. 20 characters required)");
-    if (!profileData.registrationId || profileData.registrationId.trim().length < 5) errs.push("Valid Registration / Tax ID");
-    if (!profileData.address || profileData.address.trim().length < 10) errs.push("Complete Physical HQ Address");
-    if (!profileData.phone || profileData.phone.trim().length < 8) errs.push("Valid Contact Phone Number");
-    if (!profileData.causes || profileData.causes.trim().length === 0) errs.push("At least one Core Cause selected");
-    
-    if (profileData.website && !/^https?:\/\/[^\s$.?#].[^\s]*$/.test(profileData.website)) {
-        errs.push("Website must be a valid URL (e.g., https://www...)");
-    }
-
-    if (currentTier !== 'tier1') {
-        if (!profileData.boardMembers || profileData.boardMembers.trim().length < 15) errs.push("Board of Directors Roster (Required for Tier 2/3)");
-        if (!profileData.safeguardingPolicy || profileData.safeguardingPolicy.trim().length < 30) errs.push("Safeguarding Policy (min. 30 characters required)");
-    }
-
-    return errs;
-  };
-
-  const profileErrors = getProfileErrors();
+  const profileErrors = getProfileErrors(profileData, currentTier);
   const isProfileComplete = profileErrors.length === 0;
 
-  const getRequiredDocs = () => {
-    if (currentTier === 'tier2') {
-      return [
-        { id: 'incorporation', title: 'Certificate of Incorporation', desc: 'Proof of Legal NGO Status', icon: FileCheck },
-        { id: 'financial', title: 'Latest Financial Audit', desc: 'Fiduciary Transparency', icon: Landmark },
-        { id: 'signatoryId', title: 'Signatory Official ID', desc: 'Passport or National ID', icon: Fingerprint }
-      ];
-    }
-    return [
-      { id: 'incorporation', title: 'Certificate of Incorporation', desc: 'Proof of Legal Status', icon: FileCheck },
-      { id: 'financial', title: 'Latest Financial Audit (Form 990)', desc: 'Fiduciary Transparency', icon: Landmark },
-      { id: 'safeguarding', title: 'Data Protection Policy', desc: 'GDPR & Minor Protection', icon: ShieldAlert },
-      { id: 'insurance', title: 'Comprehensive Liability Insurance', desc: 'Volunteer Civil Liability', icon: Shield },
-      { id: 'signatoryId', title: 'Signatory Government ID', desc: 'Passport or National ID', icon: Fingerprint }
-    ];
-  };
-
-  const requiredDocs = getRequiredDocs();
+  const requiredDocs = getRequiredDocs(currentTier);
 
   const toggleCause = (cause: string) => {
     if (!isEditing) return;
@@ -270,8 +234,6 @@ export function OrganizationProfile() {
       setUploadingDoc(null);
     }, 1500);
   };
-
-  const areAllDocsUploaded = () => requiredDocs.every(doc => auditFiles[doc.id]);
 
   const handleSubmitAudit = async () => {
     if (!user) return;
@@ -791,7 +753,7 @@ export function OrganizationProfile() {
                 <Button variant="outline" className="text-slate-500 font-bold uppercase tracking-wider text-xs h-11" onClick={() => setShowVerifyModal(false)}>Cancel</Button>
                 
                 <Button 
-                  disabled={!agreedToTerms || !auditData.legalName || !auditData.licenseId || !areAllDocsUploaded() || isSubmittingAudit}
+                  disabled={!agreedToTerms || !auditData.legalName || !auditData.licenseId || !areAllDocsUploaded(requiredDocs, auditFiles) || isSubmittingAudit}
                   className="bg-role-accent-teal hover:bg-role-accent-teal/80 text-white font-bold px-8 shadow-md h-11 uppercase tracking-wider text-xs transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={handleSubmitAudit}
                 >
