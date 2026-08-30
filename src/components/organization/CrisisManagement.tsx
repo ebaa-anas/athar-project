@@ -17,34 +17,8 @@ import {
 } from 'lucide-react';
 
 import { useUserProfile } from '../../hooks/useUserProfile';
-import { auth, db } from '../../lib/firebase'; 
-
-// Single shared definition of "is this volunteer AVR-certified" — previously
-// this exact OR-chain was copy-pasted in handleActivate and in the roster
-// badge render. Keeping one helper means the dispatch logic and the badge
-// shown on screen can never disagree with each other.
-function isAVRCertified(vData: any): boolean {
-  return (
-    vData?.isAVRMember === true ||
-    vData?.isAVRMember === "true" ||
-    vData?.avrCertified === true ||
-    vData?.avrCertified === "true" ||
-    vData?.isAVR === true ||
-    vData?.isAVR === "true" ||
-    vData?.crisisInfo?.avrCertified === true ||
-    vData?.crisisInfo?.avrCertified === "true" ||
-    (vData?.skills && vData.skills.includes("AVR"))
-  );
-}
-
-// Counts how many of the crisis's required skills this volunteer has. Used
-// both to filter (must match at least one, if skills were specified) and to
-// rank (best-matched volunteers get notified first).
-function countSkillMatches(volunteerSkills: string[] | undefined, requiredSkills: string[]): number {
-  if (!requiredSkills.length) return 1; // no specific skills requested — everyone AVR-certified qualifies equally
-  const vSkills = (volunteerSkills || []).map(s => s.toLowerCase());
-  return requiredSkills.filter(rs => vSkills.includes(rs.toLowerCase())).length;
-}
+import { auth, db } from '../../lib/firebase';
+import { isAVRCertified, rankVolunteersForCrisis } from '../../lib/crisisMatching';
 
 export function CrisisManagement() {
   const { user, loading } = useUserProfile();
@@ -170,17 +144,11 @@ export function CrisisManagement() {
       // Must be AVR-certified and (no specific skills requested, or match at
       // least one), ranked by how many required skills they have, and capped
       // so a request for 10 people doesn't page hundreds.
-      const ranked = usersSnapshot.docs
-        .map(docSnap => {
-          const vData = docSnap.data();
-          const matchCount = countSkillMatches(vData.skills, requiredSkills);
-          return { id: docSnap.id, matchCount, avr: isAVRCertified(vData) };
-        })
-        .filter(v => v.avr && v.matchCount > 0)
-        .sort((a, b) => b.matchCount - a.matchCount);
-
-      const dispatchCap = Math.max(Number(newCrisis.volunteersNeeded) * 3, 15);
-      const finalDeployList = ranked.slice(0, dispatchCap).map(v => v.id);
+      const finalDeployList = rankVolunteersForCrisis(
+        usersSnapshot.docs.map(docSnap => ({ id: docSnap.id, data: docSnap.data() })),
+        requiredSkills,
+        newCrisis.volunteersNeeded
+      );
 
       const crisisDocRef = await addDoc(collection(db, "crises"), {
         orgId: user.uid, 
