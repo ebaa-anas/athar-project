@@ -19,9 +19,16 @@ export const FREE_MODELS = [
 
 export type ChatMessage = { role: string; content: string };
 
-export type OpenRouterResult =
-  | { ok: true; content: string; model: string }
-  | { ok: false; status: number; detail: string };
+// Flat shape (not a discriminated union) so callers can read any field without
+// narrowing — keeps the type-check happy across the different tsc configs this
+// runs under (local tsc, Vitest/esbuild, and Vercel's @vercel/node builder).
+export type OpenRouterResult = {
+  ok: boolean;
+  content: string; // reply text on success, "" otherwise
+  model: string; // which model answered, "" otherwise
+  status: number; // 200 on success, else the last upstream status (or 502)
+  detail: string; // "" on success, else a short diagnostic
+};
 
 // Statuses where a different model might succeed: model gone (404), needs
 // credits (402), rate limited (429), or an upstream hiccup (5xx).
@@ -62,7 +69,7 @@ export async function callOpenRouter(
     const content = data?.choices?.[0]?.message?.content;
 
     if (!data?.error && typeof content === "string" && content.length > 0) {
-      return { ok: true, content, model };
+      return { ok: true, content, model, status: 200, detail: "" };
     }
 
     const status = typeof response.status === "number" ? response.status : undefined;
@@ -73,5 +80,5 @@ export async function callOpenRouter(
     break; // e.g. 401/403 — auth problem, another model won't help
   }
 
-  return { ok: false, status: lastStatus, detail: lastDetail };
+  return { ok: false, content: "", model: "", status: lastStatus, detail: lastDetail };
 }

@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { callOpenRouter } from "./_shared/openrouter";
+import { callOpenRouter } from "./_shared/openrouter.js";
 
 const ATHAR_CONTEXT = `
 Athar is a web-based platform that connects verified volunteers with organizations.
@@ -81,21 +81,28 @@ If unrelated:
 "I can help with Athar platform questions only."
 `;
 
-  const result = await callOpenRouter(
-    apiKey,
-    [{ role: "system", content: systemPrompt }, ...messagesHistory],
-    { temperature: 0.3, max_tokens: 120 }
-  );
+  try {
+    const result = await callOpenRouter(
+      apiKey,
+      [{ role: "system", content: systemPrompt }, ...messagesHistory],
+      { temperature: 0.3, max_tokens: 120 }
+    );
 
-  if (!result.ok) {
-    console.error("OpenRouter proxy error:", result.status, result.detail);
+    if (!result.ok) {
+      console.error("OpenRouter proxy error:", result.status, result.detail);
+      res.status(502).json({ error: "Upstream AI request failed" });
+      return;
+    }
+
+    let reply = result.content.trim();
+    reply = reply.replace(/^(hello|hi|hey)[!,. ]*/i, "");
+    reply = reply.replace(/\n{3,}/g, "\n\n");
+
+    res.status(200).json({ reply });
+  } catch (error) {
+    // callOpenRouter is written not to throw, but if anything unexpected does,
+    // still answer with a JSON body the frontend can handle instead of a bare 500.
+    console.error("OpenRouter proxy error (unexpected):", (error as Error).message);
     res.status(502).json({ error: "Upstream AI request failed" });
-    return;
   }
-
-  let reply = result.content.trim();
-  reply = reply.replace(/^(hello|hi|hey)[!,. ]*/i, "");
-  reply = reply.replace(/\n{3,}/g, "\n\n");
-
-  res.status(200).json({ reply });
 }
