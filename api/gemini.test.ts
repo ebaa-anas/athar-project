@@ -73,9 +73,43 @@ describe("POST /api/gemini", () => {
     expect(startChatMock).toHaveBeenCalledWith({
       history: [{ role: "user", parts: [{ text: "seed" }] }],
     });
-    expect(sendMessageMock).toHaveBeenCalledWith("hello");
+    expect(sendMessageMock).toHaveBeenCalledWith(
+      "hello",
+      expect.objectContaining({ signal: expect.anything(), timeout: expect.any(Number) })
+    );
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({ text: "mocked reply" });
+  });
+
+  it("stops at a 429 instead of burning the budget on other models", async () => {
+    sendMessageMock.mockRejectedValue({ status: 429, message: "Resource has been exhausted" });
+    const res = mockRes();
+
+    await handler(
+      { method: "POST", body: { model: "gemini-2.5-flash", message: "hello" } } as any,
+      res
+    );
+
+    // 429 is fatal now — a single attempt, no fallthrough to the other models.
+    expect(getGenerativeModelMock).toHaveBeenCalledTimes(1);
+    expect(res.status).toHaveBeenCalledWith(502);
+  });
+
+  it("falls through to the next model on a 404", async () => {
+    sendMessageMock
+      .mockRejectedValueOnce({ status: 404, message: "model not found" })
+      .mockResolvedValueOnce({ response: { text: () => "second model reply" } });
+    const res = mockRes();
+
+    await handler(
+      { method: "POST", body: { model: "gemini-2.5-flash", message: "hello" } } as any,
+      res
+    );
+
+    expect(getGenerativeModelMock).toHaveBeenNthCalledWith(1, { model: "gemini-2.5-flash" });
+    expect(getGenerativeModelMock).toHaveBeenNthCalledWith(2, { model: "gemini-flash-latest" });
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({ text: "second model reply" });
   });
 
   it("defaults history to an empty array when omitted", async () => {
