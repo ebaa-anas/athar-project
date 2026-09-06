@@ -16,10 +16,11 @@ import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { 
   MapPin, Users, Star, Search, ShieldCheck, Mail, Globe, 
   Briefcase, HeartHandshake, CheckCircle2, X, Target, Phone, Clock, Calendar,
-  Timer, Activity, Users2, Scale, FileText, ShieldAlert, Lock, AlertTriangle, Radio
+  Timer, Activity, Users2, Scale, FileText, ShieldAlert, Lock, AlertTriangle, Radio, Flag
 } from 'lucide-react';
 
 import { useUserProfile } from '../hooks/useUserProfile';
+import { ReportContentModal } from './ReportContentModal';
 
 export function Organizations() {
   const { user } = useUserProfile();
@@ -31,6 +32,7 @@ export function Organizations() {
   // Modals State
   const [selectedOrg, setSelectedOrg] = useState<any | null>(null);
   const [showJoinModal, setShowJoinModal] = useState<any | null>(null);
+  const [showReportOrg, setShowReportOrg] = useState(false);
   
   // Advanced Form Fields
   const [formState, setFormState] = useState({
@@ -507,7 +509,14 @@ export function Organizations() {
                 </div>
              </div>
              
-             <div className="p-4 bg-white border-t border-slate-200 flex justify-end gap-3 shrink-0">
+             <div className="p-4 bg-white border-t border-slate-200 flex flex-wrap justify-end gap-3 shrink-0">
+                <Button
+                  variant="ghost"
+                  onClick={() => setShowReportOrg(true)}
+                  className="mr-auto text-slate-400 hover:text-red-600 hover:bg-red-50 font-bold text-xs px-4"
+                >
+                  <Flag className="h-3.5 w-3.5 mr-1.5" /> Report
+                </Button>
                 <Button variant="ghost" onClick={() => setSelectedOrg(null)} className="text-slate-600 font-bold text-xs px-6">Close</Button>
                 { !isProfileComplete ? (
                   <Button disabled className="bg-slate-100 text-slate-400 font-bold text-xs px-6">Locked (Profile Incomplete)</Button>
@@ -519,6 +528,20 @@ export function Organizations() {
              </div>
           </Card>
         </div>
+      )}
+
+      {selectedOrg && (
+        <ReportContentModal
+          open={showReportOrg}
+          onClose={() => setShowReportOrg(false)}
+          target={{
+            targetType: 'organization',
+            targetId: selectedOrg.uid || selectedOrg.id,
+            title: selectedOrg.name || 'Organization',
+            organization: selectedOrg.name || 'Organization',
+            contentPreview: selectedOrg.description || selectedOrg.tagline || '',
+          }}
+        />
       )}
 
     </div>

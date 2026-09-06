@@ -13,10 +13,11 @@ import { Textarea } from './ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { 
   MapPin, Users, Search, Heart, Sparkles,
-  Building2, ShieldCheck, Zap, CheckCircle2, Calendar, X, ShieldAlert, Lock, Loader2, Target, Clock
+  Building2, ShieldCheck, Zap, CheckCircle2, Calendar, X, ShieldAlert, Lock, Loader2, Target, Clock, Flag
 } from 'lucide-react';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { ReportContentModal } from './ReportContentModal';
 
 export function ExploreOpportunities() {
   const { user, loading: userLoading } = useUserProfile();
@@ -44,7 +45,13 @@ export function ExploreOpportunities() {
   useEffect(() => {
     const q = query(collection(db, "opportunities"), orderBy("createdAt", "desc"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      setOpportunities(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      // `hidden` is set by an admin when a report is upheld — keep those out of
+      // the volunteer-facing list.
+      setOpportunities(
+        snapshot.docs
+          .map(doc => ({ id: doc.id, ...doc.data() } as any))
+          .filter(o => !o.hidden)
+      );
       setLoading(false);
     });
     return () => unsubscribe();
@@ -218,6 +225,7 @@ function MissionRow({ opp, isVerified, isProfileComplete, showMatch }: { opp: an
   const [isApplying, setIsApplying] = useState(false);
   const [hasApplied, setHasApplied] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [showReport, setShowReport] = useState(false);
   const [coverLetter, setCoverLetter] = useState("");
   const [orgLogo, setOrgLogo] = useState<string | null>(null);
 
@@ -349,6 +357,16 @@ function MissionRow({ opp, isVerified, isProfileComplete, showMatch }: { opp: an
               <Button variant="outline" size="icon" className="h-10 w-10 rounded-xl border-slate-200 text-slate-300 hover:text-brand-cta hover:bg-brand-cta/10 hover:border-brand-cta/30 transition-all shrink-0">
                 <Heart size={18} />
               </Button>
+              <Button
+                onClick={() => setShowReport(true)}
+                variant="outline"
+                size="icon"
+                title="Report this opportunity"
+                aria-label="Report this opportunity"
+                className="h-10 w-10 rounded-xl border-slate-200 text-slate-300 hover:text-red-600 hover:bg-red-50 hover:border-red-200 transition-all shrink-0"
+              >
+                <Flag size={16} />
+              </Button>
             </div>
           </div>
         </CardContent>
@@ -394,6 +412,18 @@ function MissionRow({ opp, isVerified, isProfileComplete, showMatch }: { opp: an
           </div>
         </div>
       )}
+
+      <ReportContentModal
+        open={showReport}
+        onClose={() => setShowReport(false)}
+        target={{
+          targetType: 'opportunity',
+          targetId: opp.id,
+          title: opp.title || 'Untitled opportunity',
+          organization: opp.orgName || opp.organization || 'Unknown',
+          contentPreview: opp.description || '',
+        }}
+      />
     </>
   );
 }

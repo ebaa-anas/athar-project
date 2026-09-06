@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
-import { collection, onSnapshot, doc, updateDoc, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, onSnapshot, doc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { db } from '../../lib/firebase';
 
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
-import { 
-  AlertTriangle, Eye, CheckCircle, XCircle, Flag, MessageSquare, 
-  Clock, Filter, ShieldAlert, Zap, ThumbsUp, Loader2, ShieldCheck, Bug,
+import {
+  AlertTriangle, Eye, CheckCircle, XCircle, Flag,
+  Clock, Filter, ShieldAlert, Zap, ThumbsUp, Loader2, ShieldCheck,
   Building, Users
 } from 'lucide-react';
 
@@ -17,6 +17,7 @@ export function ContentModeration() {
   const [reviewedContent, setReviewedContent] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   // Fetch live reports
   useEffect(() => {
@@ -60,13 +61,14 @@ export function ContentModeration() {
   }, []);
 
   // Action handlers
-  const handleModerationAction = async (id: string, actionResult: 'Approved' | 'Removed') => {
-    setProcessingId(id);
+  // "Ignore Report" — the content is fine, just close the report.
+  const handleIgnore = async (report: any) => {
+    setProcessingId(report.id);
     try {
-      await updateDoc(doc(db, "reports", id), {
+      await updateDoc(doc(db, "reports", report.id), {
         status: 'reviewed',
-        action: actionResult,
-        reviewedDate: serverTimestamp()
+        action: 'Approved',
+        reviewedDate: serverTimestamp(),
       });
     } catch (error) {
       console.error("Error updating report:", error);
@@ -75,36 +77,26 @@ export function ContentModeration() {
     setProcessingId(null);
   };
 
-  const handleMessage = () => {
-    alert("Communication module initialized. Connecting to user's registered email...");
-  };
-
-  const handleViewContent = () => {
-    alert("Navigating to flagged content in read-only sandbox mode...");
-  };
-
-  // Demo utility that seeds a fake report, used to showcase the moderation flow live
-  const injectSimulatedReport = async () => {
-    const types = ['Opportunity Post', 'Comment', 'Organization Profile'];
-    const severities = ['high', 'medium', 'low'];
-    const reasons = ['Inappropriate content', 'Misleading information', 'Spam/Bot Activity', 'Harassment'];
-    
-    const randomSelect = (arr: any[]) => arr[Math.floor(Math.random() * arr.length)];
-    
+  // "Remove Content" — uphold the report. For an opportunity that means hiding
+  // it from volunteers (reversible: just clear `hidden`). An org-profile report
+  // can only be resolved here; unpublishing an org is a separate flow.
+  const handleRemove = async (report: any) => {
+    setProcessingId(report.id);
     try {
-      await addDoc(collection(db, "reports"), {
-        type: randomSelect(types),
-        title: `Simulated Flagged Content #${Math.floor(Math.random() * 1000)}`,
-        organization: 'Field Unit Beta',
-        reportedBy: 'System Monitor',
-        reason: randomSelect(reasons),
-        reportDate: serverTimestamp(),
-        status: 'pending',
-        severity: randomSelect(severities),
+      const targetType = report.targetType || (report.type === 'Opportunity Post' ? 'opportunity' : '');
+      if (targetType === 'opportunity' && report.targetId) {
+        await updateDoc(doc(db, "opportunities", report.targetId), { hidden: true });
+      }
+      await updateDoc(doc(db, "reports", report.id), {
+        status: 'reviewed',
+        action: 'Removed',
+        reviewedDate: serverTimestamp(),
       });
-    } catch (e) {
-      console.error(e);
+    } catch (error) {
+      console.error("Error removing content:", error);
+      alert("Failed to remove the content. It may have already been deleted.");
     }
+    setProcessingId(null);
   };
 
   const formatTimeAgo = (timestamp: any) => {
@@ -149,10 +141,7 @@ export function ContentModeration() {
           <h1 className="text-slate-900 font-bold text-3xl mb-2">Content Moderation</h1>
           <p className="text-slate-500">Review flagged content to keep the community safe</p>
         </div>
-        <div className="flex gap-2">
-            <Button onClick={injectSimulatedReport} variant="outline" className="border-emerald-200 text-emerald-700 hover:bg-emerald-50 border-2 font-bold shadow-sm">
-                <Bug className="mr-2 h-4 w-4" /> Simulate Live Report
-            </Button>
+        <div className="flex flex-wrap gap-2">
             <Button variant="outline" className="border-slate-200 text-slate-700 font-bold">
                 <Filter className="mr-2 h-4 w-4" /> Filter
             </Button>
@@ -257,7 +246,6 @@ export function ContentModeration() {
               <ShieldCheck className="h-16 w-16 text-emerald-500 mx-auto mb-4 opacity-50" />
               <h3 className="text-xl font-bold text-slate-700">Zero Inbox</h3>
               <p className="text-slate-500 mt-2">The community is safe. No pending reports to review.</p>
-              <p className="text-xs text-slate-400 mt-6">(Use the "Simulate Live Report" button above to test the system)</p>
             </div>
           ) : flaggedContent.map((item) => {
             const styles = getSeverityStyles(item.severity);
@@ -297,34 +285,46 @@ export function ContentModeration() {
                             <Flag className="h-3.5 w-3.5 text-slate-500" />
                             Reported by: <span className="font-bold text-slate-700">{item.reportedBy}</span>
                         </div>
+                        {item.detail && (
+                            <p className="text-xs text-slate-600 mt-2 pt-2 border-t border-slate-100 leading-relaxed">
+                                <span className="font-bold text-slate-400 uppercase tracking-widest text-[10px]">Note</span><br />
+                                {item.detail}
+                            </p>
+                        )}
                       </div>
+
+                      {expandedId === item.id && (
+                        <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm text-slate-600 leading-relaxed">
+                          <span className="font-bold text-slate-400 uppercase tracking-widest text-[10px]">Reported content</span>
+                          <p className="mt-1 whitespace-pre-wrap">{item.contentPreview || 'No preview was captured for this report.'}</p>
+                        </div>
+                      )}
                     </div>
 
                     {/* Right: Actions */}
                     <div className="flex flex-col justify-center gap-3 border-t md:border-t-0 md:border-l border-slate-200 p-6 min-w-[240px] bg-white/50">
-                        <Button 
-                          onClick={() => handleModerationAction(item.id, 'Approved')} 
+                        <Button
+                          onClick={() => handleIgnore(item)}
                           disabled={processingId === item.id}
                           className="w-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm font-bold uppercase tracking-wider text-xs h-11"
                         >
                             {processingId === item.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <><CheckCircle className="mr-2 h-4 w-4" /> Ignore Report</>}
                         </Button>
-                        <Button 
-                          onClick={() => handleModerationAction(item.id, 'Removed')} 
+                        <Button
+                          onClick={() => handleRemove(item)}
                           disabled={processingId === item.id}
-                          variant="outline" 
+                          variant="outline"
                           className="w-full text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 font-bold uppercase tracking-wider text-xs h-11"
                         >
-                            {processingId === item.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <><XCircle className="mr-2 h-4 w-4" /> Remove Content</>}
+                            {processingId === item.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <><XCircle className="mr-2 h-4 w-4" /> {item.targetType === 'opportunity' || item.type === 'Opportunity Post' ? 'Hide Content' : 'Remove Content'}</>}
                         </Button>
-                        <div className="flex gap-2">
-                            <Button onClick={handleViewContent} variant="outline" className="flex-1 text-slate-700 border-slate-200 hover:bg-white h-10">
-                                <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button onClick={handleMessage} variant="outline" className="flex-1 text-slate-700 border-slate-200 hover:bg-white h-10">
-                                <MessageSquare className="h-4 w-4" />
-                            </Button>
-                        </div>
+                        <Button
+                          onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}
+                          variant="outline"
+                          className="w-full text-slate-700 border-slate-200 hover:bg-white font-bold uppercase tracking-wider text-xs h-10"
+                        >
+                            <Eye className="mr-2 h-4 w-4" /> {expandedId === item.id ? 'Hide details' : 'View content'}
+                        </Button>
                     </div>
 
                   </div>
