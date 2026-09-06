@@ -37,8 +37,6 @@ export function getProfileErrors(profileData: OrgProfileData, tier: OrgTier): st
     errs.push("About Entity (min. 50 characters required)");
   if (!profileData.mission || profileData.mission.trim().length < 20)
     errs.push("Mission Statement (min. 20 characters required)");
-  if (!profileData.registrationId || profileData.registrationId.trim().length < 5)
-    errs.push("Valid Registration / Tax ID");
   if (!profileData.address || profileData.address.trim().length < 10)
     errs.push("Complete Physical HQ Address");
   if (!profileData.phone || profileData.phone.trim().length < 8)
@@ -50,7 +48,11 @@ export function getProfileErrors(profileData: OrgProfileData, tier: OrgTier): st
     errs.push("Website must be a valid URL (e.g., https://www...)");
   }
 
+  // Tier 1 (student clubs / youth forums) have no tax number, board, or formal
+  // safeguarding policy — those are only required to verify a Tier 2/3 entity.
   if (tier !== "tier1") {
+    if (!profileData.registrationId || profileData.registrationId.trim().length < 5)
+      errs.push("Valid Registration / Tax ID");
     if (!profileData.boardMembers || profileData.boardMembers.trim().length < 15)
       errs.push("Board of Directors Roster (Required for Tier 2/3)");
     if (!profileData.safeguardingPolicy || profileData.safeguardingPolicy.trim().length < 30)

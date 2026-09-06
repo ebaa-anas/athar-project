@@ -116,14 +116,7 @@ describe("signUpOrganization", () => {
   it("auto-verifies a tier1 org at creation", async () => {
     createUser.mockResolvedValue({ user: { uid: "org-1" } } as never);
 
-    const result = await signUpOrganization(
-      "o@example.com",
-      "pw123456",
-      "Orgy Org",
-      "tier1",
-      "555",
-      "TAX-1"
-    );
+    const result = await signUpOrganization("o@example.com", "pw123456", "Orgy Org", "tier1", "555");
 
     expect(result).toEqual({ success: true });
     // First setDoc writes the full organizations/ profile.
@@ -132,6 +125,8 @@ describe("signUpOrganization", () => {
       tier: "tier1",
       verified: true,
       verificationStatus: "verified",
+      // No tax number is collected at signup; the org fills it in later.
+      registrationId: "",
     });
     // Second setDoc leaves the users/ "nametag" with the role + tier.
     expect(mockSetDoc.mock.calls[1][1]).toMatchObject({
@@ -144,7 +139,7 @@ describe("signUpOrganization", () => {
   it("leaves a tier2 org unverified at creation", async () => {
     createUser.mockResolvedValue({ user: { uid: "org-2" } } as never);
 
-    await signUpOrganization("o@example.com", "pw123456", "NGO", "tier2", "555", "TAX-2");
+    await signUpOrganization("o@example.com", "pw123456", "NGO", "tier2", "555");
 
     expect(mockSetDoc.mock.calls[0][1]).toMatchObject({
       tier: "tier2",
@@ -156,7 +151,7 @@ describe("signUpOrganization", () => {
   it("also leaves a tier3 org unverified at creation", async () => {
     createUser.mockResolvedValue({ user: { uid: "org-3" } } as never);
 
-    await signUpOrganization("o@example.com", "pw123456", "Crisis Co", "tier3", "555", "TAX-3");
+    await signUpOrganization("o@example.com", "pw123456", "Crisis Co", "tier3", "555");
 
     expect(mockSetDoc.mock.calls[0][1]).toMatchObject({
       tier: "tier3",
@@ -165,10 +160,18 @@ describe("signUpOrganization", () => {
     });
   });
 
+  it("stores an empty registrationId for tier2/3 — collected later during verification", async () => {
+    createUser.mockResolvedValue({ user: { uid: "org-4" } } as never);
+
+    await signUpOrganization("o@example.com", "pw123456", "NGO", "tier2", "555");
+
+    expect(mockSetDoc.mock.calls[0][1]).toMatchObject({ registrationId: "" });
+  });
+
   it("returns a friendly error when creation fails", async () => {
     createUser.mockRejectedValue({ code: "auth/weak-password" });
 
-    const result = await signUpOrganization("o@example.com", "x", "NGO", "tier2", "555", "TAX");
+    const result = await signUpOrganization("o@example.com", "x", "NGO", "tier2", "555");
 
     expect(result).toEqual({
       success: false,

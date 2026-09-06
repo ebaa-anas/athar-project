@@ -48,6 +48,22 @@ describe("getProfileErrors", () => {
     expect(errs).toContain("Safeguarding Policy (min. 30 characters required)");
   });
 
+  it("does not require a registration / tax ID for tier1", () => {
+    const { registrationId, ...noRegId } = validBase;
+    void registrationId;
+    expect(getProfileErrors(noRegId, "tier1")).toEqual([]);
+  });
+
+  it("still requires a registration / tax ID for tier2", () => {
+    const { registrationId, ...noRegId } = validBase;
+    void registrationId;
+    const errs = getProfileErrors(
+      { ...noRegId, boardMembers: "Chair, Treasurer, Secretary", safeguardingPolicy: "C".repeat(30) },
+      "tier2"
+    );
+    expect(errs).toContain("Valid Registration / Tax ID");
+  });
+
   it("clears the tier2 extras once board and safeguarding are long enough", () => {
     const tier2Ready: OrgProfileData = {
       ...validBase,

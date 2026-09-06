@@ -74,7 +74,7 @@ export const signUpVolunteer = async (email: string, pass: string, fullName: str
   }
 };
 
-export const signUpOrganization = async (email: string, pass: string, orgName: string, orgTier: string, phone: string, taxId: string): Promise<AuthResult> => {
+export const signUpOrganization = async (email: string, pass: string, orgName: string, orgTier: string, phone: string): Promise<AuthResult> => {
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
     const user = userCredential.user;
@@ -98,7 +98,8 @@ export const signUpOrganization = async (email: string, pass: string, orgName: s
       role: "organization", 
       tier: orgTier, 
       phone: phone,
-      registrationId: taxId,
+      // Collected later during profile completion / verification, not at signup.
+      registrationId: "",
       createdAt: new Date().toISOString(),
       bio: "",
       location: "",

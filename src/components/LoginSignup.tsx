@@ -4,7 +4,7 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Separator } from './ui/separator';
-import { Mail, Lock, User, ArrowRight, X, ShieldAlert, Eye, EyeOff, Building2, Phone, FileText, CheckSquare } from 'lucide-react'; 
+import { Mail, Lock, User, ArrowRight, X, ShieldAlert, Eye, EyeOff, Building2, Phone, CheckSquare } from 'lucide-react';
 import atharLogo from '../assets/athar-logo.png';
 import { auth } from '../lib/firebase';
 import { signUpVolunteer, loginUser, signUpOrganization, loginWithGoogle, friendlyAuthError } from '../lib/authService';
@@ -25,7 +25,6 @@ export function LoginSignup({ onLogin, onClose, userType }: LoginSignupProps) {
   const [signupName, setSignupName] = useState('');
   const [signupEmail, setSignupEmail] = useState('');
   const [signupPhone, setSignupPhone] = useState('');
-  const [officialId, setOfficialId] = useState(''); // Now only used for Organizations
   const [signupPass, setSignupPass] = useState('');
   const [confirmPass, setConfirmPass] = useState('');
   const [acceptTerms, setAcceptTerms] = useState(false);
@@ -112,15 +111,11 @@ export function LoginSignup({ onLogin, onClose, userType }: LoginSignupProps) {
     e.preventDefault();
     setFeedback(null);
 
-    // Core Form Validation (No officialId for volunteers)
+    // Core Form Validation — same lightweight set for volunteers and every org
+    // tier. Legal details (tax ID, documents) are collected later, only for the
+    // tiers that need verifying.
     if (!signupName || !signupEmail || !signupPass || !confirmPass || !signupPhone) {
       setFeedback({ type: 'error', text: 'Please fill in all mandatory fields.' });
-      return;
-    }
-
-    // Organization-Specific Validation
-    if (userType === 'organization' && !officialId) {
-      setFeedback({ type: 'error', text: 'Please provide your Organization Tax/Registration Number.' });
       return;
     }
 
@@ -137,7 +132,7 @@ export function LoginSignup({ onLogin, onClose, userType }: LoginSignupProps) {
     setLoading(true);
 
     const result = userType === 'organization'
-      ? await signUpOrganization(signupEmail, signupPass, signupName, orgTier, signupPhone, officialId)
+      ? await signUpOrganization(signupEmail, signupPass, signupName, orgTier, signupPhone)
       : await signUpVolunteer(signupEmail, signupPass, signupName, signupPhone);
 
     if (result.success) {
@@ -221,7 +216,7 @@ export function LoginSignup({ onLogin, onClose, userType }: LoginSignupProps) {
       </div>
 
       {/* RIGHT SIDE: The Form */}
-      <div className="w-full lg:w-1/2 bg-white flex items-center justify-center p-8 overflow-y-auto">
+      <div className="w-full lg:w-1/2 bg-white flex items-center justify-center p-5 sm:p-8 overflow-y-auto">
         <div className="w-full max-w-md space-y-8 my-auto">
             
             <div className="lg:hidden flex justify-center mb-8">
@@ -406,38 +401,29 @@ export function LoginSignup({ onLogin, onClose, userType }: LoginSignupProps) {
                             </div>
                           </div>
 
-                          {/* Row 3: Organization Specific Fields (Only renders for Organizations) */}
+                          {/* Row 3: Entity Classification (Only renders for Organizations).
+                              This is all we ask an organization for up front — Tier 1
+                              is ready to go, Tier 2/3 supply legal details when they
+                              start verification. */}
                           {userType === 'organization' && (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="official-id">Tax/Registration No.</Label>
-                                    <div className="relative">
-                                        <FileText className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
-                                        <Input 
-                                            id="official-id" 
-                                            placeholder="Required for verification" 
-                                            className="pl-10 h-11 bg-slate-50 border-slate-200"
-                                            value={officialId} 
-                                            onChange={(e) => setOfficialId(e.target.value)}
-                                        />
-                                    </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="org-tier">Entity Classification</Label>
+                                <div className="relative">
+                                    <Building2 className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
+                                    <select
+                                        id="org-tier"
+                                        value={orgTier}
+                                        onChange={(e) => setOrgTier(e.target.value)}
+                                        className="w-full pl-10 pr-4 h-11 bg-slate-50 border border-slate-200 rounded-md text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-role-org appearance-none"
+                                    >
+                                        <option value="tier1">Tier 1: Student Club / Youth Forum</option>
+                                        <option value="tier2">Tier 2: Society / Standard NGO</option>
+                                        <option value="tier3">Tier 3: Disaster Response NGO</option>
+                                    </select>
                                 </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="org-tier">Entity Classification</Label>
-                                    <div className="relative">
-                                        <Building2 className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
-                                        <select 
-                                            id="org-tier"
-                                            value={orgTier}
-                                            onChange={(e) => setOrgTier(e.target.value)}
-                                            className="w-full pl-10 pr-4 h-11 bg-slate-50 border border-slate-200 rounded-md text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-role-org appearance-none"
-                                        >
-                                            <option value="tier1">Tier 1: Student Club / Youth Forum</option>
-                                            <option value="tier2">Tier 2: Society / Standard NGO</option>
-                                            <option value="tier3">Tier 3: Disaster Response NGO</option>
-                                        </select>
-                                    </div>
-                                </div>
+                                <p className="text-xs text-slate-400">
+                                    Tier 2 and Tier 3 entities complete a document review before posting opportunities.
+                                </p>
                             </div>
                           )}
 
