@@ -20,7 +20,9 @@ import {
   Globe,
   MapPin,
   BrainCircuit,
-  Activity
+  Activity,
+  Menu,
+  X
 } from "lucide-react";
 import atharLogo from "../assets/athar-logo.png";
 
@@ -61,6 +63,7 @@ export function LandingPage({
   onSelectUserType,
 }: LandingPageProps) {
   const [scrolled, setScrolled] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -75,42 +78,45 @@ export function LandingPage({
     if (element) {
       element.scrollIntoView({ behavior: "smooth" });
     }
+    setIsMenuOpen(false);
   };
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans selection:bg-role-accent-teal selection:text-white overflow-x-hidden">
       
       {/* --- HEADER --- */}
-      <header 
+      <header
         className={`fixed top-0 w-full z-50 transition-all duration-500 ${
-          scrolled 
-            ? "bg-white/95 backdrop-blur-md shadow-sm py-3" 
+          scrolled
+            ? "bg-white/95 backdrop-blur-md shadow-sm py-3"
             : "bg-transparent py-5"
         }`}
       >
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
           <div
-            className="flex items-center gap-2.5 cursor-pointer group"
+            className="flex items-center gap-2.5 cursor-pointer group shrink-0"
             onClick={() => scrollToSection("home")}
           >
-            <img 
-              src={atharLogo} 
-              alt="Athar" 
-              className={`w-9 h-9 transition-all duration-300 group-hover:scale-105 ${!scrolled ? 'brightness-0 invert' : ''}`} 
+            <img
+              src={atharLogo}
+              alt="Athar"
+              className={`w-9 h-9 transition-all duration-300 group-hover:scale-105 ${!scrolled ? 'brightness-0 invert' : ''}`}
             />
             <span className={`text-xl font-bold tracking-tight transition-colors duration-300 ${!scrolled ? 'text-white' : 'text-role-org'}`}>
               Athar
             </span>
           </div>
-          <div className="flex items-center gap-2">
+
+          {/* Desktop nav */}
+          <div className="hidden md:flex items-center gap-2">
             {['About', 'How It Works', 'Contact'].map((item) => (
                 <Button
                 key={item}
                 variant="ghost"
                 onClick={() => scrollToSection(item.toLowerCase().replace(/\s+/g, '-'))}
                 className={`font-medium text-sm transition-colors duration-300 h-9 px-4 ${
-                    !scrolled 
-                    ? 'text-white hover:bg-white/10 hover:text-white' 
+                    !scrolled
+                    ? 'text-white hover:bg-white/10 hover:text-white'
                     : 'text-role-org hover:text-role-accent-teal hover:bg-role-accent-teal/5'
                 }`}
                 >
@@ -121,16 +127,59 @@ export function LandingPage({
               variant="outline"
               size="sm"
               onClick={() => onSelectUserType("admin")}
-              className={`ml-2 font-medium text-xs border h-9 px-4 transition-all duration-300 ${
-                  !scrolled 
-                  ? 'border-white text-white hover:bg-white hover:text-role-org' 
+              className={`ml-2 font-medium text-xs border h-9 px-4 transition-all duration-300 bg-transparent ${
+                  !scrolled
+                  ? 'border-white text-white hover:bg-white hover:text-role-org'
                   : 'border-role-org text-role-org hover:bg-role-org hover:text-white'
               }`}
             >
               Admin Portal
             </Button>
           </div>
+
+          {/* Mobile burger toggle */}
+          <button
+            type="button"
+            onClick={() => setIsMenuOpen((open) => !open)}
+            aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={isMenuOpen}
+            className={`md:hidden flex items-center justify-center w-9 h-9 rounded-md transition-colors duration-300 ${
+                !scrolled
+                ? 'text-white hover:bg-white/10'
+                : 'text-role-org hover:bg-role-accent-teal/10'
+            }`}
+          >
+            {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
         </div>
+
+        {/* Mobile dropdown */}
+        {isMenuOpen && (
+          <div className="md:hidden absolute top-full inset-x-0 bg-white shadow-lg border-t border-slate-100 animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="flex flex-col px-6 py-4 gap-1">
+              {['About', 'How It Works', 'Contact'].map((item) => (
+                  <Button
+                  key={item}
+                  variant="ghost"
+                  onClick={() => scrollToSection(item.toLowerCase().replace(/\s+/g, '-'))}
+                  className="justify-start font-medium text-sm h-11 px-3 text-role-org hover:text-role-accent-teal hover:bg-role-accent-teal/5"
+                  >
+                  {item}
+                  </Button>
+              ))}
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  onSelectUserType("admin");
+                }}
+                className="justify-start mt-1 font-medium text-xs border h-11 px-3 border-role-org text-role-org hover:bg-role-org hover:text-white"
+              >
+                Admin Portal
+              </Button>
+            </div>
+          </div>
+        )}
       </header>
 
       {/* --- HERO SECTION --- */}
