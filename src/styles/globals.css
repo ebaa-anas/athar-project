@@ -310,6 +310,17 @@ html {
   font-size: var(--font-size);
 }
 
+/* Last-resort guard against a stray wide child forcing the whole page to
+   scroll sideways on small screens. Individual wide elements (tables, code,
+   diagrams) must still opt into their own `overflow-x-auto` container — this
+   only stops the viewport itself from panning. `clip` keeps `position: sticky`
+   working, unlike `hidden`. */
+html,
+body,
+#root {
+  overflow-x: clip;
+}
+
 /* Professional spacing and layout utilities */
 .container-professional {
   max-width: 1400px;

@@ -228,8 +228,11 @@ export default function App() {
         />
       )}
 
-      {/* Main content */}
-      <main className="flex-1 overflow-y-auto lg:ml-64">
+      {/* Main content. min-w-0 lets this flex child actually shrink instead of
+          being widened by wide descendants (tables, fixed-width panes);
+          overflow-x-clip is a safety net so nothing can force a horizontal
+          page scroll. `clip` (not `hidden`) keeps the sticky top bar working. */}
+      <main className="flex-1 min-w-0 overflow-x-clip overflow-y-auto lg:ml-64">
         {/* Mobile top bar */}
         <div className="sticky top-0 z-30 flex items-center gap-3 border-b border-slate-200 bg-white px-4 py-3 lg:hidden">
           <button

@@ -294,8 +294,8 @@ export function CrisisManagement() {
           <ShieldX className="h-20 w-20 text-slate-400" />
         </div>
         <div className="max-w-xl space-y-4">
-          <h2 className="text-4xl font-black text-slate-900 uppercase tracking-tight">Access Restricted</h2>
-          <p className="text-slate-500 text-lg leading-relaxed">
+          <h2 className="text-3xl sm:text-4xl font-black text-slate-900 uppercase tracking-tight">Access Restricted</h2>
+          <p className="text-slate-500 text-base sm:text-lg leading-relaxed">
             The Crisis Response Center is strictly reserved for <strong>Government-Verified Entities</strong>. 
             You must complete the verification audit in your Profile settings before you can declare emergencies or mobilize the Athar Volunteer Reserve.
           </p>

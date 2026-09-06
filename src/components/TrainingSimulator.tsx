@@ -385,7 +385,7 @@ export function TrainingSimulator() {
           </CardContent>
         </Card>
 
-        <Card className="border-slate-200 shadow-md bg-white flex flex-col h-[600px]">
+        <Card className="border-slate-200 shadow-md bg-white flex flex-col h-[75vh] min-h-[28rem] md:h-[600px]">
           <CardHeader className="border-b border-slate-100 pb-4 shrink-0">
             <div className="flex items-center justify-between">
               <div>
@@ -524,7 +524,7 @@ export function TrainingSimulator() {
                   : "You must score 90% or higher to master this scenario. Review the debrief and try again."}
               </p>
               
-              <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 mb-8 inline-block min-w-[250px]">
+              <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 mb-8 inline-block min-w-[250px] max-w-full">
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Final Evaluation Score</p>
                 <p className={`text-5xl font-black ${passed ? 'text-emerald-600' : 'text-red-500'}`}>
                   {score}<span className="text-2xl text-slate-300">/100</span>

@@ -7,9 +7,10 @@ import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { Hash, Send, MessageSquare, ShieldCheck, Users, Search, ShieldAlert, Lock, Clock } from 'lucide-react';
-import { useUserProfile } from '../hooks/useUserProfile'; 
+import { Hash, Send, MessageSquare, ShieldCheck, Users, Search, ShieldAlert, Lock, Clock, ArrowLeft } from 'lucide-react';
+import { useUserProfile } from '../hooks/useUserProfile';
 import { Badge } from './ui/badge';
+import { useIsMobile } from './ui/use-mobile';
 
 // db comes from the shared Firebase connection in lib/firebase rather than
 // calling initializeApp() again here. A second initializeApp() call throws
@@ -31,6 +32,10 @@ const timeAgo = (timestamp: number) => {
 
 export function Messages() {
   const { user } = useUserProfile();
+  // On phones the list and the conversation can't sit side by side, so we show
+  // one at a time: the channel list until a channel is picked, then the thread
+  // (with a back button). md+ keeps the classic two-pane layout.
+  const isMobile = useIsMobile();
   const [channels, setChannels] = useState<any[]>([]);
   const [activeChannel, setActiveChannel] = useState<any | null>(null);
   const [messages, setMessages] = useState<any[]>([]);
@@ -181,7 +186,9 @@ export function Messages() {
             fetchedChannels.sort((a, b) => b.lastActivity - a.lastActivity);
             setChannels(fetchedChannels);
 
-            if (fetchedChannels.length > 0 && !activeChannelRef.current) {
+            // Auto-open the first channel on desktop only. On phones the list is
+            // the landing view; jumping straight into a thread would hide it.
+            if (fetchedChannels.length > 0 && !activeChannelRef.current && window.innerWidth >= 768) {
                setActiveChannel(fetchedChannels[0]);
             }
             setLoading(false);
@@ -277,8 +284,8 @@ export function Messages() {
     <div className="max-w-6xl mx-auto h-[calc(100vh-100px)] pb-6 animate-in fade-in duration-300">
       
       <Card className="w-full h-full flex flex-col md:flex-row shadow-xl border-slate-200 rounded-2xl overflow-hidden bg-white">
-        
-        <div className="w-full md:w-[340px] bg-slate-50 flex flex-col border-r border-slate-200 shrink-0">
+
+        <div className={`w-full md:w-[340px] bg-slate-50 flex-col border-r border-slate-200 shrink-0 md:flex ${isMobile && activeChannel ? 'hidden' : 'flex'}`}>
           
           <div className="p-5 border-b border-slate-200 bg-role-volunteer text-white">
             <h2 className="text-lg font-bold flex items-center gap-2 tracking-tight">
@@ -358,27 +365,35 @@ export function Messages() {
           </div>
         </div>
 
-        <div className="flex-1 flex flex-col bg-white min-w-0">
+        <div className={`flex-1 flex-col bg-white min-w-0 md:flex ${isMobile && !activeChannel ? 'hidden' : 'flex'}`}>
           {activeChannel ? (
             <>
               <div className="bg-white p-5 border-b border-slate-100 flex items-center justify-between shadow-sm z-10 shrink-0">
-                <div className="flex items-center gap-4">
-                  <div className={`p-2.5 rounded-xl ${activeChannel.type === 'crisis' ? 'bg-brand-cta/10' : activeChannel.type === 'group' ? 'bg-blue-50' : activeChannel.type === 'dm' ? 'bg-slate-100' : 'bg-teal-50'}`}>
+                <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                  <button
+                    type="button"
+                    onClick={() => setActiveChannel(null)}
+                    className="md:hidden -ml-1 p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 shrink-0"
+                    aria-label="Back to channels"
+                  >
+                    <ArrowLeft className="h-5 w-5" />
+                  </button>
+                  <div className={`p-2.5 rounded-xl shrink-0 ${activeChannel.type === 'crisis' ? 'bg-brand-cta/10' : activeChannel.type === 'group' ? 'bg-blue-50' : activeChannel.type === 'dm' ? 'bg-slate-100' : 'bg-teal-50'}`}>
                     {activeChannel.type === 'crisis' ? <ShieldAlert className="h-6 w-6 text-brand-cta" /> : activeChannel.type === 'group' ? <Users className="h-6 w-6 text-blue-600" /> : activeChannel.type === 'dm' ? <Lock className="h-6 w-6 text-slate-600" /> : <Hash className="h-6 w-6 text-role-accent-teal" />}
                   </div>
-                  <div>
-                    <h2 className="text-lg font-black text-slate-900 tracking-tight leading-tight">
+                  <div className="min-w-0">
+                    <h2 className="text-lg font-black text-slate-900 tracking-tight leading-tight truncate">
                       {activeChannel.title}
                     </h2>
-                    <div className="flex items-center gap-1.5 mt-1 text-[10px] uppercase tracking-widest text-slate-500 font-bold">
-                      {activeChannel.type === 'dm' ? <Lock className="h-3 w-3 text-slate-400" /> : <ShieldCheck className="h-3 w-3 text-role-accent-teal" />}
-                      {activeChannel.type === 'dm' ? 'Private Encrypted Channel' : `Command: ${activeChannel.orgName}`}
+                    <div className="flex items-center gap-1.5 mt-1 text-[10px] uppercase tracking-widest text-slate-500 font-bold truncate">
+                      {activeChannel.type === 'dm' ? <Lock className="h-3 w-3 text-slate-400 shrink-0" /> : <ShieldCheck className="h-3 w-3 text-role-accent-teal shrink-0" />}
+                      <span className="truncate">{activeChannel.type === 'dm' ? 'Private Encrypted Channel' : `Command: ${activeChannel.orgName}`}</span>
                     </div>
                   </div>
                 </div>
-                <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 flex items-center gap-2 px-3 py-1 font-bold text-[10px] uppercase tracking-widest">
+                <Badge variant="outline" className="shrink-0 bg-emerald-50 text-emerald-700 border-emerald-200 flex items-center gap-2 px-3 py-1 font-bold text-[10px] uppercase tracking-widest">
                   <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                  Connected
+                  <span className="hidden sm:inline">Connected</span>
                 </Badge>
               </div>
 

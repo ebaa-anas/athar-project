@@ -7,9 +7,10 @@ import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { Hash, Send, Users,ShieldCheck, MessageSquare, ShieldAlert, Radio, Sparkles, BrainCircuit, CheckCircle2, X, Lock, Search } from 'lucide-react';
+import { Hash, Send, Users,ShieldCheck, MessageSquare, ShieldAlert, Radio, Sparkles, BrainCircuit, CheckCircle2, X, Lock, Search, ArrowLeft } from 'lucide-react';
 import { useUserProfile } from '../../hooks/useUserProfile';
 import { Badge } from '../ui/badge';
+import { useIsMobile } from '../ui/use-mobile';
 
 // db comes from the single shared Firebase connection rather than calling
 // initializeApp() again here — a duplicate init throws "Firebase App named
@@ -46,7 +47,10 @@ const timeAgo = (timestamp: number) => {
 
 export function OrganizationMessages() {
   const { user } = useUserProfile();
-  
+
+  // Phones show one pane at a time: channel list, then the thread with a back
+  // button. md+ keeps the two-pane command view.
+  const isMobile = useIsMobile();
   const [channels, setChannels] = useState<any[]>([]);
   const [activeChannel, setActiveChannel] = useState<any | null>(null);
   const [messages, setMessages] = useState<any[]>([]);
@@ -157,7 +161,8 @@ export function OrganizationMessages() {
 
                 setChannels(fetchedChannels);
 
-                if (fetchedChannels.length > 0 && !activeChannelRef.current) {
+                // Desktop auto-opens the first channel; phones stay on the list.
+                if (fetchedChannels.length > 0 && !activeChannelRef.current && window.innerWidth >= 768) {
                     setActiveChannel(fetchedChannels[0]);
                 }
                 setLoading(false);
@@ -308,7 +313,7 @@ export function OrganizationMessages() {
   return (
     <div className="max-w-7xl mx-auto h-[calc(100vh-100px)] flex flex-col md:flex-row gap-4 pb-6 relative animate-in fade-in duration-300">
       
-      <Card className="w-full md:w-[320px] h-full border-slate-200 shadow-sm rounded-2xl flex flex-col bg-white shrink-0 relative z-10 overflow-hidden">
+      <Card className={`w-full md:w-[320px] h-full border-slate-200 shadow-sm rounded-2xl flex-col bg-white shrink-0 relative z-10 overflow-hidden md:flex ${isMobile && activeChannel ? 'hidden' : 'flex'}`}>
         <div className="p-5 border-b border-slate-100 bg-role-org text-white">
           <h2 className="text-lg font-bold flex items-center gap-2">
             <Radio className="h-5 w-5 text-role-accent-teal" /> Comm Channels
@@ -381,25 +386,33 @@ export function OrganizationMessages() {
         </div>
       </Card>
 
-      <Card className="flex-1 h-full border-slate-200 shadow-sm rounded-2xl flex flex-col bg-slate-50 relative z-10 overflow-hidden">
+      <Card className={`flex-1 h-full border-slate-200 shadow-sm rounded-2xl flex-col bg-slate-50 relative z-10 overflow-hidden md:flex ${isMobile && !activeChannel ? 'hidden' : 'flex'}`}>
         {activeChannel ? (
           <>
-            <div className="bg-white p-4 border-b border-slate-200 flex items-center justify-between shadow-sm z-10 shrink-0">
-              <div className="flex items-center gap-4">
-                <div className={`p-2.5 rounded-xl ${activeChannel.type === 'crisis' ? 'bg-brand-cta/10' : activeChannel.type === 'group' ? 'bg-blue-50' : activeChannel.type === 'dm' ? 'bg-slate-100' : 'bg-teal-50'}`}>
+            <div className="bg-white p-4 border-b border-slate-200 flex items-center justify-between shadow-sm z-10 shrink-0 gap-3">
+              <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                <button
+                  type="button"
+                  onClick={() => setActiveChannel(null)}
+                  className="md:hidden -ml-1 p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 shrink-0"
+                  aria-label="Back to channels"
+                >
+                  <ArrowLeft className="h-5 w-5" />
+                </button>
+                <div className={`p-2.5 rounded-xl shrink-0 ${activeChannel.type === 'crisis' ? 'bg-brand-cta/10' : activeChannel.type === 'group' ? 'bg-blue-50' : activeChannel.type === 'dm' ? 'bg-slate-100' : 'bg-teal-50'}`}>
                   {activeChannel.type === 'crisis' ? <ShieldAlert className="h-6 w-6 text-brand-cta" /> : activeChannel.type === 'group' ? <Users className="h-6 w-6 text-blue-600" /> : activeChannel.type === 'dm' ? <Lock className="h-6 w-6 text-slate-600" /> : <Hash className="h-6 w-6 text-role-accent-teal" />}
                 </div>
-                <div>
-                  <h2 className="text-lg font-black text-slate-900 tracking-tight leading-tight">
+                <div className="min-w-0">
+                  <h2 className="text-lg font-black text-slate-900 tracking-tight leading-tight truncate">
                     {activeChannel.title}
                   </h2>
-                  <div className="flex items-center gap-1.5 mt-1 text-[10px] uppercase tracking-widest text-slate-500 font-bold">
-                    {activeChannel.type === 'dm' ? <Lock className="h-3 w-3 text-slate-400" /> : <ShieldCheck className="h-3 w-3 text-role-accent-teal" />}
-                    {activeChannel.type === 'dm' ? 'Private Encrypted Channel' : 'Command Center Overview'}
+                  <div className="flex items-center gap-1.5 mt-1 text-[10px] uppercase tracking-widest text-slate-500 font-bold truncate">
+                    {activeChannel.type === 'dm' ? <Lock className="h-3 w-3 text-slate-400 shrink-0" /> : <ShieldCheck className="h-3 w-3 text-role-accent-teal shrink-0" />}
+                    <span className="truncate">{activeChannel.type === 'dm' ? 'Private Encrypted Channel' : 'Command Center Overview'}</span>
                   </div>
                 </div>
               </div>
-              
+
               {activeChannel.type === 'crisis' && (
                 <Button 
                   onClick={runAITriage} 

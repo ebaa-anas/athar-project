@@ -182,8 +182,11 @@ export function LandingPage({
         )}
       </header>
 
-      {/* --- HERO SECTION --- */}
-      <section id="home" className="relative w-full h-screen min-h-[800px] flex flex-col justify-center items-center overflow-hidden rounded-b-[50%_60px] shadow-2xl bg-role-org">
+      {/* --- HERO SECTION ---
+          Fluid height: tall enough to feel like a hero, but never taller than
+          it needs to be on short/landscape phones (the old `h-screen
+          min-h-[800px]` clipped the centred content on small screens). */}
+      <section id="home" className="relative w-full min-h-[38rem] py-28 md:py-0 md:h-screen md:min-h-[46rem] flex flex-col justify-center items-center overflow-hidden rounded-b-[50%_60px] shadow-2xl bg-role-org">
         
         {/* Background Image */}
         <img 
@@ -224,7 +227,7 @@ export function LandingPage({
         </div>
 
         {/* Main Content */}
-        <div className="relative z-10 max-w-4xl px-6 text-center text-white mt-10">
+        <div className="relative z-10 max-w-4xl px-6 text-center text-white mt-6 sm:mt-10">
             
             <div className="flex justify-center mb-8">
                 <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-role-accent-teal/20 backdrop-blur-md border border-role-accent-teal/50 shadow-lg animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -233,19 +236,19 @@ export function LandingPage({
                 </div>
             </div>
 
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 tracking-tight leading-tight drop-shadow-2xl">
-                Mobilizing <span className="text-role-accent-teal">Compassion</span> with <br/>
+            <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold mb-6 tracking-tight leading-tight drop-shadow-2xl">
+                Mobilizing <span className="text-role-accent-teal">Compassion</span> with <br className="hidden sm:block"/>
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-200 to-slate-400">
                     Intelligent Action.
                 </span>
             </h1>
 
-            <p className="text-lg md:text-xl text-slate-200 max-w-xl mx-auto mb-10 leading-relaxed font-light drop-shadow-md">
+            <p className="text-base sm:text-lg md:text-xl text-slate-200 max-w-xl mx-auto mb-10 leading-relaxed font-light drop-shadow-md">
                 The first platform connecting verified volunteers with organizations. 
                 <span className="font-semibold text-white"> AI-Powered. Community-Driven. Ready to Deploy.</span>
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 w-full max-w-sm mx-auto mb-20">
+            <div className="flex flex-col sm:flex-row gap-4 w-full max-w-sm mx-auto mb-12 sm:mb-20">
                 <Button 
                     onClick={() => onSelectUserType("volunteer")}
                     className="h-12 flex-1 text-sm font-bold bg-role-accent-teal hover:bg-role-volunteer text-white border-0 shadow-lg shadow-role-accent-teal/20 transition-transform hover:scale-105 rounded-lg"

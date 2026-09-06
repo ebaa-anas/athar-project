@@ -363,8 +363,10 @@ export function OrganizationOverview() {
 
       {/* Crisis map (tier3 only) */}
       {currentTier === 'tier3' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[450px]">
-          <Card className="lg:col-span-2 bg-role-org-dark border-slate-800 shadow-md overflow-hidden relative flex flex-col">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:h-[450px]">
+          {/* lg: fills the fixed 450px row. mobile: each panel keeps a usable
+              height instead of two being crushed into 450px total. */}
+          <Card className="lg:col-span-2 h-[420px] lg:h-auto bg-role-org-dark border-slate-800 shadow-md overflow-hidden relative flex flex-col">
             <div className="p-3 bg-black/40 border-b border-white/5 flex items-center justify-between z-10 relative">
               <div className="flex items-center gap-2">
                 <Crosshair className="text-red-500 h-4 w-4 animate-pulse" />
@@ -408,7 +410,7 @@ export function OrganizationOverview() {
           </Card>
 
           {/* Map sidebar */}
-          <Card className="bg-white border-slate-200 shadow-md flex flex-col overflow-hidden">
+          <Card className="h-[420px] lg:h-auto bg-white border-slate-200 shadow-md flex flex-col overflow-hidden">
             <div className="p-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
               <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
                 <ShieldAlert className="h-4 w-4 text-red-500" /> Crisis Intel
