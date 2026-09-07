@@ -9,6 +9,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
+    "seed": "node scripts/seed.mjs",
     "test": "vitest run --project node --project dom",
     "test:unit": "vitest run --project dom",
     "test:api": "vitest run --project node",
