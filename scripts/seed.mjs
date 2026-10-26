@@ -63,7 +63,12 @@ const ts = (daysAgo = 0, hoursAgo = 0) =>
   Timestamp.fromDate(new Date(Date.now() - daysAgo * 864e5 - hoursAgo * 36e5));
 const avatar = (seed) =>
   `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(seed)}`;
-const PW = "Seed!2026";
+const PW = env.SEED_USER_PASSWORD;
+const ADMIN_PW = env.SEED_ADMIN_PASSWORD;
+if (!PW || !ADMIN_PW) {
+  console.error("Missing SEED_USER_PASSWORD / SEED_ADMIN_PASSWORD in .env");
+  process.exit(1);
+}
 
 let writes = 0;
 let failures = 0;
@@ -107,7 +112,7 @@ const CAUSE_TITLE = {
 
 const VOLUNTEERS = [
   {
-    key: "alaa", email: "alaa@gmail.com", password: "alaa123", name: "Alaa Matar",
+    key: "alaa", email: "alaa@gmail.com", password: PW, name: "Alaa Matar",
     city: "Istanbul", phone: "+90 532 118 4410",
     bio: "Arabic/Turkish interpreter and trained first responder. Two years supporting refugee reception centres in Istanbul; comfortable in high-pressure field settings.",
     skills: ["First Aid", "Translation (Arabic)", "Psychological First Aid", "Logistics", "AVR"],
@@ -149,7 +154,7 @@ const VOLUNTEERS = [
 ];
 
 const ORGS = [
-  { key: "anatolia", email: "contact@anatoliayouth.org", password: "anatolia123", tier: "tier1", name: "Anatolia Youth & Social Solidarity", city: "Istanbul", category: "Youth Development", causes: "Youth Education & Mentorship, Community Development, Elderly Care", tagline: "Grassroots youth action across Istanbul", description: "Anatolia Youth & Social Solidarity is a student-founded community initiative running after-school clubs, neighbourhood clean-ups and elderly-companionship visits across three Istanbul districts. We connect university volunteers with families who need a hand.", mission: "To give every young person in our neighbourhoods a mentor, a safe space and a way to give back." },
+  { key: "anatolia", email: "contact@anatoliayouth.org", password: PW, tier: "tier1", name: "Anatolia Youth & Social Solidarity", city: "Istanbul", category: "Youth Development", causes: "Youth Education & Mentorship, Community Development, Elderly Care", tagline: "Grassroots youth action across Istanbul", description: "Anatolia Youth & Social Solidarity is a student-founded community initiative running after-school clubs, neighbourhood clean-ups and elderly-companionship visits across three Istanbul districts. We connect university volunteers with families who need a hand.", mission: "To give every young person in our neighbourhoods a mentor, a safe space and a way to give back." },
   { key: "campusgreen", email: "team@campusgreen.athar.seed", password: PW, tier: "tier1", name: "Campus Green Collective", city: "Izmir", category: "Environment", causes: "Environmental Conservation, Clean Water Initiatives", tagline: "Students restoring Izmir's coastline", description: "Campus Green Collective is a volunteer group of Izmir university students organising weekly beach and river clean-ups, native tree planting days and campus recycling drives. Everything we do is hands-on and open to anyone.", mission: "To leave Izmir's shoreline and green spaces measurably cleaner every semester." },
   { key: "neighborhoodhands", email: "hello@neighborhoodhands.athar.seed", password: PW, tier: "tier1", name: "Neighborhood Hands Initiative", city: "Bursa", category: "Community Support", causes: "Elderly Care & Support, Food Security & Nutrition, Community Development", tagline: "Neighbours helping neighbours in Bursa", description: "Neighborhood Hands is a small Bursa community initiative matching volunteers with elderly and housebound residents for weekly grocery runs, home repairs and companionship. We also run a monthly community kitchen.", mission: "To make sure no one on our street is left to manage alone." },
 
@@ -277,7 +282,6 @@ const oUid = (key) => uidByEmail[ORG_BY_KEY[key].email];
 async function main() {
   console.log(`\nSeeding project "${firebaseConfig.projectId}"\n`);
   const ADMIN_EMAIL = "admin@athar.gov";
-  const ADMIN_PW = "admin123";
 
   // ---- 1. accounts + own profile (signed in as each) --------------------
   console.log("1/6  accounts + profiles");
@@ -537,7 +541,7 @@ async function main() {
   console.log("\n────────────────────────────────────────────────────────");
   console.log(`accounts: ${accCreated} created, ${accReused} reused   |   docs: ${writes} written, ${failures} failed`);
   if (!isAdmin) console.log("\nNOTE: admin pass skipped — tier2/tier3 orgs are unverified.\n      Log in as admin and approve them in the Verification tab.");
-  console.log("\nLOGINS  (new seed accounts all use the password  Seed!2026 )\n");
+  console.log("\nLOGINS  (seed accounts all use SEED_USER_PASSWORD from .env)\n");
   console.log("  role         email                                          password");
   console.log("  ───────────────────────────────────────────────────────────────────────");
   for (const v of VOLUNTEERS) console.log(`  volunteer    ${v.email.padEnd(46)} ${v.password}${v.avr ? "   [AVR]" : ""}`);
